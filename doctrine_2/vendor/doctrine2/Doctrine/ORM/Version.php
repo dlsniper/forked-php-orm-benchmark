@@ -16,46 +16,40 @@
  * and is licensed under the LGPL. For more information, see
  * <http://www.doctrine-project.org>.
  */
-
-namespace Doctrine\ORM\Query\AST\Functions;
-
-use Doctrine\ORM\Query\Lexer;
+ 
+namespace Doctrine\ORM;
 
 /**
- * "SQRT" "(" SimpleArithmeticExpression ")"
+ * Class to store and retrieve the version of Doctrine
  *
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link    www.doctrine-project.org
  * @since   2.0
+ * @version $Revision$
+ * @author  Benjamin Eberlei <kontakt@beberlei.de>
  * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
- * @author  Benjamin Eberlei <kontakt@beberlei.de>
  */
-class SqrtFunction extends FunctionNode
+class Version
 {
-    public $simpleArithmeticExpression;
+    /**
+     * Current Doctrine Version
+     */
+    const VERSION = '2.1.0-DEV';
 
     /**
-     * @override
+     * Compares a Doctrine version with the current one.
+     *
+     * @param string $version Doctrine version to compare.
+     * @return int Returns -1 if older, 0 if it is the same, 1 if version 
+     *             passed as argument is newer.
      */
-    public function getSql(\Doctrine\ORM\Query\SqlWalker $sqlWalker)
+    public static function compare($version)
     {
-        //TODO: Use platform to get SQL
-        return 'SQRT(' . $sqlWalker->walkSimpleArithmeticExpression($this->simpleArithmeticExpression) . ')';
-    }
+        $currentVersion = str_replace(' ', '', strtolower(self::VERSION));
+        $version = str_replace(' ', '', $version);
 
-    /**
-     * @override
-     */
-    public function parse(\Doctrine\ORM\Query\Parser $parser)
-    {
-        $parser->match(Lexer::T_IDENTIFIER);
-        $parser->match(Lexer::T_OPEN_PARENTHESIS);
-        
-        $this->simpleArithmeticExpression = $parser->SimpleArithmeticExpression();
-        
-        $parser->match(Lexer::T_CLOSE_PARENTHESIS);
+        return version_compare($version, $currentVersion);
     }
 }
-

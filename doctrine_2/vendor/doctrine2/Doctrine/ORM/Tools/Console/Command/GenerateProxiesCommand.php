@@ -21,9 +21,9 @@
 
 namespace Doctrine\ORM\Tools\Console\Command;
 
-use Symfony\Components\Console\Input\InputArgument,
-    Symfony\Components\Console\Input\InputOption,
-    Symfony\Components\Console,
+use Symfony\Component\Console\Input\InputArgument,
+    Symfony\Component\Console\Input\InputOption,
+    Symfony\Component\Console,
     Doctrine\ORM\Tools\Console\MetadataFilter;
 
 /**
@@ -50,7 +50,7 @@ class GenerateProxiesCommand extends Console\Command\Command
         ->setDescription('Generates proxy classes for entity classes.')
         ->setDefinition(array(
             new InputOption(
-                'filter', null, InputOption::PARAMETER_REQUIRED | InputOption::PARAMETER_IS_ARRAY,
+                'filter', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'A string pattern used to match entities that should be processed.'
             ),
             new InputArgument(

@@ -21,9 +21,9 @@
 
 namespace Doctrine\ORM\Tools\Console\Command;
 
-use Symfony\Components\Console\Input\InputArgument,
-    Symfony\Components\Console\Input\InputOption,
-    Symfony\Components\Console;
+use Symfony\Component\Console\Input\InputArgument,
+    Symfony\Component\Console\Input\InputOption,
+    Symfony\Component\Console;
 
 /**
  * Command to ensure that Doctrine is properly configured for a production environment.
@@ -49,7 +49,7 @@ class EnsureProductionSettingsCommand extends Console\Command\Command
         ->setDescription('Verify that Doctrine is properly configured for a production environment.')
         ->setDefinition(array(
             new InputOption(
-                'complete', null, InputOption::PARAMETER_NONE,
+                'complete', null, InputOption::VALUE_NONE,
                 'Flag to also inspect database connection existance.'
             )
         ))

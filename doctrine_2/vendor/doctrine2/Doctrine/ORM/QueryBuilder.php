@@ -79,6 +79,11 @@ class QueryBuilder
      * @var array The query parameters.
      */
     private $_params = array();
+
+    /**
+     * @var array The parameter type map of this query.
+     */
+    private $_paramTypes = array();
     
     /**
      * @var integer The index of the first result to retrieve.
@@ -208,7 +213,7 @@ class QueryBuilder
     public function getQuery()
     {
         return $this->_em->createQuery($this->getDQL())
-                ->setParameters($this->_params)
+                ->setParameters($this->_params, $this->_paramTypes)
                 ->setFirstResult($this->_firstResult)
                 ->setMaxResults($this->_maxResults);
     }
@@ -246,10 +251,14 @@ class QueryBuilder
      *
      * @param string|integer $key The parameter position or name.
      * @param mixed $value The parameter value.
+     * @param string|null $type PDO::PARAM_* or \Doctrine\DBAL\Types\Type::* constant
      * @return QueryBuilder This QueryBuilder instance.
      */
-    public function setParameter($key, $value)
+    public function setParameter($key, $value, $type = null)
     {
+        if ($type !== null) {
+            $this->_paramTypes[$key] = $type;
+        }
         $this->_params[$key] = $value;
         return $this;
     }
@@ -271,8 +280,9 @@ class QueryBuilder
      * @param array $params The query parameters to set.
      * @return QueryBuilder This QueryBuilder instance.
      */
-    public function setParameters(array $params)
+    public function setParameters(array $params, array $types = array())
     {
+        $this->_paramTypes = $types;
         $this->_params = $params;
         return $this;
     }
@@ -879,6 +889,40 @@ class QueryBuilder
     }
 
     /**
+     * Reset DQL parts
+     *
+     * @param array $parts
+     * @return QueryBuilder
+     */
+    public function resetDQLParts($parts = null)
+    {
+        if (is_null($parts)) {
+            $parts = array_keys($this->_dqlParts);
+        }
+        foreach ($parts as $part) {
+            $this->resetDQLPart($part);
+        }
+        return $this;
+    }
+
+    /**
+     * Reset single DQL part
+     *
+     * @param string $part
+     * @return QueryBuilder;
+     */
+    public function resetDQLPart($part)
+    {
+        if (is_array($this->_dqlParts[$part])) {
+            $this->_dqlParts[$part] = array();
+        } else {
+            $this->_dqlParts[$part] = null;
+        }
+        $this->_state = self::STATE_DIRTY;
+        return $this;
+    }
+
+    /**
      * Gets a string representation of this QueryBuilder which corresponds to
      * the final DQL query being constructed.
      *
@@ -887,5 +931,25 @@ class QueryBuilder
     public function __toString()
     {
         return $this->getDQL();
+    }
+
+    /**
+     * Deep clone of all expression objects in the DQL parts.
+     *
+     * @return void
+     */
+    public function __clone()
+    {
+        foreach ($this->_dqlParts AS $part => $elements) {
+            if (is_array($this->_dqlParts[$part])) {
+                foreach ($this->_dqlParts[$part] AS $idx => $element) {
+                    if (is_object($element)) {
+                        $this->_dqlParts[$part][$idx] = clone $element;
+                    }
+                }
+            } else if (\is_object($elements)) {
+                $this->_dqlParts[$part] = clone $elements;
+            }
+        }
     }
 }

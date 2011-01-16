@@ -17,45 +17,33 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace Doctrine\ORM\Query\AST\Functions;
-
-use Doctrine\ORM\Query\Lexer;
+namespace Doctrine\ORM\Query\AST;
 
 /**
- * "SQRT" "(" SimpleArithmeticExpression ")"
+ * InstanceOfExpression ::= IdentificationVariable ["NOT"] "INSTANCE" ["OF"] (AbstractSchemaName | InputParameter)
  *
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link    www.doctrine-project.org
  * @since   2.0
+ * @version $Revision: 3938 $
  * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
- * @author  Benjamin Eberlei <kontakt@beberlei.de>
  */
-class SqrtFunction extends FunctionNode
+class InstanceOfExpression extends Node
 {
-    public $simpleArithmeticExpression;
-
-    /**
-     * @override
-     */
-    public function getSql(\Doctrine\ORM\Query\SqlWalker $sqlWalker)
+    public $not;
+    public $identificationVariable;
+    public $value;
+    
+    public function __construct($identVariable)
     {
-        //TODO: Use platform to get SQL
-        return 'SQRT(' . $sqlWalker->walkSimpleArithmeticExpression($this->simpleArithmeticExpression) . ')';
+        $this->identificationVariable = $identVariable;
     }
 
-    /**
-     * @override
-     */
-    public function parse(\Doctrine\ORM\Query\Parser $parser)
+    public function dispatch($sqlWalker)
     {
-        $parser->match(Lexer::T_IDENTIFIER);
-        $parser->match(Lexer::T_OPEN_PARENTHESIS);
-        
-        $this->simpleArithmeticExpression = $parser->SimpleArithmeticExpression();
-        
-        $parser->match(Lexer::T_CLOSE_PARENTHESIS);
+        return $sqlWalker->walkInstanceOfExpression($this);
     }
 }
 

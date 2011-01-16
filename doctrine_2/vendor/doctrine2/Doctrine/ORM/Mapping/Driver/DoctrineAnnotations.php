@@ -114,12 +114,12 @@ final class Index extends Annotation {
 final class JoinTable extends Annotation {
     public $name;
     public $schema;
-    public $joinColumns;
-    public $inverseJoinColumns;
+    public $joinColumns = array();
+    public $inverseJoinColumns = array();
 }
 final class SequenceGenerator extends Annotation {
     public $sequenceName;
-    public $allocationSize = 10;
+    public $allocationSize = 1;
     public $initialValue = 1;
 }
 final class ChangeTrackingPolicy extends Annotation {}

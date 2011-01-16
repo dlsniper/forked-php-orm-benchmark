@@ -184,11 +184,17 @@ abstract class AbstractHydrator
                     $cache[$key]['type'] = Type::getType($classMetadata->fieldMappings[$fieldName]['type']);
                     $cache[$key]['isIdentifier'] = $classMetadata->isIdentifier($fieldName);
                     $cache[$key]['dqlAlias'] = $this->_rsm->columnOwnerMap[$key];
+                } else if (!isset($this->_rsm->metaMappings[$key])) {
+                    // this column is a left over, maybe from a LIMIT query hack for example in Oracle or DB2
+                    // maybe from an additional column that has not been defined in a NativeQuery ResultSetMapping.
+                    continue;
                 } else {
                     // Meta column (has meaning in relational schema only, i.e. foreign keys or discriminator columns).
+                    $fieldName = $this->_rsm->metaMappings[$key];
                     $cache[$key]['isMetaColumn'] = true;
-                    $cache[$key]['fieldName'] = $this->_rsm->metaMappings[$key];
+                    $cache[$key]['fieldName'] = $fieldName;
                     $cache[$key]['dqlAlias'] = $this->_rsm->columnOwnerMap[$key];
+                    $cache[$key]['isIdentifier'] = $classMetadata->isIdentifier($fieldName);
                 }
             }
             
@@ -199,13 +205,13 @@ abstract class AbstractHydrator
 
             $dqlAlias = $cache[$key]['dqlAlias'];
 
+            if ($cache[$key]['isIdentifier']) {
+                $id[$dqlAlias] .= '|' . $value;
+            }
+
             if (isset($cache[$key]['isMetaColumn'])) {
                 $rowData[$dqlAlias][$cache[$key]['fieldName']] = $value;
                 continue;
-            }
-
-            if ($cache[$key]['isIdentifier']) {
-                $id[$dqlAlias] .= '|' . $value;
             }
 
             $rowData[$dqlAlias][$cache[$key]['fieldName']] = $cache[$key]['type']->convertToPHPValue($value, $this->_platform);
@@ -245,6 +251,10 @@ abstract class AbstractHydrator
                     $cache[$key]['fieldName'] = $fieldName;
                     $cache[$key]['type'] = Type::getType($classMetadata->fieldMappings[$fieldName]['type']);
                     $cache[$key]['dqlAlias'] = $this->_rsm->columnOwnerMap[$key];
+                } else if (!isset($this->_rsm->metaMappings[$key])) {
+                    // this column is a left over, maybe from a LIMIT query hack for example in Oracle or DB2
+                    // maybe from an additional column that has not been defined in a NativeQuery ResultSetMapping.
+                    continue;
                 } else {
                     // Meta column (has meaning in relational schema only, i.e. foreign keys or discriminator columns).
                     $cache[$key]['isMetaColumn'] = true;

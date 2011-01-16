@@ -64,7 +64,8 @@ abstract class AbstractCollectionPersister
      */
     public function delete(PersistentCollection $coll)
     {
-        if ( ! $coll->getMapping()->isOwningSide) {
+        $mapping = $coll->getMapping();
+        if ( ! $mapping['isOwningSide']) {
             return; // ignore inverse side
         }
         $sql = $this->_getDeleteSQL($coll);
@@ -94,7 +95,8 @@ abstract class AbstractCollectionPersister
      */
     public function update(PersistentCollection $coll)
     {
-        if ( ! $coll->getMapping()->isOwningSide) {
+        $mapping = $coll->getMapping();
+        if ( ! $mapping['isOwningSide']) {
             return; // ignore inverse side
         }
         $this->deleteRows($coll);
@@ -121,6 +123,31 @@ abstract class AbstractCollectionPersister
         foreach ($insertDiff as $element) {
             $this->_conn->executeUpdate($sql, $this->_getInsertRowSQLParameters($coll, $element));
         }
+    }
+
+    public function count(PersistentCollection $coll)
+    {
+        throw new \BadMethodCallException("Counting the size of this persistent collection is not supported by this CollectionPersister.");
+    }
+
+    public function slice(PersistentCollection $coll, $offset, $length = null)
+    {
+        throw new \BadMethodCallException("Slicing elements is not supported by this CollectionPersister.");
+    }
+
+    public function contains(PersistentCollection $coll, $element)
+    {
+        throw new \BadMethodCallException("Checking for existance of an element is not supported by this CollectionPersister.");
+    }
+
+    public function containsKey(PersistentCollection $coll, $key)
+    {
+        throw new \BadMethodCallException("Checking for existance of a key is not supported by this CollectionPersister.");
+    }
+
+    public function get(PersistentCollection $coll, $index)
+    {
+        throw new \BadMethodCallException("Selecting a collection by index is not supported by this CollectionPersister.");
     }
 
     /**

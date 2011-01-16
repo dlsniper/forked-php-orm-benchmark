@@ -21,9 +21,9 @@
 
 namespace Doctrine\ORM\Tools\Console\Command\ClearCache;
 
-use Symfony\Components\Console\Input\InputArgument,
-    Symfony\Components\Console\Input\InputOption,
-    Symfony\Components\Console;
+use Symfony\Component\Console\Input\InputArgument,
+    Symfony\Component\Console\Input\InputOption,
+    Symfony\Component\Console;
 
 /**
  * Command to clear the result cache of the various cache drivers.
@@ -49,19 +49,19 @@ class ResultCommand extends Console\Command\Command
         ->setDescription('Clear result cache of the various cache drivers.')
         ->setDefinition(array(
             new InputOption(
-                'id', null, InputOption::PARAMETER_REQUIRED | InputOption::PARAMETER_IS_ARRAY,
+                'id', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'ID(s) of the cache entry to delete (accepts * wildcards).', array()
             ),
             new InputOption(
-                'regex', null, InputOption::PARAMETER_REQUIRED | InputOption::PARAMETER_IS_ARRAY,
+                'regex', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'Delete cache entries that match the given regular expression(s).', array()
             ),
             new InputOption(
-                'prefix', null, InputOption::PARAMETER_REQUIRED | InputOption::PARAMETER_IS_ARRAY,
+                'prefix', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'Delete cache entries that have the given prefix(es).', array()
             ),
             new InputOption(
-                'suffix', null, InputOption::PARAMETER_REQUIRED | InputOption::PARAMETER_IS_ARRAY,
+                'suffix', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
                 'Delete cache entries that have the given suffix(es).', array()
             ),
         ))
@@ -82,6 +82,10 @@ EOT
 
         if ( ! $cacheDriver) {
             throw new \InvalidArgumentException('No Result cache driver is configured on given EntityManager.');
+        }
+
+        if ($cacheDriver instanceof \Doctrine\Common\Cache\ApcCache) {
+            throw new \LogicException("Cannot clear APC Cache from Console, its shared in the Webserver memory and not accessible from the CLI.");
         }
 
         $outputed = false;

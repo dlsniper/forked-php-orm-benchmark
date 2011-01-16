@@ -33,11 +33,18 @@ use Doctrine\ORM\Mapping\ClassMetadata,
 abstract class AbstractEntityInheritancePersister extends BasicEntityPersister
 {
     /**
-     * Map from column names to class names that declare the field the column is mapped to.
+     * Map from column names to class metadata instances that declare the field the column is mapped to.
      * 
      * @var array
      */
-    private $_declaringClassMap = array();
+    private $declaringClassMap = array();
+
+    /**
+     * Map from column names to class names that declare the field the association with join column is mapped to.
+     *
+     * @var array
+     */
+    private $declaringJoinColumnMap = array();
 
     /**
      * {@inheritdoc}
@@ -70,12 +77,20 @@ abstract class AbstractEntityInheritancePersister extends BasicEntityPersister
         unset($sqlResult[$discrColumnName]);
         foreach ($sqlResult as $column => $value) {
             $realColumnName = $this->_resultColumnNames[$column];
-            if (isset($this->_declaringClassMap[$column])) {
-                $class = $this->_declaringClassMap[$column];
+            if (isset($this->declaringClassMap[$column])) {
+                $class = $this->declaringClassMap[$column];
                 if ($class->name == $entityName || is_subclass_of($entityName, $class->name)) {
                     $field = $class->fieldNames[$realColumnName];
-                    $data[$field] = Type::getType($class->fieldMappings[$field]['type'])
-                            ->convertToPHPValue($value, $this->_platform);
+                    if (isset($data[$field])) {
+                        $data[$realColumnName] = $value;
+                    } else {
+                        $data[$field] = Type::getType($class->fieldMappings[$field]['type'])
+                                ->convertToPHPValue($value, $this->_platform);
+                    }
+                }
+            } else if (isset($this->declaringJoinColumnMap[$column])) {
+                if ($this->declaringJoinColumnMap[$column] == $entityName || is_subclass_of($entityName, $this->declaringJoinColumnMap[$column])) {
+                    $data[$realColumnName] = $value;
                 }
             } else {
                 $data[$realColumnName] = $value;
@@ -95,9 +110,21 @@ abstract class AbstractEntityInheritancePersister extends BasicEntityPersister
         $columnAlias = $this->_platform->getSQLResultCasing($columnName . $this->_sqlAliasCounter++);
         if ( ! isset($this->_resultColumnNames[$columnAlias])) {
             $this->_resultColumnNames[$columnAlias] = $columnName;
-            $this->_declaringClassMap[$columnAlias] = $class;
+            $this->declaringClassMap[$columnAlias] = $class;
         }
 
         return "$sql AS $columnAlias";
+    }
+
+    protected function getSelectJoinColumnSQL($tableAlias, $joinColumnName, $className)
+    {
+        $columnAlias = $joinColumnName . $this->_sqlAliasCounter++;
+        $resultColumnName = $this->_platform->getSQLResultCasing($columnAlias);
+        if ( ! isset($this->_resultColumnNames[$resultColumnName])) {
+            $this->_resultColumnNames[$resultColumnName] = $joinColumnName;
+            $this->declaringJoinColumnMap[$resultColumnName] = $className;
+        }
+        
+        return $tableAlias . ".$joinColumnName AS $columnAlias";
     }
 }

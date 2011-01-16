@@ -45,23 +45,6 @@ class ORMException extends Exception
         return new self("Unrecognized field: $field");
     }
 
-    public static function removedEntityInCollectionDetected($entity, $assoc)
-    {
-        return new self("Removed entity of type " . get_class($entity)
-                . " detected in collection '" . $assoc->sourceFieldName . "' during flush."
-                . " Remove deleted entities from collections.");
-    }
-
-    public static function invalidEntityState($state)
-    {
-        return new self("Invalid entity state: $state.");
-    }
-
-    public static function detachedEntityCannotBeRemoved()
-    {
-        return new self("A detached entity can not be removed.");
-    }
-
     public static function invalidFlushMode($mode)
     {
         return new self("'$mode' is an invalid flush mode.");
@@ -92,6 +75,14 @@ class ORMException extends Exception
         return new self(
             "Entity '".$entityName."' has no field '".$fieldName."'. ".
             "You can therefore not call '".$method."' on the entities' repository"
+        );
+    }
+
+    public static function invalidFindByInverseAssociation($entityName, $associationFieldName)
+    {
+        return new self(
+            "You cannot search for the association field '".$entityName."#".$associationFieldName."', ".
+            "because it is the inverse side of an association. Find methods only work on owning side associations."
         );
     }
 
