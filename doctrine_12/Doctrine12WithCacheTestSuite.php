@@ -16,9 +16,9 @@ class Doctrine12WithCacheTestSuite extends Doctrine12TestSuite
 	function clearCache()
 	{
 		parent::clearCache();
-		if ($this->cache->count() > 0) {
+		//if ($this->cache->count() > 0) {
 			$this->cache->deleteAll();
-		}
+		//}
 		
 	}
 	
