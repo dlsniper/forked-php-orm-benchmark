@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<database name="bookstore" defaultIdMethod="native">
+
+	<table name="book" description="Book Table">
+		<column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER" />
+		<column name="title" type="VARCHAR" required="true" description="Book Title" primaryString="true" />
+		<column name="isbn" required="true" type="VARCHAR" size="24" phpName="ISBN" description="ISBN Number" />
+		<column name="price" required="false" type="FLOAT" description="Price of the book." />
+		<column name="author_id" required="false" type="INTEGER" description="Foreign Key Author" />
+		<foreign-key foreignTable="author" onDelete="setnull" onUpdate="cascade">
+			<reference local="author_id" foreign="id" />
+		</foreign-key>
+	</table>
+
+	<table name="author" description="Author Table">
+		<column name="id" required="true" primaryKey="true" autoIncrement="true" type="INTEGER" />
+		<column name="first_name" required="true" type="VARCHAR" size="128" description="First Name" />
+		<column name="last_name" required="true" type="VARCHAR" size="128" description="Last Name" />
+		<column name="email" type="VARCHAR" size="128" description="E-Mail Address" />
+	</table>
+
+</database>

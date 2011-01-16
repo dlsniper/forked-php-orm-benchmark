@@ -1,0 +1,43 @@
+= Changelog Of The Propel 1.4 Branch =
+
+== 2010-04-20: Version 1.4.2 ==
+
+ * [1690] Fixed issue with duplicate indexes generated in SQL on foreign keys (patch from cheezy) (closes #725)
+ * [1684] Fixed check of external schema path before inclusion (closes #562)
+ * [1639] Removed save() methods from readOnly objects (closes #869)
+ * [1638] Fixed a syntax error in SoftDelete behavior
+ * [1608] Fixed Count subquery fails when identically named columns are in SELECT (closes #795) (based on a patch by cheezy)
+ * [1597] Fixed hardcoded ID field in soft_delete behavior (closes #879)
+ * [1595] Fixed composite primary keys in SQLite (closes #745)
+ * [1594] Fixed typo in `Column::getFullyQualifiedName()` (closes #873)
+ * [1559] Fixed detection of TEXT column default values in MySQL (closes #652)
+ * [1558] Fixed propel-gen.bat (closes #828)
+ * [1539] [doc] Made it clearer that a preInsert() hook must return true (closes #822)
+ * [1537] Fixed pear-propel-gen script (refs #737)
+ * [1524] Fixed OMBuilder::hasBehaviorModifier() only tests one behavior (closes #843)
+ * [1514] Fixed phpNname generator (closes #842)
+ * [1508] Made Propel compatible with Phing 2.4.0
+
+== 2010-01-12: Version 1.4.1 ==
+
+ * [1450] Fixed classPrefix support (refs #806)
+ * [1448] Fixed doSelectJoinXXX() bug for one-to-one relationships (refs #808)
+ * [1447] Fixed generated SQL code for VARCHAR columns with custom SQLType
+ * [1403] Fixed notice on soft_delete behavior
+ * [1399] Fixed generated doDelete() in case of multiple pks when using cascade emulation (refs #807)
+ * [1397] Fixed PostgreSQL reverse engineering of foreign keys when namespaces are used (refs #713) (patch by mrhyde)
+ * [1382] Fixed Error with DebugPDOStatement and logging of values when more than 10 (based on a patch from gunnar)(closes #818)
+ * [1381] Fixed wrong opening php tags and closing braces in Pagination.txt (patch from tilo) (closes #819)
+ * [1378] Fixed PHPDoc in Propel.php to remove confusion about .ini files
+ * [1333] made soft_delete skip not deleted records (refs #817)
+ * [1332] Fixed uncommitted transaction when pre- hook returns false (refs #816)
+ * [1329] Fixed segfault in PHP5.3 (refs #815)
+ * [1328] Fixed alternative_coding_standards behavior newline on Windows again (refs #811)
+ * [1327] Fixed alternatice_coding_standards behavior newline on Windows (closes #811)
+ * [1305] fixed typo (closes #801)
+ * [1304] fixed typo (refs #800)
+ * [1303] fixed typo (closes #800)
+
+== 2009-11-08: Version 1.4.0 ==
+
+ * [1300] Tagged 1.4.0 stable

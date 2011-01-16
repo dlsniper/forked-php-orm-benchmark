@@ -1,0 +1,17 @@
+---
+detect_relations: true
+
+Book:
+  columns:
+    id:         { type: integer, primary: true, autoincrement: true, notnull: true }
+    title:      { type: string, notnull: true }
+    isbn:       { type: string(24), notnull: true }
+    price:      { type: float, notnull: false }
+    author_id: integer
+
+Author:
+  columns:
+    id:         { type: integer, primary: true, autoincrement: true, notnull: true }
+    first_name: { type: string(128), notnull: true }
+    last_name:  { type: string(128), notnull: true }
+    email:      { type: string(128) }
