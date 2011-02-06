@@ -55,13 +55,13 @@ In order to display this navigation, the pager object executes one simple query 
 
 == Getting Objects From A Pager ==
 
-A call to `PropelPager::getResults()` makes a call to `BookPeer::doSelect($criteria)` in the background and returns the same array of `Book` objects you are used to dealing with:
+A call to `PropelPager::getResult()` makes a call to `BookPeer::doSelect($criteria)` in the background and returns the same array of `Book` objects you are used to dealing with:
 
 {{{
 #!php
 <-- Get results -->
 <table>
-<?php foreach ($pager->getResults() as $book): ?>
+<?php foreach ($pager->getResult() as $book): ?>
   <tr>
     <td><?php echo $book->getTitle() ?></td>
     <td><?php echo $book->getISBN() ?></td>

@@ -18,7 +18,7 @@ require_once 'ConcreteInheritanceParentBehavior.php';
  * to the parent model.
  *
  * @author     François Zaninotto
- * @version    $Revision: 2068 $
+ * @version    $Revision: 2171 $
  * @package    propel.generator.behavior.concrete_inheritance
  */
 class ConcreteInheritanceBehavior extends Behavior
@@ -110,6 +110,7 @@ class ConcreteInheritanceBehavior extends Behavior
 				continue;
 			}
 			$copiedBehavior = clone $behavior;
+			$copiedBehavior->setTableModified(false);
 			$this->getTable()->addBehavior($copiedBehavior);
 		}
 

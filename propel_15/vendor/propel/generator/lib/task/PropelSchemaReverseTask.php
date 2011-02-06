@@ -17,7 +17,7 @@ require_once 'model/PropelTypes.php';
  * the database metadata.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 1716 $
+ * @version    $Revision: 2175 $
  * @package    propel.generator.task
  */
 class PropelSchemaReverseTask extends PDOTask
@@ -259,7 +259,7 @@ class PropelSchemaReverseTask extends PDOTask
 	 */
 	public function setSamePhpName($v)
 	{
-		$this->samePhpName = $v;
+		$this->samePhpName = (boolean) $v;
 	}
 
 	/**

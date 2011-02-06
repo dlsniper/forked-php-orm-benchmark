@@ -133,7 +133,7 @@ Whether to add the vendor info.  This is currently only used for MySQL, but does
 {{{
 propel.addValidators = {none}|maxvalue|type|required|unique|all
 }}}
-Which Propel validators to add to the generated schema (based on the db constraints).
+Which Propel validators to add to the generated schema, based on the database constraints. You can cherry-pick allowed validators by using a comma-separated value, e.g 'maxvalue,type,required'
 
 === Customizing Generated Object Model ===
 
