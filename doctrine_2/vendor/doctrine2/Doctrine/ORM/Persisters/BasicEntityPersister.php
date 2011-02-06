@@ -28,7 +28,9 @@ use PDO,
     Doctrine\ORM\Query,
     Doctrine\ORM\PersistentCollection,
     Doctrine\ORM\Mapping\MappingException,
-    Doctrine\ORM\Mapping\ClassMetadata;
+    Doctrine\ORM\Mapping\ClassMetadata,
+    Doctrine\ORM\Events,
+    Doctrine\ORM\Event\LifecycleEventArgs;
 
 /**
  * A BasicEntityPersiter maps an entity to a single table in a relational database.
@@ -223,7 +225,7 @@ class BasicEntityPersister
             }
 
             if ($this->_class->isVersioned) {
-                $this->_assignDefaultVersionValue($this->_class, $entity, $id);
+                $this->assignDefaultVersionValue($entity, $id);
             }
         }
 
@@ -238,22 +240,33 @@ class BasicEntityPersister
      * by the preceding INSERT statement and assigns it back in to the 
      * entities version field.
      *
-     * @param Doctrine\ORM\Mapping\ClassMetadata $class
      * @param object $entity
      * @param mixed $id
      */
-    protected function _assignDefaultVersionValue($class, $entity, $id)
+    protected function assignDefaultVersionValue($entity, $id)
     {
-        $versionField = $this->_class->versionField;
-        $identifier = $this->_class->getIdentifierColumnNames();
-        $versionFieldColumnName = $this->_class->getColumnName($versionField);
+        $value = $this->fetchVersionValue($this->_class, $id);
+        $this->_class->setFieldValue($entity, $this->_class->versionField, $value);
+    }
+
+    /**
+     * Fetch the current version value of a versioned entity.
+     * 
+     * @param Doctrine\ORM\Mapping\ClassMetadata $versionedClass
+     * @param mixed $id
+     * @return mixed
+     */
+    protected function fetchVersionValue($versionedClass, $id)
+    {
+        $versionField = $versionedClass->versionField;
+        $identifier = $versionedClass->getIdentifierColumnNames();
+        $versionFieldColumnName = $versionedClass->getColumnName($versionField);
         //FIXME: Order with composite keys might not be correct
-        $sql = "SELECT " . $versionFieldColumnName . " FROM " . $class->getQuotedTableName($this->_platform)
+        $sql = "SELECT " . $versionFieldColumnName . " FROM " . $versionedClass->getQuotedTableName($this->_platform)
                . " WHERE " . implode(' = ? AND ', $identifier) . " = ?";
         $value = $this->_conn->fetchColumn($sql, array_values((array)$id));
 
-        $value = Type::getType($class->fieldMappings[$versionField]['type'])->convertToPHPValue($value, $this->_platform);
-        $this->_class->setFieldValue($entity, $versionField, $value);
+        return Type::getType($versionedClass->fieldMappings[$versionField]['type'])->convertToPHPValue($value, $this->_platform);
     }
 
     /**
@@ -282,7 +295,7 @@ class BasicEntityPersister
 
             if ($this->_class->isVersioned) {
                 $id = $this->_em->getUnitOfWork()->getEntityIdentifier($entity);
-                $this->_assignDefaultVersionValue($this->_class, $entity, $id);
+                $this->assignDefaultVersionValue($entity, $id);
             }
         }
     }
@@ -693,6 +706,14 @@ class BasicEntityPersister
         }
 
         $this->_em->getUnitOfWork()->setOriginalEntityData($entity, $newData);
+
+        if (isset($this->_class->lifecycleCallbacks[Events::postLoad])) {
+            $this->_class->invokeLifecycleCallbacks(Events::postLoad, $entity);
+        }
+        $evm = $this->_em->getEventManager();
+        if ($evm->hasListeners(Events::postLoad)) {
+            $evm->dispatchEvent(Events::postLoad, new LifecycleEventArgs($entity, $this->_em));
+        }
     }
 
     /**
@@ -729,13 +750,53 @@ class BasicEntityPersister
     public function getManyToManyCollection(array $assoc, $sourceEntity, $offset = null, $limit = null)
     {
         $stmt = $this->getManyToManyStatement($assoc, $sourceEntity, $offset, $limit);
+        return $this->loadArrayFromStatement($assoc, $stmt);
+    }
 
+    /**
+     * Load an array of entities from a given dbal statement.
+     * 
+     * @param array $assoc
+     * @param Doctrine\DBAL\Statement $stmt
+     * @return array
+     */
+    private function loadArrayFromStatement($assoc, $stmt)
+    {
         $entities = array();
-        while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $entities[] = $this->_createEntity($result);
+        if (isset($assoc['indexBy'])) {
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $entity = $this->_createEntity($result);
+                $entities[$this->_class->reflFields[$assoc['indexBy']]->getValue($entity)] = $entity;
+            }
+        } else {
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $entities[] = $this->_createEntity($result);
+            }
         }
         $stmt->closeCursor();
         return $entities;
+    }
+
+    /**
+     * Hydrate a collection from a given dbal statement.
+     * 
+     * @param array $assoc
+     * @param Doctrine\DBAL\Statement $stmt
+     * @param PersistentCollection $coll
+     */
+    private function loadCollectionFromStatement($assoc, $stmt, $coll)
+    {
+        if (isset($assoc['indexBy'])) {
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $entity = $this->_createEntity($result);
+                $coll->hydrateSet($this->_class->reflFields[$assoc['indexBy']]->getValue($entity), $entity);
+            }
+        } else {
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $coll->hydrateAdd($this->_createEntity($result));
+            }
+        }
+        $stmt->closeCursor();
     }
 
     /**
@@ -751,11 +812,7 @@ class BasicEntityPersister
     public function loadManyToManyCollection(array $assoc, $sourceEntity, PersistentCollection $coll)
     {
         $stmt = $this->getManyToManyStatement($assoc, $sourceEntity);
-
-        while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $coll->hydrateAdd($this->_createEntity($result));
-        }
-        $stmt->closeCursor();
+        return $this->loadCollectionFromStatement($assoc, $stmt, $coll);
     }
 
     private function getManyToManyStatement(array $assoc, $sourceEntity, $offset = null, $limit = null)
@@ -1217,13 +1274,7 @@ class BasicEntityPersister
     public function getOneToManyCollection(array $assoc, $sourceEntity, $offset = null, $limit = null)
     {
         $stmt = $this->getOneToManyStatement($assoc, $sourceEntity, $offset, $limit);
-
-        $entities = array();
-        while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $entities[] = $this->_createEntity($result);
-        }
-        $stmt->closeCursor();
-        return $entities;
+        return $this->loadArrayFromStatement($assoc, $stmt);
     }
 
     /**
@@ -1238,11 +1289,7 @@ class BasicEntityPersister
     public function loadOneToManyCollection(array $assoc, $sourceEntity, PersistentCollection $coll)
     {
         $stmt = $this->getOneToManyStatement($assoc, $sourceEntity);
-
-        while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $coll->hydrateAdd($this->_createEntity($result));
-        }
-        $stmt->closeCursor();
+        $this->loadCollectionFromStatement($assoc, $stmt, $coll);
     }
 
     /**
