@@ -135,6 +135,11 @@ class PostgreSqlPlatform extends AbstractPlatform
     {
         return true;
     }
+
+    public function supportsCommentOnStatement()
+    {
+        return true;
+    }
     
     /**
      * Whether the platform prefers sequences for ID generation.
@@ -217,7 +222,7 @@ class PostgreSqlPlatform extends AbstractPlatform
      * @param  string $table
      * @return string
      */
-    public function getListTableIndexesSQL($table)
+    public function getListTableIndexesSQL($table, $currentDatabase = null)
     {
         return "SELECT relname, pg_index.indisunique, pg_index.indisprimary,
                        pg_index.indkey, pg_index.indrelid
@@ -241,7 +246,7 @@ class PostgreSqlPlatform extends AbstractPlatform
         return $whereClause;
     }
 
-    public function getListTableColumnsSQL($table)
+    public function getListTableColumnsSQL($table, $database = null)
     {
         return "SELECT
                     a.attnum,
@@ -262,8 +267,11 @@ class PostgreSqlPlatform extends AbstractPlatform
                      FROM pg_attrdef
                      WHERE c.oid = pg_attrdef.adrelid
                         AND pg_attrdef.adnum=a.attnum
-                    ) AS default
-                    FROM pg_attribute a, pg_class c, pg_type t, pg_namespace n 
+                    ) AS default,
+                    (SELECT pg_description.description
+                        FROM pg_description WHERE pg_description.objoid = c.oid AND a.attnum = pg_description.objsubid
+                    ) AS comment
+                    FROM pg_attribute a, pg_class c, pg_type t, pg_namespace n
                     WHERE ".$this->getTableWhereClause($table, 'c', 'n') ."
                         AND a.attnum > 0
                         AND a.attrelid = c.oid
@@ -340,10 +348,14 @@ class PostgreSqlPlatform extends AbstractPlatform
     public function getAlterTableSQL(TableDiff $diff)
     {
         $sql = array();
+        $commentsSQL = array();
 
         foreach ($diff->addedColumns as $column) {
             $query = 'ADD ' . $this->getColumnDeclarationSQL($column->getQuotedName($this), $column->toArray());
             $sql[] = 'ALTER TABLE ' . $diff->name . ' ' . $query;
+            if ($comment = $this->getColumnComment($column)) {
+                $commentsSQL[] = $this->getCommentOnColumnSQL($diff->name, $column->getName(), $comment);
+            }
         }
 
         foreach ($diff->removedColumns as $column) {
@@ -385,6 +397,9 @@ class PostgreSqlPlatform extends AbstractPlatform
                     $sql[] = "ALTER TABLE " . $diff->name . " " . $query;
                 }
             }
+            if ($columnDiff->hasChanged('comment') && $comment = $this->getColumnComment($column)) {
+                $commentsSQL[] = $this->getCommentOnColumnSQL($diff->name, $column->getName(), $comment);
+            }
         }
 
         foreach ($diff->renamedColumns as $oldColumnName => $column) {
@@ -395,9 +410,7 @@ class PostgreSqlPlatform extends AbstractPlatform
             $sql[] = 'ALTER TABLE ' . $diff->name . ' RENAME TO ' . $diff->newName;
         }
 
-        $sql = array_merge($sql, $this->_getAlterTableIndexForeignKeySQL($diff));
-
-        return $sql;
+        return array_merge($sql, $this->_getAlterTableIndexForeignKeySQL($diff), $commentsSQL);
     }
     
     /**
@@ -591,21 +604,10 @@ class PostgreSqlPlatform extends AbstractPlatform
      * @params array $field
      * @override
      */
-    public function getVarcharTypeDeclarationSQL(array $field)
+    protected function getVarcharTypeDeclarationSQLSnippet($length, $fixed)
     {
-        if ( ! isset($field['length'])) {
-            if (array_key_exists('default', $field)) {
-                $field['length'] = $this->getVarcharDefaultLength();
-            } else {
-                $field['length'] = false;
-            }
-        }
-
-        $length = ($field['length'] <= $this->getVarcharMaxLength()) ? $field['length'] : false;
-        $fixed = (isset($field['fixed'])) ? $field['fixed'] : false;
-
         return $fixed ? ($length ? 'CHAR(' . $length . ')' : 'CHAR(255)')
-                : ($length ? 'VARCHAR(' . $length . ')' : 'TEXT');
+                : ($length ? 'VARCHAR(' . $length . ')' : 'VARCHAR(255)');
     }
     
     /** @override */
@@ -706,5 +708,15 @@ class PostgreSqlPlatform extends AbstractPlatform
             'numeric'       => 'decimal',
             'year'          => 'date',
         );
+    }
+
+    public function getVarcharMaxLength()
+    {
+        return 65535;
+    }
+    
+    protected function getReservedKeywordsClass()
+    {
+        return 'Doctrine\DBAL\Platforms\Keywords\PostgreSQLKeywords';
     }
 }

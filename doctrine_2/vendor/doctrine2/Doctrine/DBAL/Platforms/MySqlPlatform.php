@@ -109,9 +109,25 @@ class MySqlPlatform extends AbstractPlatform
         return 'SHOW INDEX FROM ' . $table;
     }
 
-    public function getListTableIndexesSQL($table)
+    /**
+     * Two approaches to listing the table indexes. The information_schema is 
+     * prefered, because it doesn't cause problems with SQL keywords such as "order" or "table".
+     * 
+     * @param string $table
+     * @param string $currentDatabase
+     * @return string
+     */
+    public function getListTableIndexesSQL($table, $currentDatabase = null)
     {
-        return 'SHOW INDEX FROM ' . $table;
+        if ($currentDatabase) {
+            return "SELECT TABLE_NAME AS `Table`, NON_UNIQUE AS Non_Unique, INDEX_NAME AS Key_name, ".
+                   "SEQ_IN_INDEX AS Seq_in_index, COLUMN_NAME AS Column_Name, COLLATION AS Collation, ".
+                   "CARDINALITY AS Cardinality, SUB_PART AS Sub_Part, PACKED AS Packed, " .
+                   "NULLABLE AS `Null`, INDEX_TYPE AS Index_Type, COMMENT AS Comment " . 
+                   "FROM information_schema.STATISTICS WHERE TABLE_NAME = '" . $table . "' AND TABLE_SCHEMA = '" . $currentDatabase . "'";
+        } else {
+            return 'SHOW INDEX FROM ' . $table;
+        }
     }
 
     public function getListViewsSQL($database)
@@ -152,19 +168,8 @@ class MySqlPlatform extends AbstractPlatform
      *
      * @params array $field
      */
-    public function getVarcharTypeDeclarationSQL(array $field)
+    protected function getVarcharTypeDeclarationSQLSnippet($length, $fixed)
     {
-        if ( ! isset($field['length'])) {
-            if (array_key_exists('default', $field)) {
-                $field['length'] = $this->getVarcharDefaultLength();
-            } else {
-                $field['length'] = false;
-            }
-        }
-
-        $length = ($field['length'] <= $this->getVarcharMaxLength()) ? $field['length'] : false;
-        $fixed = (isset($field['fixed'])) ? $field['fixed'] : false;
-
         return $fixed ? ($length ? 'CHAR(' . $length . ')' : 'CHAR(255)')
                 : ($length ? 'VARCHAR(' . $length . ')' : 'VARCHAR(255)');
     }
@@ -259,6 +264,11 @@ class MySqlPlatform extends AbstractPlatform
         return true;
     }
 
+    public function supportsInlineColumnComments()
+    {
+        return true;
+    }
+
     public function getShowDatabasesSQL()
     {
         return 'SHOW DATABASES';
@@ -266,12 +276,19 @@ class MySqlPlatform extends AbstractPlatform
     
     public function getListTablesSQL()
     {
-        return 'SHOW FULL TABLES WHERE Table_type = "BASE TABLE"';
+        return "SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'";
     }
 
-    public function getListTableColumnsSQL($table)
+    public function getListTableColumnsSQL($table, $database = null)
     {
-        return 'DESCRIBE ' . $table;
+        if ($database) {
+            return "SELECT COLUMN_NAME AS Field, COLUMN_TYPE AS Type, IS_NULLABLE AS `Null`, ".
+                   "COLUMN_KEY AS `Key`, COLUMN_DEFAULT AS `Default`, EXTRA AS Extra, COLUMN_COMMENT AS Comment, " .
+                   "CHARACTER_SET_NAME AS CharacterSet, COLLATION_NAME AS CollactionName ".
+                   "FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = '" . $database . "' AND TABLE_NAME = '" . $table . "'";
+        } else {
+            return 'DESCRIBE ' . $table;
+        }
     }
 
     /**
@@ -410,7 +427,9 @@ class MySqlPlatform extends AbstractPlatform
         }
 
         foreach ($diff->addedColumns AS $fieldName => $column) {
-            $queryParts[] = 'ADD ' . $this->getColumnDeclarationSQL($column->getQuotedName($this), $column->toArray());
+            $columnArray = $column->toArray();
+            $columnArray['comment'] = $this->getColumnComment($column);
+            $queryParts[] = 'ADD ' . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray);
         }
 
         foreach ($diff->removedColumns AS $column) {
@@ -420,13 +439,17 @@ class MySqlPlatform extends AbstractPlatform
         foreach ($diff->changedColumns AS $columnDiff) {
             /* @var $columnDiff Doctrine\DBAL\Schema\ColumnDiff */
             $column = $columnDiff->column;
+            $columnArray = $column->toArray();
+            $columnArray['comment'] = $this->getColumnComment($column);
             $queryParts[] =  'CHANGE ' . ($columnDiff->oldColumnName) . ' '
-                    . $this->getColumnDeclarationSQL($column->getQuotedName($this), $column->toArray());
+                    . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray);
         }
 
         foreach ($diff->renamedColumns AS $oldColumnName => $column) {
+            $columnArray = $column->toArray();
+            $columnArray['comment'] = $this->getColumnComment($column);
             $queryParts[] =  'CHANGE ' . $oldColumnName . ' '
-                    . $this->getColumnDeclarationSQL($column->getQuotedName($this), $column->toArray());
+                    . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray);
         }
 
         $sql = array();
@@ -598,5 +621,15 @@ class MySqlPlatform extends AbstractPlatform
             'numeric'       => 'decimal',
             'year'          => 'date',
         );
+    }
+
+    public function getVarcharMaxLength()
+    {
+        return 65535;
+    }
+    
+    protected function getReservedKeywordsClass()
+    {
+        return 'Doctrine\DBAL\Platforms\Keywords\MySQLKeywords';
     }
 }
