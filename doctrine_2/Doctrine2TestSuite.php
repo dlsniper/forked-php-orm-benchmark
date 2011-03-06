@@ -38,11 +38,11 @@ class Doctrine2TestSuite extends AbstractTestSuite
         
         $schemaTool = new Doctrine\ORM\Tools\SchemaTool($this->em);
 
-        try {
+/*        try {
             $schemaTool->dropSchema(self::$classes);    
         } catch(Exception $e) {
             echo $e->getMessage();
-        }
+        }*/
         $schemaTool->createSchema(self::$classes);
         
         require_once __DIR__ . '/proxies/AuthorProxy.php';
