@@ -22,11 +22,13 @@
  * @method     BookQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     BookQuery innerJoin($relation) Adds a INNER JOIN clause to the query
  *
- * @method     BookQuery leftJoinAuthor($relationAlias = '') Adds a LEFT JOIN clause to the query using the Author relation
- * @method     BookQuery rightJoinAuthor($relationAlias = '') Adds a RIGHT JOIN clause to the query using the Author relation
- * @method     BookQuery innerJoinAuthor($relationAlias = '') Adds a INNER JOIN clause to the query using the Author relation
+ * @method     BookQuery leftJoinAuthor($relationAlias = null) Adds a LEFT JOIN clause to the query using the Author relation
+ * @method     BookQuery rightJoinAuthor($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Author relation
+ * @method     BookQuery innerJoinAuthor($relationAlias = null) Adds a INNER JOIN clause to the query using the Author relation
  *
  * @method     Book findOne(PropelPDO $con = null) Return the first Book matching the query
+ * @method     Book findOneOrCreate(PropelPDO $con = null) Return the first Book matching the query, or a new Book object populated from the query conditions when no match is found
+ *
  * @method     Book findOneById(int $id) Return the first Book filtered by the id column
  * @method     Book findOneByTitle(string $title) Return the first Book filtered by the title column
  * @method     Book findOneByISBN(string $isbn) Return the first Book filtered by the isbn column
@@ -179,13 +181,11 @@ abstract class BaseBookQuery extends ModelCriteria
 	 */
 	public function filterByTitle($title = null, $comparison = null)
 	{
-		if (is_array($title)) {
-			if (null === $comparison) {
+		if (null === $comparison) {
+			if (is_array($title)) {
 				$comparison = Criteria::IN;
-			}
-		} elseif (preg_match('/[\%\*]/', $title)) {
-			$title = str_replace('*', '%', $title);
-			if (null === $comparison) {
+			} elseif (preg_match('/[\%\*]/', $title)) {
+				$title = str_replace('*', '%', $title);
 				$comparison = Criteria::LIKE;
 			}
 		}
@@ -203,13 +203,11 @@ abstract class BaseBookQuery extends ModelCriteria
 	 */
 	public function filterByISBN($iSBN = null, $comparison = null)
 	{
-		if (is_array($iSBN)) {
-			if (null === $comparison) {
+		if (null === $comparison) {
+			if (is_array($iSBN)) {
 				$comparison = Criteria::IN;
-			}
-		} elseif (preg_match('/[\%\*]/', $iSBN)) {
-			$iSBN = str_replace('*', '%', $iSBN);
-			if (null === $comparison) {
+			} elseif (preg_match('/[\%\*]/', $iSBN)) {
+				$iSBN = str_replace('*', '%', $iSBN);
 				$comparison = Criteria::LIKE;
 			}
 		}
@@ -300,7 +298,7 @@ abstract class BaseBookQuery extends ModelCriteria
 	 *
 	 * @return    BookQuery The current query, for fluid interface
 	 */
-	public function joinAuthor($relationAlias = '', $joinType = Criteria::LEFT_JOIN)
+	public function joinAuthor($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
 	{
 		$tableMap = $this->getTableMap();
 		$relationMap = $tableMap->getRelation('Author');
@@ -335,7 +333,7 @@ abstract class BaseBookQuery extends ModelCriteria
 	 *
 	 * @return    AuthorQuery A secondary query class using the current class as primary query
 	 */
-	public function useAuthorQuery($relationAlias = '', $joinType = Criteria::LEFT_JOIN)
+	public function useAuthorQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
 	{
 		return $this
 			->joinAuthor($relationAlias, $joinType)
@@ -454,7 +452,7 @@ abstract class BaseBookQuery extends ModelCriteria
 						if ($this->getHaving()) {
 							throw new PropelException('Propel cannot create a COUNT query when using HAVING and  duplicate column names in the SELECT part');
 						}
-						BasePeer::turnSelectColumnsToAliases($this);
+						$db->turnSelectColumnsToAliases($this);
 					}
 					$selectSql = BasePeer::createSelectSql($this, $params);
 					$sql = 'SELECT COUNT(*) FROM (' . $selectSql . ') propelmatch4cnt';
