@@ -867,7 +867,7 @@ abstract class BaseBook extends BaseObject  implements Persistent {
 	public function getAuthor(PropelPDO $con = null)
 	{
 		if ($this->aAuthor === null && ($this->author_id !== null)) {
-			$this->aAuthor = AuthorPeer::retrieveByPk($this->author_id);
+			$this->aAuthor = AuthorPeer::retrieveByPk($this->author_id, $con);
 			/* The following can be used additionally to
 			   guarantee the related object contains a reference
 			   to this object.  This level of coupling may, however, be
