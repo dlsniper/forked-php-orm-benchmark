@@ -20,11 +20,13 @@
  * @method     AuthorQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     AuthorQuery innerJoin($relation) Adds a INNER JOIN clause to the query
  *
- * @method     AuthorQuery leftJoinBook($relationAlias = '') Adds a LEFT JOIN clause to the query using the Book relation
- * @method     AuthorQuery rightJoinBook($relationAlias = '') Adds a RIGHT JOIN clause to the query using the Book relation
- * @method     AuthorQuery innerJoinBook($relationAlias = '') Adds a INNER JOIN clause to the query using the Book relation
+ * @method     AuthorQuery leftJoinBook($relationAlias = null) Adds a LEFT JOIN clause to the query using the Book relation
+ * @method     AuthorQuery rightJoinBook($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Book relation
+ * @method     AuthorQuery innerJoinBook($relationAlias = null) Adds a INNER JOIN clause to the query using the Book relation
  *
  * @method     Author findOne(PropelPDO $con = null) Return the first Author matching the query
+ * @method     Author findOneOrCreate(PropelPDO $con = null) Return the first Author matching the query, or a new Author object populated from the query conditions when no match is found
+ *
  * @method     Author findOneById(int $id) Return the first Author filtered by the id column
  * @method     Author findOneByFirstName(string $first_name) Return the first Author filtered by the first_name column
  * @method     Author findOneByLastName(string $last_name) Return the first Author filtered by the last_name column
@@ -171,13 +173,11 @@ abstract class BaseAuthorQuery extends ModelCriteria
 	 */
 	public function filterByFirstName($firstName = null, $comparison = null)
 	{
-		if (is_array($firstName)) {
-			if (null === $comparison) {
+		if (null === $comparison) {
+			if (is_array($firstName)) {
 				$comparison = Criteria::IN;
-			}
-		} elseif (preg_match('/[\%\*]/', $firstName)) {
-			$firstName = str_replace('*', '%', $firstName);
-			if (null === $comparison) {
+			} elseif (preg_match('/[\%\*]/', $firstName)) {
+				$firstName = str_replace('*', '%', $firstName);
 				$comparison = Criteria::LIKE;
 			}
 		}
@@ -195,13 +195,11 @@ abstract class BaseAuthorQuery extends ModelCriteria
 	 */
 	public function filterByLastName($lastName = null, $comparison = null)
 	{
-		if (is_array($lastName)) {
-			if (null === $comparison) {
+		if (null === $comparison) {
+			if (is_array($lastName)) {
 				$comparison = Criteria::IN;
-			}
-		} elseif (preg_match('/[\%\*]/', $lastName)) {
-			$lastName = str_replace('*', '%', $lastName);
-			if (null === $comparison) {
+			} elseif (preg_match('/[\%\*]/', $lastName)) {
+				$lastName = str_replace('*', '%', $lastName);
 				$comparison = Criteria::LIKE;
 			}
 		}
@@ -219,13 +217,11 @@ abstract class BaseAuthorQuery extends ModelCriteria
 	 */
 	public function filterByEmail($email = null, $comparison = null)
 	{
-		if (is_array($email)) {
-			if (null === $comparison) {
+		if (null === $comparison) {
+			if (is_array($email)) {
 				$comparison = Criteria::IN;
-			}
-		} elseif (preg_match('/[\%\*]/', $email)) {
-			$email = str_replace('*', '%', $email);
-			if (null === $comparison) {
+			} elseif (preg_match('/[\%\*]/', $email)) {
+				$email = str_replace('*', '%', $email);
 				$comparison = Criteria::LIKE;
 			}
 		}
@@ -254,7 +250,7 @@ abstract class BaseAuthorQuery extends ModelCriteria
 	 *
 	 * @return    AuthorQuery The current query, for fluid interface
 	 */
-	public function joinBook($relationAlias = '', $joinType = Criteria::LEFT_JOIN)
+	public function joinBook($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
 	{
 		$tableMap = $this->getTableMap();
 		$relationMap = $tableMap->getRelation('Book');
@@ -289,7 +285,7 @@ abstract class BaseAuthorQuery extends ModelCriteria
 	 *
 	 * @return    BookQuery A secondary query class using the current class as primary query
 	 */
-	public function useBookQuery($relationAlias = '', $joinType = Criteria::LEFT_JOIN)
+	public function useBookQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
 	{
 		return $this
 			->joinBook($relationAlias, $joinType)
