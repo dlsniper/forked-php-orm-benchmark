@@ -12,40 +12,43 @@ class Doctrine2TestSuite extends AbstractTestSuite
 
     public function initialize()
     {
-        require_once __DIR__ . "/vendor/doctrine2/Doctrine/Common/ClassLoader.php";
+      $lib = __DIR__ . '/vendor/doctrine2/lib/';
+      require $lib . 'vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
 
-        $loader = new Doctrine\Common\ClassLoader('Doctrine', __DIR__."/vendor/doctrine2");
-        $loader->register();
+      $classLoader = new \Doctrine\Common\ClassLoader('Doctrine\Common', $lib . 'vendor/doctrine-common/lib');
+      $classLoader->register();
 
-        $annotationReader = new Doctrine\Common\Annotations\AnnotationReader();
-        $annotationReader->setDefaultAnnotationNamespace('Doctrine\ORM\Mapping\\');
-        $annotation = new Doctrine\ORM\Mapping\Driver\AnnotationDriver($annotationReader, array(__DIR__."/models"));
+      $classLoader = new \Doctrine\Common\ClassLoader('Doctrine\DBAL', $lib . 'vendor/doctrine-dbal/lib');
+      $classLoader->register();
 
-        $config = new Doctrine\ORM\Configuration();
-        $config->setProxyDir(__DIR__ . "/proxies");
-        $config->setProxyNamespace('Proxies');
-        $config->setMetadataDriverImpl($annotation);
-        //$config->setSqlLogger(new \Doctrine\DBAL\Logging\EchoSqlLogger);
-        $config->setAutoGenerateProxyClasses(false); // no code generation in production
+      $classLoader = new \Doctrine\Common\ClassLoader('Doctrine\ORM', $lib);
+      $classLoader->register();
+      
+      $classloader = new \Doctrine\Common\ClassLoader('Symfony', $lib . 'vendor/');
+      $classloader->register();
+      
+      $cache = new \Doctrine\Common\Cache\ArrayCache;
+      $config = new Doctrine\ORM\Configuration;
+      $config->setMetadataCacheImpl($cache);
+      $driverImpl = $config->newDefaultAnnotationDriver(__DIR__ . '/models');
+      $config->setMetadataDriverImpl($driverImpl);
+      $config->setQueryCacheImpl($cache);
+      $config->setProxyDir(__DIR__ . '/proxies');
+      $config->setProxyNamespace('Proxies');
+      $config->setAutoGenerateProxyClasses(false); // no code generation in production
+      
+      $dbParams = array('driver' => 'pdo_sqlite', 'memory' => true);
 
-        $dbParams = array('driver' => 'pdo_sqlite', 'memory' => true);
-
-        $this->em = Doctrine\ORM\EntityManager::create($dbParams, $config);
+      $this->em = Doctrine\ORM\EntityManager::create($dbParams, $config);
         
-        if (!self::$classes) {
-            self::$classes = $this->em->getMetadataFactory()->getAllMetadata();
-        }
+      if (!self::$classes) {
+        self::$classes = $this->em->getMetadataFactory()->getAllMetadata();
+      }
         
-        $schemaTool = new Doctrine\ORM\Tools\SchemaTool($this->em);
-
-/*        try {
-            $schemaTool->dropSchema(self::$classes);    
-        } catch(Exception $e) {
-            echo $e->getMessage();
-        }*/
-        $schemaTool->createSchema(self::$classes);
-        
-        require_once __DIR__ . '/proxies/AuthorProxy.php';
+      $schemaTool = new Doctrine\ORM\Tools\SchemaTool($this->em);
+      $schemaTool->createSchema(self::$classes);
+      
+      require_once __DIR__ . '/proxies/AuthorProxy.php';
     }
 
     public function beginTransaction() {

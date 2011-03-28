@@ -5,6 +5,7 @@ require dirname(__FILE__) . '/Doctrine2TestSuite.php';
 $test = new Doctrine2TestSuite();
 $test->initialize();
 $test->run();
+/*
 
 require dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
 
@@ -14,7 +15,6 @@ $test->run();
 
 // Optional tests of the alternative abstraction levels of results doctrine provides.
 // These are often used in production when data is only needed for presentation (read-only) purposes.
-/*
 require dirname(__FILE__) . '/Doctrine2ArrayHydrateTestSuite.php';
 
 $test = new Doctrine2ArrayHydrateTestSuite();
