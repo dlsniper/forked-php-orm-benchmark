@@ -99,7 +99,7 @@ class Parser
 
     /**
      * Gets the lexer used by this parser.
-     * 
+     *
      * @return Lexer The lexer.
      */
     public function getLexer()
@@ -303,7 +303,14 @@ class Parser
         $nameParts = array();
 
         $this->match(Lexer::T_AT);
-        $this->match(Lexer::T_IDENTIFIER);
+        if ($this->isNestedAnnotation === false) {
+            if ($this->lexer->lookahead['type'] !== Lexer::T_IDENTIFIER) {
+                return false;
+            }
+            $this->lexer->moveNext();
+        } else {
+            $this->match(Lexer::T_IDENTIFIER);
+        }
         $nameParts[] = $this->lexer->token['value'];
 
         while ($this->lexer->isNextToken(Lexer::T_NAMESPACE_SEPARATOR)) {
@@ -313,6 +320,7 @@ class Parser
         }
 
         // Effectively pick the name of the class (append default NS if none, grab from NS alias, etc)
+        $namespacedAnnotation = false;
         if (strpos($nameParts[0], ':')) {
             list ($alias, $nameParts[0]) = explode(':', $nameParts[0]);
 
@@ -323,6 +331,7 @@ class Parser
             }
 
             $name = $this->namespaceAliases[$alias] . implode('\\', $nameParts);
+            $namespacedAnnotation = true;
         } else if (count($nameParts) == 1) {
             $name = $this->defaultAnnotationNamespace . $nameParts[0];
         } else {
@@ -331,6 +340,10 @@ class Parser
 
         // Does the annotation class exist?
         if ( ! class_exists($name, $this->autoloadAnnotations)) {
+            if ($namespacedAnnotation) {
+                throw AnnotationException::semanticalError('Annotation class "' . $name . '" does not exist.');
+            }
+
             $this->lexer->skipUntil(Lexer::T_AT);
             return false;
         }
@@ -375,21 +388,27 @@ class Parser
 
         while ($this->lexer->isNextToken(Lexer::T_COMMA)) {
             $this->match(Lexer::T_COMMA);
+            $token = $this->lexer->lookahead;
             $value = $this->Value();
 
-            if ( ! is_array($value)) {
-                $this->syntaxError('Value', $value);
+            if ( ! is_object($value) && ! is_array($value)) {
+                $this->syntaxError('Value', $token);
             }
 
             $values[] = $value;
         }
 
         foreach ($values as $k => $value) {
-            if (is_array($value) && is_string(key($value))) {
-                $key = key($value);
-                $values[$key] = $value[$key];
-            } else {
+            if (is_object($value) && $value instanceof \stdClass) {
+                $values[$value->name] = $value->value;
+            } else if ( ! isset($values['value'])){
                 $values['value'] = $value;
+            } else {
+                if ( ! is_array($values['value'])) {
+                    $values['value'] = array($values['value']);
+                }
+
+                $values['value'][] = $value;
             }
 
             unset($values[$k]);
@@ -436,11 +455,11 @@ class Parser
 
             case Lexer::T_INTEGER:
                 $this->match(Lexer::T_INTEGER);
-                return $this->lexer->token['value'];
+                return (int)$this->lexer->token['value'];
 
             case Lexer::T_FLOAT:
                 $this->match(Lexer::T_FLOAT);
-                return $this->lexer->token['value'];
+                return (float)$this->lexer->token['value'];
 
             case Lexer::T_TRUE:
                 $this->match(Lexer::T_TRUE);
@@ -467,7 +486,11 @@ class Parser
         $fieldName = $this->lexer->token['value'];
         $this->match(Lexer::T_EQUALS);
 
-        return array($fieldName => $this->PlainValue());
+        $item = new \stdClass();
+        $item->name  = $fieldName;
+        $item->value = $this->PlainValue();
+
+        return $item;
     }
 
     /**
