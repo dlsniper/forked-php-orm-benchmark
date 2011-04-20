@@ -18,7 +18,7 @@ require_once 'ConcreteInheritanceParentBehavior.php';
  * to the parent model.
  *
  * @author     François Zaninotto
- * @version    $Revision: 2171 $
+ * @version    $Revision: 2240 $
  * @package    propel.generator.behavior.concrete_inheritance
  */
 class ConcreteInheritanceBehavior extends Behavior
@@ -137,6 +137,9 @@ class ConcreteInheritanceBehavior extends Behavior
 				break;
 			case 'QueryBuilder':
 				return $builder->getNewStubQueryBuilder($this->getParentTable())->getClassname();
+				break;
+			case 'PHP5PeerBuilder':
+				return $builder->getNewStubPeerBuilder($this->getParentTable())->getClassname();
 				break;
 			default:
 				return null;

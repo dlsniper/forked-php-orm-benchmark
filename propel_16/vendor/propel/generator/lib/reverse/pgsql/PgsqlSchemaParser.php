@@ -14,7 +14,7 @@ require_once dirname(__FILE__) . '/../BaseSchemaParser.php';
  * Postgresql database schema parser.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2227 $
+ * @version    $Revision: 2238 $
  * @package    propel.generator.reverse.pgsql
  */
 class PgsqlSchemaParser extends BaseSchemaParser
@@ -45,7 +45,7 @@ class PgsqlSchemaParser extends BaseSchemaParser
 				'float' => PropelTypes::FLOAT,
 				'float4' => PropelTypes::FLOAT,
 				'decimal' => PropelTypes::DECIMAL,
-				'numeric' => PropelTypes::NUMERIC,
+				'numeric' => PropelTypes::DECIMAL,
 				'double' => PropelTypes::DOUBLE,
 				'float8' => PropelTypes::DOUBLE,
 				'char' => PropelTypes::CHAR,

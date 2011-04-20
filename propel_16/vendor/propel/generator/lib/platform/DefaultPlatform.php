@@ -18,7 +18,7 @@ require_once dirname(__FILE__) . '/../model/PropelTypes.php';
  * Default implementation for the Platform interface.
  *
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @version    $Revision: 2194 $
+ * @version    $Revision: 2243 $
  * @package    propel.generator.platform
  */
 class DefaultPlatform implements PropelPlatformInterface
@@ -1106,7 +1106,7 @@ ALTER TABLE %s ADD
 	 */
 	public function getTimestampFormatter()
 	{
-		return DateTime::ISO8601;
+		return 'Y-m-d H:i:s';
 	}
 
 	/**

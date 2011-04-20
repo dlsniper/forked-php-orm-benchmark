@@ -27,7 +27,7 @@
  * @author     Jon S. Stevens <jon@latchkey.com> (Torque)
  * @author     Brett McLaughlin <bmclaugh@algx.net> (Torque)
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
- * @version    $Revision: 2228 $
+ * @version    $Revision: 2243 $
  * @package    propel.runtime.adapter
  */
 abstract class DBAdapter
@@ -275,7 +275,7 @@ abstract class DBAdapter
 	 */
 	public function getTimestampFormatter()
 	{
-		return "Y-m-d H:i:s";
+		return 'Y-m-d H:i:s';
 	}
 
 	/**

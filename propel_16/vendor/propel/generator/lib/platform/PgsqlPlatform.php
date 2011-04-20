@@ -16,7 +16,7 @@ require_once dirname(__FILE__) . '/DefaultPlatform.php';
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
  * @author     Niklas Närhinen <niklas@narhinen.net>
- * @version    $Revision: 2208 $
+ * @version    $Revision: 2238 $
  * @package    propel.generator.platform
  */
 class PgsqlPlatform extends DefaultPlatform
@@ -34,6 +34,7 @@ class PgsqlPlatform extends DefaultPlatform
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::BIGINT, "INT8"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::REAL, "FLOAT"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::DOUBLE, "DOUBLE PRECISION"));
+		$this->setSchemaDomainMapping(new Domain(PropelTypes::FLOAT, "DOUBLE PRECISION"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, "TEXT"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, "BYTEA"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::VARBINARY, "BYTEA"));

@@ -23,7 +23,7 @@ require_once dirname(__FILE__) . '/Behavior.php';
  * @author     Martin Poeschl<mpoeschl@marmot.at> (Torque)
  * @author     Daniel Rall<dlr@collab.net> (Torque)
  * @author     Byron Foster <byron_foster@yahoo.com> (Torque)
- * @version    $Revision: 2173 $
+ * @version    $Revision: 2270 $
  * @package    propel.generator.model
  */
 class Database extends ScopedElement
@@ -378,6 +378,15 @@ class Database extends ScopedElement
 			$this->tablesByName[$tbl->getName()] = $tbl;
 			$this->tablesByLowercaseName[strtolower($tbl->getName())] = $tbl;
 			$this->tablesByPhpName[ $tbl->getPhpName() ] = $tbl;
+			if (strpos($tbl->getNamespace(), '\\') === 0) {
+				$tbl->setNamespace(substr($tbl->getNamespace(), 1));
+			} elseif ($namespace = $this->getNamespace()) {
+				if ($tbl->getNamespace() === null) {
+					$tbl->setNamespace($namespace);
+				} else {
+					$tbl->setNamespace($namespace . '\\' . $tbl->getNamespace());
+				}
+			}
 			if ($tbl->getPackage() === null) {
 				$tbl->setPackage($this->getPackage());
 			}
