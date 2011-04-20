@@ -272,7 +272,7 @@ abstract class BaseBook extends BaseObject  implements Persistent
 				$this->ensureConsistency();
 			}
 
-			return $startcol + 5; // 5 = BookPeer::NUM_COLUMNS - BookPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 5; // 5 = BookPeer::NUM_HYDRATE_COLUMNS.
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating Book object", $e);
@@ -806,10 +806,10 @@ abstract class BaseBook extends BaseObject  implements Persistent
 	 */
 	public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
 	{
-		$copyObj->setTitle($this->title);
-		$copyObj->setISBN($this->isbn);
-		$copyObj->setPrice($this->price);
-		$copyObj->setAuthorId($this->author_id);
+		$copyObj->setTitle($this->getTitle());
+		$copyObj->setISBN($this->getISBN());
+		$copyObj->setPrice($this->getPrice());
+		$copyObj->setAuthorId($this->getAuthorId());
 		if ($makeNew) {
 			$copyObj->setNew(true);
 			$copyObj->setId(NULL); // this is a auto-increment column, so set to default value

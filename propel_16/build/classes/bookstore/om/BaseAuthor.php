@@ -231,7 +231,7 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 				$this->ensureConsistency();
 			}
 
-			return $startcol + 4; // 4 = AuthorPeer::NUM_COLUMNS - AuthorPeer::NUM_LAZY_LOAD_COLUMNS).
+			return $startcol + 4; // 4 = AuthorPeer::NUM_HYDRATE_COLUMNS.
 
 		} catch (Exception $e) {
 			throw new PropelException("Error populating Author object", $e);
@@ -746,9 +746,9 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 	 */
 	public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
 	{
-		$copyObj->setFirstName($this->first_name);
-		$copyObj->setLastName($this->last_name);
-		$copyObj->setEmail($this->email);
+		$copyObj->setFirstName($this->getFirstName());
+		$copyObj->setLastName($this->getLastName());
+		$copyObj->setEmail($this->getEmail());
 
 		if ($deepCopy) {
 			// important: temporarily setNew(false) because this affects the behavior of

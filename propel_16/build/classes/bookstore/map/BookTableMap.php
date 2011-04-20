@@ -39,6 +39,7 @@ class BookTableMap extends TableMap {
 		// columns
 		$this->addPrimaryKey('ID', 'Id', 'INTEGER', true, null, null);
 		$this->addColumn('TITLE', 'Title', 'VARCHAR', true, 255, null);
+		$this->getColumn('TITLE', false)->setPrimaryString(true);
 		$this->addColumn('ISBN', 'ISBN', 'VARCHAR', true, 24, null);
 		$this->addColumn('PRICE', 'Price', 'FLOAT', false, null, null);
 		$this->addForeignKey('AUTHOR_ID', 'AuthorId', 'INTEGER', 'author', 'ID', false, null, null);

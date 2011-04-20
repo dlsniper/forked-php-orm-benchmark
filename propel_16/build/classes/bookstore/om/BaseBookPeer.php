@@ -31,6 +31,9 @@ abstract class BaseBookPeer {
 	/** The number of lazy-loaded columns. */
 	const NUM_LAZY_LOAD_COLUMNS = 0;
 
+	/** The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS) */
+	const NUM_HYDRATE_COLUMNS = 5;
+
 	/** the column name for the ID field */
 	const ID = 'book.ID';
 
@@ -443,7 +446,7 @@ abstract class BaseBookPeer {
 			// We no longer rehydrate the object, since this can cause data loss.
 			// See http://www.propelorm.org/ticket/509
 			// $obj->hydrate($row, $startcol, true); // rehydrate
-			$col = $startcol + BookPeer::NUM_COLUMNS;
+			$col = $startcol + BookPeer::NUM_HYDRATE_COLUMNS;
 		} else {
 			$cls = BookPeer::OM_CLASS;
 			$obj = new $cls();
@@ -522,7 +525,7 @@ abstract class BaseBookPeer {
 		}
 
 		BookPeer::addSelectColumns($criteria);
-		$startcol = (BookPeer::NUM_COLUMNS - BookPeer::NUM_LAZY_LOAD_COLUMNS);
+		$startcol = BookPeer::NUM_HYDRATE_COLUMNS;
 		AuthorPeer::addSelectColumns($criteria);
 
 		$criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
@@ -638,10 +641,10 @@ abstract class BaseBookPeer {
 		}
 
 		BookPeer::addSelectColumns($criteria);
-		$startcol2 = (BookPeer::NUM_COLUMNS - BookPeer::NUM_LAZY_LOAD_COLUMNS);
+		$startcol2 = BookPeer::NUM_HYDRATE_COLUMNS;
 
 		AuthorPeer::addSelectColumns($criteria);
-		$startcol3 = $startcol2 + (AuthorPeer::NUM_COLUMNS - AuthorPeer::NUM_LAZY_LOAD_COLUMNS);
+		$startcol3 = $startcol2 + AuthorPeer::NUM_HYDRATE_COLUMNS;
 
 		$criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
 
