@@ -4208,6 +4208,17 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			$script .= "
 		\$this->$varName = null;";
 		}
+		foreach ($this->getTable()->getCrossFks() as $fkList) {
+			list($refFK, $crossFK) = $fkList;
+			$varName = $this->getCrossFKVarName($crossFK);
+			$script .= "
+			if (\$this->$varName) {
+				foreach (\$this->$varName as \$o) {
+					\$o->clearAllReferences(\$deep);
+				}
+			}";
+			$vars[] = $varName;
+		}
 
 		$script .= "
 	}
