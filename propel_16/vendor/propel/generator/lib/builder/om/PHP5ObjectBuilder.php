@@ -121,9 +121,10 @@ class PHP5ObjectBuilder extends ObjectBuilder
 	 */
 	protected function getDefaultValueString(Column $col)
 	{
+		$defaultValue = var_export(null, true);
 		$val = $col->getPhpDefaultValue();
 		if ($val === null) {
-			return var_export(null, true);
+			return $defaultValue;
 		}
 		if ($col->isTemporalType()) {
 			$fmt = $this->getTemporalFormatter($col);
@@ -4617,6 +4618,17 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 				}
 			}";
 			}
+			$vars[] = $varName;
+		}
+		foreach ($this->getTable()->getCrossFks() as $fkList) {
+			list($refFK, $crossFK) = $fkList;
+			$varName = $this->getCrossFKVarName($crossFK);
+			$script .= "
+			if (\$this->$varName) {
+				foreach (\$this->$varName as \$o) {
+					\$o->clearAllReferences(\$deep);
+				}
+			}";
 			$vars[] = $varName;
 		}
 
