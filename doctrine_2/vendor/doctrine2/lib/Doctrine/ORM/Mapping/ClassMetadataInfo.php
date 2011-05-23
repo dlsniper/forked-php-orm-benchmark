@@ -1628,6 +1628,7 @@ class ClassMetadataInfo implements ClassMetadata
             if (strpos($className, '\\') === false && strlen($this->namespace)) {
                 $className = $this->namespace . '\\' . $className;
             }
+            $className = ltrim($className, '\\');
             $this->discriminatorMap[$value] = $className;
             if ($this->name == $className) {
                 $this->discriminatorValue = $value;
@@ -1838,5 +1839,53 @@ class ClassMetadataInfo implements ClassMetadata
     public function markReadOnly()
     {
         $this->isReadOnly = true;
+    }
+    
+    /**
+     * A numerically indexed list of field names of this persistent class.
+     * 
+     * This array includes identifier fields if present on this class.
+     * 
+     * @return array
+     */
+    public function getFieldNames()
+    {
+        return array_keys($this->fieldMappings);
+    }
+    
+    /**
+     * A numerically indexed list of association names of this persistent class.
+     * 
+     * This array includes identifier associations if present on this class.
+     * 
+     * @return array
+     */
+    public function getAssociationNames()
+    {
+        return array_keys($this->associationMappings);
+    }
+    
+    /**
+     * Returns the target class name of the given association.
+     * 
+     * @param string $assocName
+     * @return string
+     */
+    public function getAssociationTargetClass($assocName)
+    {
+        if (!isset($this->associationMappings[$assocName])) {
+            throw new \InvalidArgumentException("Association name expected, '" . $assocName ."' is not an association.");
+        }
+        return $this->associationMappings[$assocName]['targetEntity'];
+    }
+    
+    /**
+     * Get fully-qualified class name of this persistent class.
+     * 
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 }

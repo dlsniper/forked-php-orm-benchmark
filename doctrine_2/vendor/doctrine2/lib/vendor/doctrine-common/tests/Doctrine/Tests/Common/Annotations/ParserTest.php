@@ -4,8 +4,6 @@ namespace Doctrine\Tests\Common\Annotations;
 
 use Doctrine\Common\Annotations\Parser;
 
-require_once __DIR__ . '/../../TestInit.php';
-
 class ParserTest extends \Doctrine\Tests\DoctrineTestCase
 {
     public function testBasicAnnotations()
@@ -29,7 +27,7 @@ class ParserTest extends \Doctrine\Tests\DoctrineTestCase
         $this->assertTrue(isset($annot->foo['key1']));
 
         // Numerical arrays
-        $result = $parser->parse('@Name({2="foo", 4="bar"})');
+        $result = $parser->parse('@Name({2="foo", 4=\'bar\'})');
         $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
         $this->assertTrue(is_array($annot->value));
         $this->assertEquals('foo', $annot->value[2]);
@@ -217,15 +215,15 @@ DOCBLOCK;
         $this->assertEquals(0, count($result));
     }
 
-    public function testAnnotationDontAcceptSingleQuotes()
+    public function testAnnotationAcceptsSingleQuotes()
     {
-        $this->setExpectedException(
-            'Doctrine\Common\Annotations\AnnotationException',
-            "[Syntax Error] Expected PlainValue, got ''' at position 10."
-        );
-
         $parser = $this->createTestParser();
-        $parser->parse("@Name(foo='bar')");
+        $result = $parser->parse("@Name(foo='bar')");
+
+        $this->assertEquals(1, count($result));
+        $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
+        $this->assertTrue($annot instanceof Name);
+        $this->assertEquals('bar', $annot->foo);
     }
 
     /**
@@ -286,12 +284,12 @@ DOCBLOCK;
     {
         $this->setExpectedException(
             'Doctrine\Common\Annotations\AnnotationException',
-            "[Syntax Error] Expected PlainValue, got ''' at position 10 ".
+            "[Syntax Error] Expected PlainValue, got 'x' at position 10 ".
             "in class \Doctrine\Tests\Common\Annotations\Name"
         );
 
         $parser = $this->createTestParser();
-        $parser->parse("@Name(foo='bar')", "class \Doctrine\Tests\Common\Annotations\Name");
+        $parser->parse("@Name(foo=x)", "class \Doctrine\Tests\Common\Annotations\Name");
     }
 
     /**
@@ -376,18 +374,17 @@ DOCBLOCK;
     }
 
     /**
-     * @group DCOM-44
+     * @group DCOM-46
      */
-    public function testNonexistantAliasedAnnotation()
+    public function testSupportsMultipleDeclaration()
     {
-        $parser = new Parser;
-        $parser->setAnnotationNamespaceAlias('Doctrine\Tests\Common\Annotations\\', 'common');
+        $parser = $this->createTestParser();
 
-        $this->setExpectedException(
-            "Doctrine\Common\Annotations\AnnotationException",
-            "[Semantical Error] Annotation class \"Doctrine\Tests\Common\Annotations\Foo\" does not exist."
-        );
-        $result = $parser->parse('@common:Foo');
+        $result = $parser->parse("@Name(foo=1234.345) @Name(foo=10)");
+        $annots = $result['Doctrine\Tests\Common\Annotations\Name'];
+        
+        $this->assertInternalType('array', $annots);
+        $this->assertEquals(2, count($annots));
     }
 }
 
