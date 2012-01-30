@@ -1,8 +1,8 @@
 <?php
 
-require dirname(__FILE__) . '/Doctrine2TestSuite.php';
+require dirname(__FILE__) . '/Doctrine21TestSuite.php';
 
-$test = new Doctrine2TestSuite();
+$test = new Doctrine21TestSuite();
 $test->initialize();
 $test->run();
 /*

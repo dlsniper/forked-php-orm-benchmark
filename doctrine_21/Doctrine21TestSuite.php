@@ -2,7 +2,7 @@
 
 require_once dirname(__FILE__) . '/../AbstractTestSuite.php';
 
-class Doctrine2TestSuite extends AbstractTestSuite
+class Doctrine21TestSuite extends AbstractTestSuite
 {
     /**
      * @var \Doctrine\ORM\EntityManager
