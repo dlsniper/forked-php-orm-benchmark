@@ -11,3 +11,4 @@ passthru('php propel_16/TestRunner.php');
 passthru('php doctrine_12/TestRunner.php');
 passthru('php doctrine_2/TestRunner.php');
 passthru('php doctrine_21/TestRunner.php');
+passthru('php doctrine_22/TestRunner.php');
