@@ -1,10 +1,8 @@
 # Running the Doctrine 2 Testsuite
 
-## Running tests
+## Setting up a PHPUnit Configuration XML
 
-Execute PHPUnit in the root folder of your doctrine-common clone.
-
-    phpunit
+..
 
 ## Testing Lock-Support
 

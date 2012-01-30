@@ -45,11 +45,16 @@ class DDC192Phonenumber
     protected $phone;
     
     /**
+     * @Id @Column(name="userId", type="integer")
+     */
+    protected $userId;
+    
+    /**
      * @Id
      * @ManyToOne(targetEntity="DDC192User")
      * @JoinColumn(name="userId", referencedColumnName="id")
      */
-    protected $User;
+    protected $User; // Id on this docblock is ignored!
     
     
     public function setPhone($value) { $this->phone = $value; }
@@ -59,6 +64,7 @@ class DDC192Phonenumber
     public function setUser(User $user) 
     {
         $this->User = $user;
+        $this->userId = $user->getId(); // TODO: Remove once ManyToOne supports Id annotation
     }
     
     public function getUser() { return $this->User; }

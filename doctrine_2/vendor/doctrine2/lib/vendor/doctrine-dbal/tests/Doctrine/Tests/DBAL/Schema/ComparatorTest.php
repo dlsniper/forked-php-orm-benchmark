@@ -426,7 +426,7 @@ class ComparatorTest extends \PHPUnit_Framework_TestCase
         $c = new Comparator();
         $tableDiff = $c->diffTable($table1, $table2);
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
+        $this->assertType('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
         $this->assertEquals(1, count($tableDiff->addedForeignKeys));
     }
 
@@ -445,7 +445,7 @@ class ComparatorTest extends \PHPUnit_Framework_TestCase
         $c = new Comparator();
         $tableDiff = $c->diffTable($table2, $table1);
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
+        $this->assertType('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
         $this->assertEquals(1, count($tableDiff->removedForeignKeys));
     }
 
@@ -465,7 +465,7 @@ class ComparatorTest extends \PHPUnit_Framework_TestCase
         $c = new Comparator();
         $tableDiff = $c->diffTable($table1, $table2);
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
+        $this->assertType('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
         $this->assertEquals(1, count($tableDiff->changedForeignKeys));
     }
 
@@ -621,7 +621,7 @@ class ComparatorTest extends \PHPUnit_Framework_TestCase
         $c = new Comparator();
         $tableDiff = $c->diffTable($tableA, $tableB);
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
+        $this->assertType('Doctrine\DBAL\Schema\TableDiff', $tableDiff);
         $this->assertArrayHasKey('id', $tableDiff->changedColumns);
     }
 

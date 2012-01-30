@@ -150,7 +150,7 @@ class ManyToManyBasicAssociationTest extends \Doctrine\Tests\OrmFunctionalTestCa
             $user->groups[] = $group;
         }
 
-        $this->assertInstanceOf('Doctrine\ORM\PersistentCollection', $user->groups);
+        $this->assertType('Doctrine\ORM\PersistentCollection', $user->groups);
         $this->assertTrue($user->groups->isDirty());
         
         $this->assertEquals($groupCount, count($user->groups), "There should be 10 groups in the collection.");
@@ -265,7 +265,7 @@ class ManyToManyBasicAssociationTest extends \Doctrine\Tests\OrmFunctionalTestCa
                              ->setParameter(1, $user->getId())
                              ->getSingleResult();
         $this->assertEquals(0, count($newUser->groups));
-        $this->assertInternalType('array', $newUser->groups->getMapping());
+        $this->assertType('array', $newUser->groups->getMapping());
 
         $newUser->addGroup($group);
         
@@ -341,5 +341,40 @@ class ManyToManyBasicAssociationTest extends \Doctrine\Tests\OrmFunctionalTestCa
         $this->assertEquals(2, count($user->groups));
         $this->assertEquals('Developers_New1', $user->groups[0]->name);
         $this->assertEquals('Developers_New2', $user->groups[1]->name);
+    }
+    
+    /**
+     * @group DDC-733
+     */
+    public function testInitializePersistentCollection()
+    {
+        $user = $this->addCmsUserGblancoWithGroups(2);
+        $this->_em->clear();
+        
+        $user = $this->_em->find(get_class($user), $user->id);
+        
+        $this->assertFalse($user->groups->isInitialized(), "Pre-condition: lazy collection");
+        $this->_em->getUnitOfWork()->initializeObject($user->groups);
+        $this->assertTrue($user->groups->isInitialized(), "Collection should be initialized after calling UnitOfWork::initializeObject()");
+    }
+    
+    /**
+     * @group DDC-1189
+     * @group DDC-956
+     */
+    public function testClearBeforeLazyLoad()
+    {
+        $user = $this->addCmsUserGblancoWithGroups(4);
+        
+        $this->_em->clear();
+        
+        $user = $this->_em->find(get_class($user), $user->id);
+        $user->groups->clear(); 
+        $this->assertEquals(0, count($user->groups));
+        
+        $this->_em->flush();
+        
+        $user = $this->_em->find(get_class($user), $user->id);
+        $this->assertEquals(0, count($user->groups));
     }
 }

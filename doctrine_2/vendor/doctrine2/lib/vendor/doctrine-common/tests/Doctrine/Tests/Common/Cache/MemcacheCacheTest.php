@@ -4,6 +4,8 @@ namespace Doctrine\Tests\Common\Cache;
 
 use Doctrine\Common\Cache\MemcacheCache;
 
+require_once __DIR__ . '/../../TestInit.php';
+
 class MemcacheCacheTest extends CacheTest
 {
     private $_memcache;

@@ -13,13 +13,7 @@ class DDC742Test extends \Doctrine\Tests\OrmFunctionalTestCase
         parent::setUp();
 
         if (\extension_loaded('memcache')) {
-            $memcache = new \Memcache();
-            $memcache->addServer('localhost');
-
-            $cacheDriver = new \Doctrine\Common\Cache\MemcacheCache();
-            $cacheDriver->setMemcache($memcache);
-
-            $this->_em->getMetadataFactory()->setCacheDriver($cacheDriver);
+            $this->_em->getMetadataFactory()->setCacheDriver(new \Doctrine\Common\Cache\MemcacheCache());
         } else if (\extension_loaded('apc')) {
             $this->_em->getMetadataFactory()->setCacheDriver(new \Doctrine\Common\Cache\ApcCache());
         }

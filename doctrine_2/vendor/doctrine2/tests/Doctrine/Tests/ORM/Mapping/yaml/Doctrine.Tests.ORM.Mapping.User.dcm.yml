@@ -1,8 +1,6 @@
 Doctrine\Tests\ORM\Mapping\User:
   type: entity
   table: cms_users
-  namedQueries:
-    all: SELECT u FROM __CLASS__ u
   id:
     id:
       type: integer
@@ -35,6 +33,7 @@ Doctrine\Tests\ORM\Mapping\User:
   oneToMany:
     phonenumbers:
       targetEntity: Phonenumber
+      orphanRemoval: true
       mappedBy: user
       orderBy:
         number: ASC

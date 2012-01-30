@@ -30,8 +30,6 @@ class ClassMetadataTest extends \Doctrine\Tests\OrmTestCase
         $cm->setCustomRepositoryClass("UserRepository");
         $cm->setDiscriminatorColumn(array('name' => 'disc', 'type' => 'integer'));
         $cm->mapOneToOne(array('fieldName' => 'phonenumbers', 'targetEntity' => 'Bar', 'mappedBy' => 'foo'));
-        $cm->markReadOnly();
-        $cm->addNamedQuery(array('name' => 'dql', 'query' => 'foo'));
         $this->assertEquals(1, count($cm->associationMappings));
 
         $serialized = serialize($cm);
@@ -53,8 +51,6 @@ class ClassMetadataTest extends \Doctrine\Tests\OrmTestCase
         $this->assertTrue($oneOneMapping['fetch'] == ClassMetadata::FETCH_LAZY);
         $this->assertEquals('phonenumbers', $oneOneMapping['fieldName']);
         $this->assertEquals('Doctrine\Tests\Models\CMS\Bar', $oneOneMapping['targetEntity']);
-        $this->assertTrue($cm->isReadOnly);
-        $this->assertEquals(array('dql' => 'foo'), $cm->namedQueries);
     }
 
     public function testFieldIsNullable()
@@ -236,6 +232,17 @@ class ClassMetadataTest extends \Doctrine\Tests\OrmTestCase
         $this->setExpectedException('Doctrine\ORM\Mapping\MappingException');
         $cm->mapField(array('fieldName' => 'name', 'columnName' => 'name'));
     }
+    
+    /**
+     * @group DDC-1224
+     */
+    public function testGetTemporaryTableNameSchema()
+    {
+        $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
+        $cm->setTableName('foo.bar');
+        
+        $this->assertEquals('foo_bar_id_tmp', $cm->getTemporaryIdTableName());
+    }
 
     public function testDefaultTableName()
     {
@@ -318,73 +325,6 @@ class ClassMetadataTest extends \Doctrine\Tests\OrmTestCase
     }
 
     /**
-     * @group DDC-117
-     */
-    public function testMapIdentifierAssociation()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\DDC117\DDC117ArticleDetails');
-        $cm->mapOneToOne(array(
-            'fieldName' => 'article',
-            'id' => true,
-            'targetEntity' => 'Doctrine\Tests\Models\DDC117\DDC117Article',
-            'joinColumns' => array(),
-        ));
-
-        $this->assertTrue($cm->containsForeignIdentifier, "Identifier Association should set 'containsForeignIdentifier' boolean flag.");
-        $this->assertEquals(array("article"), $cm->identifier);
-    }
-
-    /**
-     * @group DDC-117
-     */
-    public function testOrphanRemovalIdentifierAssociation()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\DDC117\DDC117ArticleDetails');
-
-        $this->setExpectedException('Doctrine\ORM\Mapping\MappingException', 'The orphan removal option is not allowed on an association that');
-        $cm->mapOneToOne(array(
-            'fieldName' => 'article',
-            'id' => true,
-            'targetEntity' => 'Doctrine\Tests\Models\DDC117\DDC117Article',
-            'orphanRemoval' => true,
-            'joinColumns' => array(),
-        ));
-    }
-
-    /**
-     * @group DDC-117
-     */
-    public function testInverseIdentifierAssocation()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\DDC117\DDC117ArticleDetails');
-
-        $this->setExpectedException('Doctrine\ORM\Mapping\MappingException', 'An inverse association is not allowed to be identifier in');
-        $cm->mapOneToOne(array(
-            'fieldName' => 'article',
-            'id' => true,
-            'mappedBy' => 'details', // INVERSE!
-            'targetEntity' => 'Doctrine\Tests\Models\DDC117\DDC117Article',
-            'joinColumns' => array(),
-        ));
-    }
-
-    /**
-     * @group DDC-117
-     */
-    public function testIdentifierAssocationManyToMany()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\DDC117\DDC117ArticleDetails');
-
-        $this->setExpectedException('Doctrine\ORM\Mapping\MappingException', 'Many-to-many or one-to-many associations are not allowed to be identifier in');
-        $cm->mapManyToMany(array(
-            'fieldName' => 'article',
-            'id' => true,
-            'targetEntity' => 'Doctrine\Tests\Models\DDC117\DDC117Article',
-            'joinColumns' => array(),
-        ));
-    }
-
-    /**
      * @group DDC-996
      */
     public function testEmptyFieldNameThrowsException()
@@ -393,71 +333,5 @@ class ClassMetadataTest extends \Doctrine\Tests\OrmTestCase
             "The field or association mapping misses the 'fieldName' attribute in entity 'Doctrine\Tests\Models\CMS\CmsUser'.");
         $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
         $cm->mapField(array('fieldName' => ''));
-    }
-
-    public function testRetrievalOfNamedQueries()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
-
-        $this->assertEquals(0, count($cm->getNamedQueries()));
-
-        $cm->addNamedQuery(array(
-            'name'  => 'userById',
-            'query' => 'SELECT u FROM __CLASS__ u WHERE u.id = ?1'
-        ));
-
-        $this->assertEquals(1, count($cm->getNamedQueries()));
-    }
-
-    public function testExistanceOfNamedQuery()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
-
-        $cm->addNamedQuery(array(
-            'name'  => 'all',
-            'query' => 'SELECT u FROM __CLASS__ u'
-        ));
-
-        $this->assertTrue($cm->hasNamedQuery('all'));
-        $this->assertFalse($cm->hasNamedQuery('userById'));
-    }
-
-    public function testRetrieveOfNamedQuery()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
-
-        $cm->addNamedQuery(array(
-            'name'  => 'userById',
-            'query' => 'SELECT u FROM __CLASS__ u WHERE u.id = ?1'
-        ));
-
-        $this->assertEquals('SELECT u FROM Doctrine\Tests\Models\CMS\CmsUser u WHERE u.id = ?1', $cm->getNamedQuery('userById'));
-    }
-
-    public function testNamingCollisionNamedQueryShouldThrowException()
-    {
-        $cm = new ClassMetadata('Doctrine\Tests\Models\CMS\CmsUser');
-
-        $this->setExpectedException('Doctrine\ORM\Mapping\MappingException');
-
-        $cm->addNamedQuery(array(
-            'name'  => 'userById',
-            'query' => 'SELECT u FROM __CLASS__ u WHERE u.id = ?1'
-        ));
-
-        $cm->addNamedQuery(array(
-            'name'  => 'userById',
-            'query' => 'SELECT u FROM __CLASS__ u WHERE u.id = ?1'
-        ));
-    }
-
-    /**
-     * @group DDC-1068
-     */
-    public function testClassCaseSensitivity()
-    {
-        $user = new \Doctrine\Tests\Models\CMS\CmsUser();
-        $cm = new ClassMetadata('DOCTRINE\TESTS\MODELS\CMS\CMSUSER');
-        $this->assertEquals('Doctrine\Tests\Models\CMS\CmsUser', $cm->name);
     }
 }

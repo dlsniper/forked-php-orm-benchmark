@@ -4,6 +4,8 @@ namespace Doctrine\Tests\Common\Cache;
 
 use Doctrine\Common\Cache\XcacheCache;
 
+require_once __DIR__ . '/../../TestInit.php';
+
 class XcacheCacheTest extends CacheTest
 {
     public function setUp()

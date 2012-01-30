@@ -33,6 +33,7 @@ use PDO, Closure, Exception,
  * @license http://www.opensource.org/licenses/lgpl-license.php LGPL
  * @link    www.doctrine-project.org
  * @since   2.0
+ * @version $Revision: 3938 $
  * @author  Guilherme Blanco <guilhermeblanco@hotmail.com>
  * @author  Jonathan Wage <jonwage@gmail.com>
  * @author  Roman Borschel <roman@code-factory.org>
@@ -61,27 +62,6 @@ class Connection implements DriverConnection
      * Constant for transaction isolation level SERIALIZABLE.
      */
     const TRANSACTION_SERIALIZABLE = 4;
-    
-    /**
-     * Represents an array of ints to be expanded by Doctrine SQL parsing.
-     * 
-     * @var int
-     */
-    const PARAM_INT_ARRAY = 101;
-    
-    /**
-     * Represents an array of strings to be expanded by Doctrine SQL parsing.
-     * 
-     * @var int
-     */
-    const PARAM_STR_ARRAY = 102;
-    
-    /**
-     * Offset by which PARAM_* constants are detected as arrays of the param type.
-     * 
-     * @var int
-     */
-    const ARRAY_PARAM_OFFSET = 100;
 
     /**
      * The wrapped driver connection.
@@ -99,11 +79,6 @@ class Connection implements DriverConnection
      * @var Doctrine\Common\EventManager
      */
     protected $_eventManager;
-    
-    /**
-     * @var Doctrine\DBAL\Query\ExpressionBuilder
-     */
-    protected $_expr;
 
     /**
      * Whether or not a connection has been established.
@@ -199,9 +174,6 @@ class Connection implements DriverConnection
 
         $this->_config = $config;
         $this->_eventManager = $eventManager;
-        
-        $this->_expr = new Query\Expression\ExpressionBuilder($this);
-        
         if ( ! isset($params['platform'])) {
             $this->_platform = $driver->getDatabasePlatform();
         } else if ($params['platform'] instanceof Platforms\AbstractPlatform) {
@@ -209,7 +181,6 @@ class Connection implements DriverConnection
         } else {
             throw DBALException::invalidPlatformSpecified();
         }
-        
         $this->_transactionIsolationLevel = $this->_platform->getDefaultTransactionIsolationLevel();
     }
 
@@ -312,17 +283,7 @@ class Connection implements DriverConnection
     {
         return $this->_platform;
     }
-    
-    /**
-     * Gets the ExpressionBuilder for the connection.
-     *
-     * @return Doctrine\DBAL\Query\ExpressionBuilder
-     */
-    public function getExpressionBuilder()
-    {
-        return $this->_expr;
-    }
-    
+
     /**
      * Establishes the connection with the database.
      *
@@ -605,8 +566,6 @@ class Connection implements DriverConnection
         }
 
         if ($params) {
-            list($query, $params, $types) = SQLParserUtils::expandListParameters($query, $params, $types);
-            
             $stmt = $this->_conn->prepare($query);
             if ($types) {
                 $this->_bindTypedValues($stmt, $params, $types);
@@ -661,7 +620,20 @@ class Connection implements DriverConnection
     {
         $this->connect();
 
-        return call_user_func_array(array($this->_conn, 'query'), func_get_args());
+        $args = func_get_args();
+
+        $logger = $this->getConfiguration()->getSQLLogger();
+        if ($logger) {
+            $logger->startQuery($args[0]);
+        }
+
+        $statement = call_user_func_array(array($this->_conn, 'query'), $args);
+
+        if ($logger) {
+            $logger->stopQuery();
+        }
+
+        return $statement;
     }
 
     /**
@@ -686,8 +658,6 @@ class Connection implements DriverConnection
         }
 
         if ($params) {
-            list($query, $params, $types) = SQLParserUtils::expandListParameters($query, $params, $types);
-            
             $stmt = $this->_conn->prepare($query);
             if ($types) {
                 $this->_bindTypedValues($stmt, $params, $types);
@@ -1091,15 +1061,5 @@ class Connection implements DriverConnection
                 }
             }
         }
-    }
-    
-    /**
-     * Create a new instance of a SQL query builder.
-     * 
-     * @return Query\QueryBuilder 
-     */
-    public function createQueryBuilder()
-    {
-        return new Query\QueryBuilder($this);
     }
 }

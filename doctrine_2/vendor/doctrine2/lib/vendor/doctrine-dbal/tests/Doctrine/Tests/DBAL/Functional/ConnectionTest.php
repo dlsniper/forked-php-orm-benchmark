@@ -22,7 +22,7 @@ class ConnectionTest extends \Doctrine\Tests\DbalFunctionalTestCase
 
     public function testGetWrappedConnection()
     {
-        $this->assertInstanceOf('Doctrine\DBAL\Driver\Connection', $this->_conn->getWrappedConnection());
+        $this->assertType('Doctrine\DBAL\Driver\Connection', $this->_conn->getWrappedConnection());
     }
 
     public function testCommitWithRollbackOnlyThrowsException()

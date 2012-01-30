@@ -4,6 +4,8 @@ namespace Doctrine\Tests\Common\Annotations;
 
 use Doctrine\Common\Annotations\Parser;
 
+require_once __DIR__ . '/../../TestInit.php';
+
 class ParserTest extends \Doctrine\Tests\DoctrineTestCase
 {
     public function testBasicAnnotations()
@@ -27,7 +29,7 @@ class ParserTest extends \Doctrine\Tests\DoctrineTestCase
         $this->assertTrue(isset($annot->foo['key1']));
 
         // Numerical arrays
-        $result = $parser->parse('@Name({2="foo", 4=\'bar\'})');
+        $result = $parser->parse('@Name({2="foo", 4="bar"})');
         $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
         $this->assertTrue(is_array($annot->value));
         $this->assertEquals('foo', $annot->value[2]);
@@ -50,27 +52,7 @@ class ParserTest extends \Doctrine\Tests\DoctrineTestCase
         $nestedArray = $annot->foo[2];
         $this->assertTrue(isset($nestedArray['key']));
         $this->assertTrue($nestedArray['key'] instanceof Name);
-
-        // Multiple values
-        $result = $parser->parse('@Name(@Name, @Name)');
-        $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
-
-        $this->assertTrue($annot instanceof Name);
-        $this->assertTrue(is_array($annot->value));
-        $this->assertTrue($annot->value[0] instanceof Name);
-        $this->assertTrue($annot->value[1] instanceof Name);
-
-        // Multiple types as values
-        $result = $parser->parse('@Name(foo="Bar", @Name, {"key1"="value1", "key2"="value2"})');
-        $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
-
-        $this->assertTrue($annot instanceof Name);
-        $this->assertTrue(is_array($annot->value));
-        $this->assertTrue($annot->value[0] instanceof Name);
-        $this->assertTrue(is_array($annot->value[1]));
-        $this->assertEquals('value1', $annot->value[1]['key1']);
-        $this->assertEquals('value2', $annot->value[1]['key2']);
-
+        
         // Complete docblock
         $docblock = <<<DOCBLOCK
 /**
@@ -215,15 +197,15 @@ DOCBLOCK;
         $this->assertEquals(0, count($result));
     }
 
-    public function testAnnotationAcceptsSingleQuotes()
+    public function testAnnotationDontAcceptSingleQuotes()
     {
-        $parser = $this->createTestParser();
-        $result = $parser->parse("@Name(foo='bar')");
+        $this->setExpectedException(
+            'Doctrine\Common\Annotations\AnnotationException',
+            "[Syntax Error] Expected PlainValue, got ''' at position 10."
+        );
 
-        $this->assertEquals(1, count($result));
-        $annot = $result['Doctrine\Tests\Common\Annotations\Name'];
-        $this->assertTrue($annot instanceof Name);
-        $this->assertEquals('bar', $annot->foo);
+        $parser = $this->createTestParser();
+        $parser->parse("@Name(foo='bar')");
     }
 
     /**
@@ -284,12 +266,12 @@ DOCBLOCK;
     {
         $this->setExpectedException(
             'Doctrine\Common\Annotations\AnnotationException',
-            "[Syntax Error] Expected PlainValue, got 'x' at position 10 ".
+            "[Syntax Error] Expected PlainValue, got ''' at position 10 ".
             "in class \Doctrine\Tests\Common\Annotations\Name"
         );
 
         $parser = $this->createTestParser();
-        $parser->parse("@Name(foo=x)", "class \Doctrine\Tests\Common\Annotations\Name");
+        $parser->parse("@Name(foo='bar')", "class \Doctrine\Tests\Common\Annotations\Name");
     }
 
     /**
@@ -371,20 +353,6 @@ DOCBLOCK;
         $result = $parser->parse('@nonalias:Name(foo="bar")');
 
         $this->assertEquals(0, count($result));
-    }
-
-    /**
-     * @group DCOM-46
-     */
-    public function testSupportsMultipleDeclaration()
-    {
-        $parser = $this->createTestParser();
-
-        $result = $parser->parse("@Name(foo=1234.345) @Name(foo=10)");
-        $annots = $result['Doctrine\Tests\Common\Annotations\Name'];
-        
-        $this->assertInternalType('array', $annots);
-        $this->assertEquals(2, count($annots));
     }
 }
 

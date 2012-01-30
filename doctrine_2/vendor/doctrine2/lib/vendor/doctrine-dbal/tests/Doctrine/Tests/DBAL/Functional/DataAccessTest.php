@@ -3,7 +3,6 @@
 namespace Doctrine\Tests\DBAL\Functional;
 
 use Doctrine\DBAL\Types\Type;
-use Doctrine\DBAL\Connection;
 use PDO;
 
 require_once __DIR__ . '/../../TestInit.php';
@@ -34,7 +33,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
     {
         $sql = "SELECT test_int, test_string FROM fetch_table WHERE test_int = ? AND test_string = ?";
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
 
         $stmt->bindValue(1, 1);
         $stmt->bindValue(2, 'foo');
@@ -52,7 +51,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
 
         $sql = "SELECT test_int, test_string FROM fetch_table WHERE test_int = ? AND test_string = ?";
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
 
         $stmt->bindParam(1, $paramInt);
         $stmt->bindParam(2, $paramStr);
@@ -70,7 +69,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
 
         $sql = "SELECT test_int, test_string FROM fetch_table WHERE test_int = ? AND test_string = ?";
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
 
         $stmt->bindParam(1, $paramInt);
         $stmt->bindParam(2, $paramStr);
@@ -88,7 +87,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
 
         $sql = "SELECT test_int FROM fetch_table WHERE test_int = ? AND test_string = ?";
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
 
         $stmt->bindParam(1, $paramInt);
         $stmt->bindParam(2, $paramStr);
@@ -107,7 +106,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
         $sql = "SELECT test_int, test_string FROM " . $this->_conn->quoteIdentifier($table) . " ".
                "WHERE test_int = " . $this->_conn->quote($paramInt) . " AND test_string = " . $this->_conn->quote($paramStr);
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
     }
 
     public function testPrepareWithExecuteParams()
@@ -117,7 +116,7 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
 
         $sql = "SELECT test_int, test_string FROM fetch_table WHERE test_int = ? AND test_string = ?";
         $stmt = $this->_conn->prepare($sql);
-        $this->assertInstanceOf('Doctrine\DBAL\Statement', $stmt);
+        $this->assertType('Doctrine\DBAL\Statement', $stmt);
         $stmt->execute(array($paramInt, $paramStr));
 
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -219,52 +218,5 @@ class DataAccessTest extends \Doctrine\Tests\DbalFunctionalTestCase
         $stmt->execute();
 
         $this->assertEquals(1, $stmt->fetchColumn());
-    }
-    
-    /**
-     * @group DBAL-78
-     */
-    public function testNativeArrayListSupport()
-    {
-        for ($i = 100; $i < 110; $i++) {
-            $this->_conn->insert('fetch_table', array('test_int' => $i, 'test_string' => 'foo' . $i, 'test_datetime' => '2010-01-01 10:10:10'));
-        }
-        
-        $stmt = $this->_conn->executeQuery('SELECT test_int FROM fetch_table WHERE test_int IN (?)',
-            array(array(100, 101, 102, 103, 104)), array(Connection::PARAM_INT_ARRAY));
-        
-        $data = $stmt->fetchAll(PDO::FETCH_NUM);
-        $this->assertEquals(5, count($data));
-        $this->assertEquals(array(array(100), array(101), array(102), array(103), array(104)), $data);
-        
-        $stmt = $this->_conn->executeQuery('SELECT test_int FROM fetch_table WHERE test_string IN (?)',
-            array(array('foo100', 'foo101', 'foo102', 'foo103', 'foo104')), array(Connection::PARAM_STR_ARRAY));
-        
-        $data = $stmt->fetchAll(PDO::FETCH_NUM);
-        $this->assertEquals(5, count($data));
-        $this->assertEquals(array(array(100), array(101), array(102), array(103), array(104)), $data);
-    }
-
-    /**
-     * @group DDC-1014
-     */
-    public function testDateArithmetics()
-    {
-        $p = $this->_conn->getDatabasePlatform();
-        $sql = 'SELECT ';
-        $sql .= $p->getDateDiffExpression('test_datetime', "'2010-12-24 12:00:00'") .' AS diff, ';
-        $sql .= $p->getDateAddDaysExpression('test_datetime', 10) .' AS add_days, ';
-        $sql .= $p->getDateSubDaysExpression('test_datetime', 10) .' AS sub_days, ';
-        $sql .= $p->getDateAddMonthExpression('test_datetime', 2) .' AS add_month, ';
-        $sql .= $p->getDateSubMonthExpression('test_datetime', 2) .' AS sub_month ';
-        $sql .= 'FROM fetch_table';
-
-        $row = $this->_conn->fetchAssoc($sql);
-
-        $this->assertEquals(-357, (int)$row['diff'], "Date difference should be -356 days.");
-        $this->assertEquals('2010-01-11', date('Y-m-d', strtotime($row['add_days'])), "Adding date should end up on 2010-01-11");
-        $this->assertEquals('2009-12-22', date('Y-m-d', strtotime($row['sub_days'])), "Subtracting date should end up on 2009-12-22");
-        $this->assertEquals('2010-03-01', date('Y-m-d', strtotime($row['add_month'])), "Adding month should end up on 2010-03-01");
-        $this->assertEquals('2009-11-01', date('Y-m-d', strtotime($row['sub_month'])), "Adding month should end up on 2009-11-01");
     }
 }

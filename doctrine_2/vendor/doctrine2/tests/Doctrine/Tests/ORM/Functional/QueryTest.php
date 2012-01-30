@@ -2,7 +2,6 @@
 
 namespace Doctrine\Tests\ORM\Functional;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\Tests\Models\CMS\CmsUser,
     Doctrine\Tests\Models\CMS\CmsArticle;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -94,23 +93,6 @@ class QueryTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals(2, count($users[0]->articles));
         $this->assertEquals('Doctrine 2', $users[0]->articles[0]->topic);
         $this->assertEquals('Symfony 2', $users[0]->articles[1]->topic);
-    }
-
-    public function testUsingZeroBasedQueryParameterShouldWork()
-    {
-        $user = new CmsUser;
-        $user->name = 'Jonathan';
-        $user->username = 'jwage';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        $this->_em->flush();
-        $this->_em->clear();
-
-        $q = $this->_em->createQuery('SELECT u FROM Doctrine\Tests\Models\CMS\CmsUser u WHERE u.username = ?0');
-        $q->setParameter(0, 'jwage');
-        $user = $q->getSingleResult();
-        
-        $this->assertNotNull($user);
     }
 
     public function testUsingUnknownQueryParameterShouldThrowException()
@@ -365,140 +347,5 @@ class QueryTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals("dr. dolittle", $result[0]->topic);
         $this->assertTrue($result[0]->user instanceof \Doctrine\ORM\Proxy\Proxy);
         $this->assertFalse($result[0]->user->__isInitialized__);
-    }
-    
-    /**
-     * @group DDC-952
-     */
-    public function testEnableFetchEagerMode()
-    {
-        for ($i = 0; $i < 10; $i++) {
-            $article = new CmsArticle;
-            $article->topic = "dr. dolittle";
-            $article->text = "Once upon a time ...";
-            $author = new CmsUser;
-            $author->name = "anonymous";
-            $author->username = "anon".$i;
-            $author->status = "here";
-            $article->user = $author;
-            $this->_em->persist($author);
-            $this->_em->persist($article);
-        }
-        $this->_em->flush();
-        $this->_em->clear();
-        
-        $articles = $this->_em->createQuery('select a from Doctrine\Tests\Models\CMS\CmsArticle a')
-                         ->setFetchMode('Doctrine\Tests\Models\CMS\CmsArticle', 'user', ClassMetadata::FETCH_EAGER)
-                         ->getResult();
-        
-        $this->assertEquals(10, count($articles));
-        foreach ($articles AS $article) {
-            $this->assertNotInstanceOf('Doctrine\ORM\Proxy\Proxy', $article);
-        }
-    }
-
-    /**
-     * @group DDC-991
-     */
-    public function testgetOneOrNullResult()
-    {
-        $user = new CmsUser;
-        $user->name = 'Guilherme';
-        $user->username = 'gblanco';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        $this->_em->flush();
-        $this->_em->clear();
-
-        $query = $this->_em->createQuery("select u from Doctrine\Tests\Models\CMS\CmsUser u where u.username = 'gblanco'");
-
-        $fetchedUser = $query->getOneOrNullResult();
-        $this->assertInstanceOf('Doctrine\Tests\Models\CMS\CmsUser', $fetchedUser);
-        $this->assertEquals('gblanco', $fetchedUser->username);
-
-        $query = $this->_em->createQuery("select u.username from Doctrine\Tests\Models\CMS\CmsUser u where u.username = 'gblanco'");
-        $fetchedUsername = $query->getOneOrNullResult(Query::HYDRATE_SINGLE_SCALAR);
-        $this->assertEquals('gblanco', $fetchedUsername);
-    }
-
-    /**
-     * @group DDC-991
-     */
-    public function testgetOneOrNullResultSeveralRows()
-    {
-        $user = new CmsUser;
-        $user->name = 'Guilherme';
-        $user->username = 'gblanco';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        $user = new CmsUser;
-        $user->name = 'Roman';
-        $user->username = 'romanb';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        $this->_em->flush();
-        $this->_em->clear();
-
-        $query = $this->_em->createQuery("select u from Doctrine\Tests\Models\CMS\CmsUser u");
-
-        $this->setExpectedException('Doctrine\ORM\NonUniqueResultException');
-        $fetchedUser = $query->getOneOrNullResult();
-    }
-
-    /**
-     * @group DDC-991
-     */
-    public function testgetOneOrNullResultNoRows()
-    {
-        $query = $this->_em->createQuery("select u from Doctrine\Tests\Models\CMS\CmsUser u");
-        $this->assertNull($query->getOneOrNullResult());
-
-        $query = $this->_em->createQuery("select u.username from Doctrine\Tests\Models\CMS\CmsUser u where u.username = 'gblanco'");
-        $this->assertNull($query->getOneOrNullResult(Query::HYDRATE_SCALAR));
-    }
-    
-    public function testDqlWithAutoInferOfParameters()
-    {
-        $user = new CmsUser;
-        $user->name = 'Benjamin';
-        $user->username = 'beberlei';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        
-        $user = new CmsUser;
-        $user->name = 'Roman';
-        $user->username = 'romanb';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        
-        $user = new CmsUser;
-        $user->name = 'Jonathan';
-        $user->username = 'jwage';
-        $user->status = 'developer';
-        $this->_em->persist($user);
-        
-        $this->_em->flush();
-        $this->_em->clear();
-        
-        $query = $this->_em->createQuery("SELECT u FROM Doctrine\Tests\Models\CMS\CmsUser u WHERE u.username IN (?0)");
-        $query->setParameter(0, array('beberlei', 'jwage'));
-        
-        $users = $query->execute();
-        
-        $this->assertEquals(2, count($users));
-    }
-    
-    public function testQueryBuilderWithStringWhereClauseContainingOrAndConditionalPrimary()
-    {
-        $qb = $this->_em->createQueryBuilder();
-        $qb->select('u')
-           ->from('Doctrine\Tests\Models\CMS\CmsUser', 'u')
-           ->innerJoin('u.articles', 'a')
-           ->where('(u.id = 0) OR (u.id IS NULL)');
-        
-        $query = $qb->getQuery();
-        $users = $query->execute();
-        
-        $this->assertEquals(0, count($users));
     }
 }

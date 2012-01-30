@@ -8,7 +8,6 @@ use Doctrine\Tests\Models\Generic\DecimalModel;
 use Doctrine\Tests\Models\Generic\SerializationModel;
 
 use Doctrine\ORM\Mapping\AssociationMapping;
-use Doctrine\DBAL\Types\Type;
 
 require_once __DIR__ . '/../../TestInit.php';
 
@@ -90,7 +89,7 @@ class TypeTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $dql = "SELECT s FROM Doctrine\Tests\Models\Generic\SerializationModel s";
         $serialize = $this->_em->createQuery($dql)->getSingleResult();
 
-        $this->assertInstanceOf('stdClass', $serialize->object);
+        $this->assertType('stdClass', $serialize->object);
     }
 
     public function testDate()
@@ -104,7 +103,7 @@ class TypeTest extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $dateTimeDb = $this->_em->find('Doctrine\Tests\Models\Generic\DateTimeModel', $dateTime->id);
 
-        $this->assertInstanceOf('DateTime', $dateTimeDb->date);
+        $this->assertType('DateTime', $dateTimeDb->date);
         $this->assertEquals('2009-10-01', $dateTimeDb->date->format('Y-m-d'));
     }
 
@@ -119,7 +118,7 @@ class TypeTest extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $dateTimeDb = $this->_em->find('Doctrine\Tests\Models\Generic\DateTimeModel', $dateTime->id);
 
-        $this->assertInstanceOf('DateTime', $dateTimeDb->datetime);
+        $this->assertType('DateTime', $dateTime->datetime);
         $this->assertEquals('2009-10-02 20:10:52', $dateTimeDb->datetime->format('Y-m-d H:i:s'));
     }
 
@@ -169,7 +168,7 @@ class TypeTest extends \Doctrine\Tests\OrmFunctionalTestCase
 
         $dateTimeDb = $this->_em->find('Doctrine\Tests\Models\Generic\DateTimeModel', $dateTime->id);
 
-        $this->assertInstanceOf('DateTime', $dateTime->time);
+        $this->assertType('DateTime', $dateTime->time);
         $this->assertEquals('19:27:20', $dateTime->time->format('H:i:s'));
     }
 }

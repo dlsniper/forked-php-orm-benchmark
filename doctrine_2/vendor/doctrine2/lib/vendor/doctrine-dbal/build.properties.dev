@@ -1,4 +1,4 @@
-version_name=2.0.2
+version_name=2.0.1
 stability=stable
 build.dir=build
 dist.dir=dist

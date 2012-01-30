@@ -140,6 +140,40 @@ class BasicFunctionalTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertFalse($user2->address instanceof \Doctrine\ORM\Proxy\Proxy);
     }
     
+    /**
+     * @group DDC-1230
+     */
+    public function testRemove()
+    {
+        $user = new CmsUser;
+        $user->name = 'Guilherme';
+        $user->username = 'gblanco';
+        $user->status = 'developer';
+
+        $this->assertEquals(\Doctrine\ORM\UnitOfWork::STATE_NEW, $this->_em->getUnitOfWork()->getEntityState($user));
+        
+        $this->_em->persist($user);
+        
+        $this->assertEquals(\Doctrine\ORM\UnitOfWork::STATE_MANAGED, $this->_em->getUnitOfWork()->getEntityState($user));
+        
+        $this->_em->remove($user);
+        
+        $this->assertEquals(\Doctrine\ORM\UnitOfWork::STATE_NEW, $this->_em->getUnitOfWork()->getEntityState($user));
+        
+        $this->_em->persist($user);
+        $this->_em->flush();
+        $id = $user->getId();
+        
+        $this->_em->remove($user);
+        
+        $this->assertEquals(\Doctrine\ORM\UnitOfWork::STATE_REMOVED, $this->_em->getUnitOfWork()->getEntityState($user));
+        $this->_em->flush();
+        
+        $this->assertEquals(\Doctrine\ORM\UnitOfWork::STATE_NEW, $this->_em->getUnitOfWork()->getEntityState($user));
+        
+        $this->assertNull($this->_em->find('Doctrine\Tests\Models\CMS\CmsUser', $id));
+    }
+    
     public function testOneToManyOrphanRemoval()
     {
         $user = new CmsUser;
@@ -827,36 +861,6 @@ class BasicFunctionalTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->assertEquals(0, $this->_em->getConnection()->fetchColumn("select count(*) from cms_addresses where id=".$addressId.""));
     }
 
-    public function testClearingCollectionDoesNotInitialize()
-    {
-        $user = new CmsUser();
-        $user->username = "beberlei";
-        $user->name = "Benjamin E.";
-        $user->status = 'active';
-
-        $grp = new CmsGroup();
-        $grp->setName("The Dudes");
-
-        $grp->addUser($user);
-        $user->addGroup($grp);
-
-        $this->_em->persist($user);
-        $this->_em->persist($grp);
-        $this->_em->flush();
-        $this->_em->clear();
-
-        $this->assertEquals(1, $this->_em->getConnection()->fetchColumn("select count(*) from cms_users_groups"));
-
-        $user2 = $this->_em->find(get_class($user), $user->id);
-        $this->assertFalse($user2->groups->isInitialized());
-        $user2->groups->clear();
-        $this->assertFalse($user2->groups->isInitialized());
-        $this->_em->flush();
-        $this->assertFalse($user2->groups->isInitialized());
-        
-        $this->assertEquals(0, $this->_em->getConnection()->fetchColumn("select count(*) from cms_users_groups"));
-    }
-
     public function testGetPartialReferenceToUpdateObjectWithoutLoadingIt()
     {
         //$this->_em->getConnection()->getConfiguration()->setSQLLogger(new \Doctrine\DBAL\Logging\EchoSQLLogger);
@@ -945,36 +949,5 @@ class BasicFunctionalTest extends \Doctrine\Tests\OrmFunctionalTestCase
         $this->_em->clear();
 
         $this->assertNull($this->_em->find(get_class($ph), $ph->phonenumber)->getUser());
-    }
-
-    /**
-     * @group DDC-952
-     */
-    public function testManyToOneFetchModeQuery()
-    {
-        $user = new CmsUser();
-        $user->username = "beberlei";
-        $user->name = "Benjamin E.";
-        $user->status = 'active';
-
-        $article = new CmsArticle();
-        $article->topic = "foo";
-        $article->text = "bar";
-        $article->user = $user;
-
-        $this->_em->persist($article);
-        $this->_em->persist($user);
-        $this->_em->flush();
-        $this->_em->clear();
-
-        $qc = $this->getCurrentQueryCount();
-        $dql = "SELECT a FROM Doctrine\Tests\Models\CMS\CmsArticle a WHERE a.id = ?1";
-        $article = $this->_em->createQuery($dql)
-                             ->setParameter(1, $article->id)
-                             ->setFetchMode('Doctrine\Tests\Models\CMS\CmsArticle', 'user', \Doctrine\ORM\Mapping\ClassMetadata::FETCH_EAGER)
-                             ->getSingleResult();
-        $this->assertInstanceOf('Doctrine\ORM\Proxy\Proxy', $article->user, "It IS a proxy, ...");
-        $this->assertTrue($article->user->__isInitialized__, "...but its initialized!");
-        $this->assertEquals($qc+2, $this->getCurrentQueryCount());
     }
 }

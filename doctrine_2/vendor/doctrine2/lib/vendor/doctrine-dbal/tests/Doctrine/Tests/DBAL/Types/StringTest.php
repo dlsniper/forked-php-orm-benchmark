@@ -31,19 +31,12 @@ class StringTest extends \Doctrine\Tests\DbalTestCase
 
     public function testConvertToPHPValue()
     {
-        $this->assertInternalType("string", $this->_type->convertToPHPValue("foo", $this->_platform));
-        $this->assertInternalType("string", $this->_type->convertToPHPValue("", $this->_platform));
+        $this->assertType("string", $this->_type->convertToPHPValue("foo", $this->_platform));
+        $this->assertType("string", $this->_type->convertToPHPValue("", $this->_platform));
     }
 
     public function testNullConversion()
     {
         $this->assertNull($this->_type->convertToPHPValue(null, $this->_platform));
-    }
-
-    public function testSQLConversion()
-    {
-        $this->assertFalse($this->_type->canRequireSQLConversion(), "String type can never require SQL conversion to work.");
-        $this->assertEquals('t.foo', $this->_type->convertToDatabaseValueSQL('t.foo', $this->_platform));
-        $this->assertEquals('t.foo', $this->_type->convertToPHPValueSQL('t.foo', $this->_platform));
     }
 }

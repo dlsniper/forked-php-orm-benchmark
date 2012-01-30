@@ -79,7 +79,7 @@ class DriverManagerTest extends \Doctrine\Tests\DbalTestCase
         );
 
         $conn = \Doctrine\DBAL\DriverManager::getConnection($options);
-        $this->assertInstanceOf($wrapperClass, $conn);
+        $this->assertType($wrapperClass, $conn);
     }
 
     public function testInvalidWrapperClass()
@@ -112,6 +112,6 @@ class DriverManagerTest extends \Doctrine\Tests\DbalTestCase
         );
 
         $conn = \Doctrine\DBAL\DriverManager::getConnection($options);
-        $this->assertInstanceOf('Doctrine\DBAL\Driver\PDOMySql\Driver', $conn->getDriver());
+        $this->assertType('Doctrine\DBAL\Driver\PDOMySql\Driver', $conn->getDriver());
     }
 }

@@ -111,20 +111,20 @@ class ExprTest extends \Doctrine\Tests\OrmTestCase
 
     public function testAndExpr()
     {
-        $this->assertEquals('1 = 1 AND 2 = 2', (string) $this->_expr->andx((string) $this->_expr->eq(1, 1), (string) $this->_expr->eq(2, 2)));
+        $this->assertEquals('(1 = 1) AND (2 = 2)', (string) $this->_expr->andx((string) $this->_expr->eq(1, 1), (string) $this->_expr->eq(2, 2)));
     }
 
     public function testIntelligentParenthesisPreventionAndExpr()
     {
         $this->assertEquals(
-            '1 = 1 AND 2 = 2',
+            '(1 = 1) AND (2 = 2)',
             (string) $this->_expr->andx($this->_expr->orx($this->_expr->andx($this->_expr->eq(1, 1))), (string) $this->_expr->eq(2, 2))
         );
     }
 
     public function testOrExpr()
     {
-        $this->assertEquals('1 = 1 OR 2 = 2', (string) $this->_expr->orx((string) $this->_expr->eq(1, 1), (string) $this->_expr->eq(2, 2)));
+        $this->assertEquals('(1 = 1) OR (2 = 2)', (string) $this->_expr->orx((string) $this->_expr->eq(1, 1), (string) $this->_expr->eq(2, 2)));
     }
 
     public function testAbsExpr()
@@ -256,16 +256,6 @@ class ExprTest extends \Doctrine\Tests\OrmTestCase
         $this->assertEquals('TRIM(u.id)', (string) $this->_expr->trim('u.id'));
     }
 
-    public function testIsNullExpr()
-    {
-        $this->assertEquals('u.id IS NULL', (string) $this->_expr->isNull('u.id'));
-    }
-
-    public function testIsNotNullExpr()
-    {
-        $this->assertEquals('u.id IS NOT NULL', (string) $this->_expr->isNotNull('u.id'));
-    }
-
     public function testInExpr()
     {
         $this->assertEquals('u.id IN(1, 2, 3)', (string) $this->_expr->in('u.id', array(1, 2, 3)));
@@ -296,7 +286,7 @@ class ExprTest extends \Doctrine\Tests\OrmTestCase
         $orExpr->add($andExpr);
         $orExpr->add($this->_expr->eq(1, 1));
 
-        $this->assertEquals('(1 = 1 AND 1 < 5) OR 1 = 1', (string) $orExpr);
+        $this->assertEquals('((1 = 1) AND (1 < 5)) OR (1 = 1)', (string) $orExpr);
     }
 
     public function testOrxExpr()
@@ -305,7 +295,7 @@ class ExprTest extends \Doctrine\Tests\OrmTestCase
         $orExpr->add($this->_expr->eq(1, 1));
         $orExpr->add($this->_expr->lt(1, 5));
 
-        $this->assertEquals('1 = 1 OR 1 < 5', (string) $orExpr);
+        $this->assertEquals('(1 = 1) OR (1 < 5)', (string) $orExpr);
     }
 
     public function testOrderByCountExpr()

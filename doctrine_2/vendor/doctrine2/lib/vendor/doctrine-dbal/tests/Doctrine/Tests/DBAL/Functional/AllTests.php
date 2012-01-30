@@ -41,7 +41,6 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\DBAL\Functional\WriteTest');
         $suite->addTestSuite('Doctrine\Tests\DBAL\Functional\LoggingTest');
         $suite->addTestSuite('Doctrine\Tests\DBAL\Functional\TypeConversionTest');
-        $suite->addTestSuite('Doctrine\Tests\DBAL\Functional\PortabilityTest');
 
         return $suite;
     }

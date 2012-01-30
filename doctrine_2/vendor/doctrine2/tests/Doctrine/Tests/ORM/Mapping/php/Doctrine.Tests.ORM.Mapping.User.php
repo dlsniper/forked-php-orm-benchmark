@@ -10,10 +10,6 @@ $metadata->setChangeTrackingPolicy(ClassMetadataInfo::CHANGETRACKING_DEFERRED_IM
 $metadata->addLifecycleCallback('doStuffOnPrePersist', 'prePersist');
 $metadata->addLifecycleCallback('doOtherStuffOnPrePersistToo', 'prePersist');
 $metadata->addLifecycleCallback('doStuffOnPostPersist', 'postPersist');
-$metadata->addNamedQuery(array(
-    'name'  => 'all',
-    'query' => 'SELECT u FROM __CLASS__ u'
-));
 $metadata->mapField(array(
    'id' => true,
    'fieldName' => 'id',
@@ -64,7 +60,7 @@ $metadata->mapOneToMany(array(
    1 => 'persist',
    ),
    'mappedBy' => 'user',
-   'orphanRemoval' => false,
+   'orphanRemoval' => true,
    'orderBy' => 
    array(
    'number' => 'ASC',

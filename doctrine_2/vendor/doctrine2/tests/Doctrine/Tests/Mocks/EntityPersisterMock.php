@@ -59,7 +59,7 @@ class EntityPersisterMock extends \Doctrine\ORM\Persisters\BasicEntityPersister
         $this->_updates[] = $entity;
     }
 
-    public function exists($entity, array $extraConditions = array())
+    public function exists($entity)
     {
         $this->existsCalled = true;
     }

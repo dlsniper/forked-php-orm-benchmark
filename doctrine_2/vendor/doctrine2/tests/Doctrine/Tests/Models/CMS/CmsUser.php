@@ -7,9 +7,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 /**
  * @Entity
  * @Table(name="cms_users")
- * @NamedQueries({
- *     @NamedQuery(name="all", query="SELECT u FROM __CLASS__ u")
- * })
  */
 class CmsUser
 {

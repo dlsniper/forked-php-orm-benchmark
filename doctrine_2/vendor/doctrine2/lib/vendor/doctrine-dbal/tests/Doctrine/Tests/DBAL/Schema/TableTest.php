@@ -38,8 +38,8 @@ class TableTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($table->hasColumn("bar"));
         $this->assertFalse($table->hasColumn("baz"));
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Column', $table->getColumn("foo"));
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Column', $table->getColumn("bar"));
+        $this->assertType('Doctrine\DBAL\Schema\Column', $table->getColumn("foo"));
+        $this->assertType('Doctrine\DBAL\Schema\Column', $table->getColumn("bar"));
 
         $this->assertEquals(2, count($table->getColumns()));
     }
@@ -153,9 +153,9 @@ class TableTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($table->hasIndex("bar_idx"));
         $this->assertFalse($table->hasIndex("some_idx"));
 
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Index', $table->getPrimaryKey());
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Index', $table->getIndex('the_primary'));
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Index', $table->getIndex('bar_idx'));
+        $this->assertType('Doctrine\DBAL\Schema\Index', $table->getPrimaryKey());
+        $this->assertType('Doctrine\DBAL\Schema\Index', $table->getIndex('the_primary'));
+        $this->assertType('Doctrine\DBAL\Schema\Index', $table->getIndex('bar_idx'));
     }
 
     public function testGetUnknownIndexThrowsException()
@@ -219,7 +219,7 @@ class TableTest extends \PHPUnit_Framework_TestCase
         $table->setPrimaryKey(array("bar"));
 
         $this->assertTrue($table->hasIndex("primary"));
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Index', $table->getPrimaryKey());
+        $this->assertType('Doctrine\DBAL\Schema\Index', $table->getPrimaryKey());
         $this->assertTrue($table->getIndex("primary")->isUnique());
         $this->assertTrue($table->getIndex("primary")->isPrimary());
     }
@@ -420,21 +420,6 @@ class TableTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $table->getName());
         $this->assertEquals('`bar`', $table->getQuotedName($mysqlPlatform));
         $this->assertEquals('"bar"', $table->getQuotedName($sqlitePlatform));
-    }
-
-    /**
-     * @group DBAL-79
-     */
-    public function testTableHasPrimaryKey()
-    {
-        $table = new Table("test");
-
-        $this->assertFalse($table->hasPrimaryKey());
-
-        $table->addColumn("foo", "integer");
-        $table->setPrimaryKey(array("foo"));
-
-        $this->assertTrue($table->hasPrimaryKey());
     }
 
     /**

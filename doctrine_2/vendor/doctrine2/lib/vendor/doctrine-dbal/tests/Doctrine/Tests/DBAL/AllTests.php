@@ -29,7 +29,6 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\DBAL\Platforms\PostgreSqlPlatformTest');
         $suite->addTestSuite('Doctrine\Tests\DBAL\Platforms\MsSqlPlatformTest');
         $suite->addTestSuite('Doctrine\Tests\DBAL\Platforms\OraclePlatformTest');
-        $suite->addTestSuite('Doctrine\Tests\DBAL\Platforms\ReservedKeywordsValidatorTest');
 
         // Type tests
         $suite->addTestSuite('Doctrine\Tests\DBAL\Types\ArrayTest');
@@ -55,17 +54,11 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\DBAL\Schema\ComparatorTest');
         $suite->addTestSuite('Doctrine\Tests\DBAL\Schema\SchemaDiffTest');
 
-        // Query Builder tests
-        $suite->addTestSuite('Doctrine\Tests\DBAL\Query\Expression\CompositeExpressionTest');
-        $suite->addTestSuite('Doctrine\Tests\DBAL\Query\Expression\ExpressionBuilderTest');
-        $suite->addTestSuite('Doctrine\Tests\DBAL\Query\QueryBuilderTest');
-        
         // Driver manager test
         $suite->addTestSuite('Doctrine\Tests\DBAL\DriverManagerTest');
 
         // Connection test
         $suite->addTestSuite('Doctrine\Tests\DBAL\ConnectionTest');
-        $suite->addTestSuite('Doctrine\Tests\DBAL\SQLParserUtilsTest');
         
         // Events and Listeners
         $suite->addTestSuite('Doctrine\Tests\DBAL\Events\OracleSessionInitTest');

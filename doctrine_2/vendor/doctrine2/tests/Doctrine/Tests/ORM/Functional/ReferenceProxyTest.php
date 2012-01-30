@@ -42,7 +42,7 @@ class ReferenceProxyTest extends \Doctrine\Tests\OrmFunctionalTestCase
     {
         $id = $this->createProduct();
 
-        $productProxy = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct', array('id' => $id));
+        $productProxy = $this->_factory->getProxy('Doctrine\Tests\Models\ECommerce\ECommerceProduct', array('id' => $id));
         $this->assertEquals('Doctrine Cookbook', $productProxy->getName());
     }
 
@@ -96,5 +96,55 @@ class ReferenceProxyTest extends \Doctrine\Tests\OrmFunctionalTestCase
         // domain logic, Product::__clone sets isCloned public property
         $this->assertTrue($clone->isCloned);
         $this->assertFalse($entity->isCloned);
+    }
+    
+    /**
+     * @group DDC-733
+     */
+    public function testInitializeProxy()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+        
+        $this->assertFalse($entity->__isInitialized__, "Pre-Condition: Object is unitialized proxy.");
+        $this->_em->getUnitOfWork()->initializeObject($entity);
+        $this->assertTrue($entity->__isInitialized__, "Should be initialized after called UnitOfWork::initializeObject()");
+    }
+    
+    /**
+     * @group DDC-1163
+     */
+    public function testInitializeChangeAndFlushProxy()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+        $entity->setName('Doctrine 2 Cookbook');
+        
+        $this->_em->flush();
+        $this->_em->clear();
+        
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+        $this->assertEquals('Doctrine 2 Cookbook', $entity->getName());
+    }
+
+    /**
+     * @group DDC-1022
+     */
+    public function testWakeupCalledOnProxy()
+    {
+        $id = $this->createProduct();
+
+        /* @var $entity Doctrine\Tests\Models\ECommerce\ECommerceProduct */
+        $entity = $this->_em->getReference('Doctrine\Tests\Models\ECommerce\ECommerceProduct' , $id);
+
+        $this->assertFalse($entity->wakeUp);
+
+        $entity->setName('Doctrine 2 Cookbook');
+
+        $this->assertTrue($entity->wakeUp, "Loading the proxy should call __wakeup().");
     }
 }

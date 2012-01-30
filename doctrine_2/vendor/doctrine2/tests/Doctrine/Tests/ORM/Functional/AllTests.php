@@ -35,7 +35,6 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\AdvancedDqlQueryTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OneToOneUnidirectionalAssociationTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OneToOneBidirectionalAssociationTest');
-        $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OneToOneEagerLoadingTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OneToManyBidirectionalAssociationTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OneToManyUnidirectionalAssociationTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ManyToManyBasicAssociationTest');
@@ -46,7 +45,6 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ManyToManySelfReferentialAssociationTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OrderedCollectionTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\OrderedJoinedTableInheritanceCollectionTest');
-        $suite->addTestSuite('Doctrine\Tests\ORM\Functional\IndexByAssociationTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\CompositePrimaryKeyTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ReferenceProxyTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\LifecycleCallbackTest');
@@ -57,9 +55,6 @@ class AllTests
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\IdentityMapTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\DatabaseDriverTest');
         $suite->addTestSuite('Doctrine\Tests\ORM\Functional\PostgreSQLIdentityStrategyTest');
-        $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ExtraLazyCollectionTest');
-        $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ClearEventTest');
-        $suite->addTestSuite('Doctrine\Tests\ORM\Functional\ReadOnlyTest');
         
         $suite->addTest(Locking\AllTests::suite());
         $suite->addTest(Ticket\AllTests::suite());

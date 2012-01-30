@@ -21,12 +21,12 @@ class BooleanTest extends \Doctrine\Tests\DbalTestCase
 
     public function testBooleanConvertsToDatabaseValue()
     {
-        $this->assertInternalType('integer', $this->_type->convertToDatabaseValue(1, $this->_platform));
+        $this->assertType('integer', $this->_type->convertToDatabaseValue(1, $this->_platform));
     }
 
     public function testBooleanConvertsToPHPValue()
     {
-        $this->assertInternalType('bool', $this->_type->convertToPHPValue(0, $this->_platform));
+        $this->assertType('bool', $this->_type->convertToPHPValue(0, $this->_platform));
     }
 
     public function testBooleanNullConvertsToPHPValue()
