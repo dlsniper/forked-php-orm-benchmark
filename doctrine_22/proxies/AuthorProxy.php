@@ -11,6 +11,11 @@ namespace Proxies {
             $this->_entityPersister = $entityPersister;
             $this->_identifier = $identifier;
         }
+	public function __load() {
+	}
+	public function __isInitialized() {
+		return true;
+	}
         private function _load() {
             if (!$this->__isInitialized__ && $this->_entityPersister) {
                 $this->__isInitialized__ = true;
