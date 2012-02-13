@@ -42,6 +42,10 @@
 abstract class BaseAuthorQuery extends ModelCriteria
 {
     
+	// query_cache behavior
+	protected $queryKey = '';
+	protected static $cacheBackend;
+				
     /**
      * Initializes internal state of BaseAuthorQuery object.
      *
@@ -343,5 +347,128 @@ abstract class BaseAuthorQuery extends ModelCriteria
 
         return $this;
     }
+
+	// query_cache behavior
+	
+	public function setQueryKey($key)
+	{
+		$this->queryKey = $key;
+		return $this;
+	}
+	
+	public function getQueryKey()
+	{
+		return $this->queryKey;
+	}
+	
+	public function cacheContains($key)
+	{
+		return isset(self::$cacheBackend[$key]);
+	}
+	
+	public function cacheFetch($key)
+	{
+		return isset(self::$cacheBackend[$key]) ? self::$cacheBackend[$key] : null;
+	}
+	
+	public function cacheStore($key, $value, $lifetime = 3600)
+	{
+		self::$cacheBackend[$key] = $value;
+	}
+	
+	protected function getSelectStatement($con = null)
+	{
+		$dbMap = Propel::getDatabaseMap(AuthorPeer::DATABASE_NAME);
+		$db = Propel::getDB(AuthorPeer::DATABASE_NAME);
+	  if ($con === null) {
+			$con = Propel::getConnection(AuthorPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+		}
+	
+		if (!$this->hasSelectClause() && !$this->getPrimaryCriteria()) {
+			$this->addSelfSelectColumns();
+		}
+	
+		$this->configureSelectColumns();
+	
+		$con->beginTransaction();
+		try {
+			$this->basePreSelect($con);
+			$key = $this->getQueryKey();
+			if ($key && $this->cacheContains($key)) {
+				$params = $this->getParams();
+				$sql = $this->cacheFetch($key);
+			} else {
+				$params = array();
+				$sql = BasePeer::createSelectSql($this, $params);
+				if ($key) {
+					$this->cacheStore($key, $sql);
+				}
+			}
+			$stmt = $con->prepare($sql);
+			$db->bindValues($stmt, $params, $dbMap);
+			$stmt->execute();
+			$con->commit();
+		} catch (PropelException $e) {
+			$con->rollback();
+			throw $e;
+		}
+	
+		return $stmt;
+	}
+	
+	protected function getCountStatement($con = null)
+	{
+		$dbMap = Propel::getDatabaseMap($this->getDbName());
+		$db = Propel::getDB($this->getDbName());
+	  if ($con === null) {
+			$con = Propel::getConnection($this->getDbName(), Propel::CONNECTION_READ);
+		}
+	
+		$con->beginTransaction();
+		try {
+			$this->basePreSelect($con);
+			$key = $this->getQueryKey();
+			if ($key && $this->cacheContains($key)) {
+				$params = $this->getParams();
+				$sql = $this->cacheFetch($key);
+			} else {
+				if (!$this->hasSelectClause() && !$this->getPrimaryCriteria()) {
+					$this->addSelfSelectColumns();
+				}
+				$params = array();
+				$needsComplexCount = $this->getGroupByColumns()
+					|| $this->getOffset()
+					|| $this->getLimit()
+					|| $this->getHaving()
+					|| in_array(Criteria::DISTINCT, $this->getSelectModifiers());
+				if ($needsComplexCount) {
+					if (BasePeer::needsSelectAliases($this)) {
+						if ($this->getHaving()) {
+							throw new PropelException('Propel cannot create a COUNT query when using HAVING and  duplicate column names in the SELECT part');
+						}
+						$db->turnSelectColumnsToAliases($this);
+					}
+					$selectSql = BasePeer::createSelectSql($this, $params);
+					$sql = 'SELECT COUNT(*) FROM (' . $selectSql . ') propelmatch4cnt';
+				} else {
+					// Replace SELECT columns with COUNT(*)
+					$this->clearSelectColumns()->addSelectColumn('COUNT(*)');
+					$sql = BasePeer::createSelectSql($this, $params);
+				}
+				if ($key) {
+					$this->cacheStore($key, $sql);
+				}
+			}
+			$stmt = $con->prepare($sql);
+			$db->bindValues($stmt, $params, $dbMap);
+			$stmt->execute();
+			$con->commit();
+		} catch (PropelException $e) {
+			$con->rollback();
+			throw $e;
+		}
+	
+		return $stmt;
+	}
 
 } // BaseAuthorQuery

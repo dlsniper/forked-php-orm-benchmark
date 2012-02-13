@@ -55,4 +55,17 @@ class BookTableMap extends TableMap
 		$this->addRelation('Author', 'Author', RelationMap::MANY_TO_ONE, array('author_id' => 'id', ), 'SET NULL', 'CASCADE');
 	} // buildRelations()
 
+	/**
+	 *
+	 * Gets the list of behaviors registered for this table
+	 *
+	 * @return array Associative array (name => parameters) of behaviors
+	 */
+	public function getBehaviors()
+	{
+		return array(
+			'query_cache' => array('backend' => 'array', 'lifetime' => '3600', ),
+		);
+	} // getBehaviors()
+
 } // BookTableMap
