@@ -894,6 +894,20 @@ class SelectSqlGenerationTest extends \Doctrine\Tests\OrmTestCase
     }
 
     /**
+     * @group DDC-1693
+     * @group locking
+     */
+    public function testLockModeNoneQueryHint()
+    {
+        $this->assertSqlGeneration(
+            "SELECT u FROM Doctrine\Tests\Models\CMS\CmsUser u WHERE u.username = 'gblanco'",
+            "SELECT c0_.id AS id0, c0_.status AS status1, c0_.username AS username2, c0_.name AS name3 ".
+            "FROM cms_users c0_ WHERE c0_.username = 'gblanco'",
+            array(Query::HINT_LOCK_MODE => \Doctrine\DBAL\LockMode::NONE)
+                );
+    }
+
+    /**
      * @group DDC-430
      */
     public function testSupportSelectWithMoreThan10InputParameters()
@@ -1059,7 +1073,7 @@ class SelectSqlGenerationTest extends \Doctrine\Tests\OrmTestCase
     {
         $this->assertSqlGeneration(
             "SELECT t, s, l FROM Doctrine\Tests\Models\DDC117\DDC117Link l INNER JOIN l.target t INNER JOIN l.source s",
-            "SELECT d0_.article_id AS article_id0, d0_.title AS title1, d1_.article_id AS article_id2, d1_.title AS title3 FROM DDC117Link d2_ INNER JOIN DDC117Article d0_ ON d2_.target_id = d0_.article_id INNER JOIN DDC117Article d1_ ON d2_.source_id = d1_.article_id"
+            "SELECT d0_.article_id AS article_id0, d0_.title AS title1, d1_.article_id AS article_id2, d1_.title AS title3, d2_.source_id AS source_id4, d2_.target_id AS target_id5 FROM DDC117Link d2_ INNER JOIN DDC117Article d0_ ON d2_.target_id = d0_.article_id INNER JOIN DDC117Article d1_ ON d2_.source_id = d1_.article_id"
         );
     }
 

@@ -128,10 +128,12 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
  * <description>
  *
  * @param <variableType>$<variableName>
+ * @return <entity>
  */
 public function <methodName>(<methodTypeHint>$<variableName>)
 {
 <spaces>$this-><fieldName>[] = $<variableName>;
+<spaces>return $this;
 }';
 
     private static $_lifecycleCallbackMethodTemplate =
@@ -681,6 +683,9 @@ public function <methodName>()
 
     private function _isAssociationIsNullable($associationMapping)
     {
+        if (isset($associationMapping['id']) && $associationMapping['id']) {
+            return false;
+        }
         if (isset($associationMapping['joinColumns'])) {
             $joinColumns = $associationMapping['joinColumns'];
         } else {
@@ -857,6 +862,14 @@ public function <methodName>()
 
         if ($this->_generateAnnotations) {
             $lines[] = $this->_spaces . ' *';
+            
+            if (isset($associationMapping['id']) && $associationMapping['id']) {
+                $lines[] = $this->_spaces . ' * @' . $this->_annotationsPrefix . 'Id';
+            
+                if ($generatorType = $this->_getIdGeneratorTypeString($metadata->generatorType)) {
+                    $lines[] = $this->_spaces . ' * @' . $this->_annotationsPrefix . 'GeneratedValue(strategy="' . $generatorType . '")';
+                }
+            }
 
             $type = null;
             switch ($associationMapping['type']) {

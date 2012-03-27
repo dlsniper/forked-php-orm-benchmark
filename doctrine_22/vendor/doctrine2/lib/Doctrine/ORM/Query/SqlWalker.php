@@ -440,12 +440,14 @@ class SqlWalker implements TreeWalker
                     $sql .= ' ' . $this->_platform->getWriteLockSQL();
                     break;
 
-                case LockMode::PESSIMISTIC_OPTIMISTIC:
+                case LockMode::OPTIMISTIC:
                     foreach ($this->_selectedClasses AS $selectedClass) {
-                        if ( ! $class->isVersioned) {
+                        if ( ! $selectedClass['class']->isVersioned) {
                             throw \Doctrine\ORM\OptimisticLockException::lockFailed($selectedClass['class']->name);
                         }
                     }
+                    break;
+                case LockMode::NONE:
                     break;
 
                 default:
@@ -636,11 +638,17 @@ class SqlWalker implements TreeWalker
             }
 
             // Add foreign key columns to SQL, if necessary
-            if ( ! $addMetaColumns) continue;
+            if ( ! $addMetaColumns && ! $class->containsForeignIdentifier) {
+                continue;
+            }
 
             // Add foreign key columns of class and also parent classes
             foreach ($class->associationMappings as $assoc) {
-                if ( ! ($assoc['isOwningSide'] && $assoc['type'] & ClassMetadata::TO_ONE)) continue;
+                if ( ! ($assoc['isOwningSide'] && $assoc['type'] & ClassMetadata::TO_ONE)) {
+                    continue;
+                } else if ( !$addMetaColumns && !isset($assoc['id'])) {
+                    continue;
+                }
 
                 $owningClass   = (isset($assoc['inherited'])) ? $this->_em->getClassMetadata($assoc['inherited']) : $class;
                 $sqlTableAlias = $this->getSQLTableAlias($owningClass->getTableName(), $dqlAlias);
@@ -652,6 +660,11 @@ class SqlWalker implements TreeWalker
 
                     $this->_rsm->addMetaResult($dqlAlias, $columnAlias, $srcColumn, (isset($assoc['id']) && $assoc['id'] === true));
                 }
+            }
+
+            // Add foreign key columns to SQL, if necessary
+            if ( ! $addMetaColumns) {
+                continue;
             }
 
             // Add foreign key columns of subclasses
@@ -1090,7 +1103,7 @@ class SqlWalker implements TreeWalker
 
                 $sqlTableAlias = $this->getSQLTableAlias($tableName, $dqlAlias);
                 $columnName    = $class->getQuotedColumnName($fieldName, $this->_platform);
-                $columnAlias   = $this->getSQLColumnAlias($columnName);
+                $columnAlias   = $this->getSQLColumnAlias($class->fieldMappings[$fieldName]['columnName']);
 
                 $col = $sqlTableAlias . '.' . $columnName;
 
