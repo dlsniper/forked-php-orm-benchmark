@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
+require_once dirname(__FILE__) . '/Doctrine22WithCacheTestSuite.php';
 
-class Doctrine2ArrayHydrateTestSuite extends Doctrine2WithCacheTestSuite
+class Doctrine22WithoutProxiesTestSuite extends Doctrine22WithCacheTestSuite
 {
     public function runHydrate($i)
     {        
@@ -10,7 +10,8 @@ class Doctrine2ArrayHydrateTestSuite extends Doctrine2WithCacheTestSuite
             'SELECT b FROM Book b WHERE b.price > ?1'
         )->setParameter(1, $i)
          ->setMaxResults(5)
-         ->getArrayResult();
+         ->setHint(\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true)
+         ->getResult();
 
         foreach ($books as $book) {
             
@@ -23,8 +24,9 @@ class Doctrine2ArrayHydrateTestSuite extends Doctrine2WithCacheTestSuite
         $book = $this->em->createQuery(
             'SELECT b, a FROM Book b JOIN b.author a WHERE b.title = ?1'
         )->setParameter(1, 'Hello' . $i)
-         ->setMaxResults(1)
-         ->getArrayResult();
+         ->setMaxResults(5)
+         ->setHint(\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true)
+         ->getResult();
     }
 	
 }

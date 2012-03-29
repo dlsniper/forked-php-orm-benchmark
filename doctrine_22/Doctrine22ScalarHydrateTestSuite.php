@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
+require_once dirname(__FILE__) . '/Doctrine22WithCacheTestSuite.php';
 
-class Doctrine2ScalarHydrateTestSuite extends Doctrine2WithCacheTestSuite
+class Doctrine22ScalarHydrateTestSuite extends Doctrine22WithCacheTestSuite
 {
     public function runHydrate($i)
     {        
