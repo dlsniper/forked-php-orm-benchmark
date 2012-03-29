@@ -48,7 +48,7 @@ class Doctrine22TestSuite extends AbstractTestSuite
       $schemaTool = new Doctrine\ORM\Tools\SchemaTool($this->em);
       $schemaTool->createSchema(self::$classes);
       
-      require_once __DIR__ . '/proxies/AuthorProxy.php';
+      require_once __DIR__ . '/proxies/__CG__Author.php';
     }
 
     public function beginTransaction() {
