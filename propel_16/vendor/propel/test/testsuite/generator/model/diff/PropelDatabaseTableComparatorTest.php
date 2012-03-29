@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelDatabaseComparator.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelDatabaseDiff.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
@@ -40,7 +39,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d1->addTable($t1);
 		$t2 = new Table('Bar');
 		$d1->addTable($t2);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table');
 		$c3 = new Column('Foo');
@@ -53,7 +52,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2->addTable($t3);
 		$t4 = new Table('Bar');
 		$d2->addTable($t4);
-		
+
 		$this->assertFalse(PropelDatabaseComparator::computeDiff($d1, $d2));
 	}
 
@@ -65,7 +64,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2 = new Database();
 		$t2 = new Table('Bar');
 		$d2->addTable($t2);
-		
+
 		$diff = PropelDatabaseComparator::computeDiff($d1, $d2);
 		$this->assertTrue($diff instanceof PropelDatabaseDiff);
 	}
@@ -78,10 +77,10 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2 = new Database();
 		$t2 = new Table('fOO');
 		$d2->addTable($t2);
-		
+
 		$this->assertFalse(PropelDatabaseComparator::computeDiff($d1, $d2, true));
 	}
-	
+
 	public function testCompareAddedTable()
 	{
 		$d1 = new Database();
@@ -107,7 +106,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2->addTable($t3);
 		$t4 = new Table('Bar');
 		$d2->addTable($t4);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -144,7 +143,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$t4 = new Table('Bar');
 		$t4->setSkipSql(true);
 		$d2->addTable($t4);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -167,7 +166,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d1->addTable($t1);
 		$t2 = new Table('Bar');
 		$d1->addTable($t2);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table');
 		$c3 = new Column('Foo');
@@ -178,7 +177,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$c3->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t3->addColumn($c3);
 		$d2->addTable($t3);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -204,7 +203,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$t2 = new Table('Bar');
 		$t2->setSkipSql(true);
 		$d1->addTable($t2);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table');
 		$c3 = new Column('Foo');
@@ -215,7 +214,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$c3->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t3->addColumn($c3);
 		$d2->addTable($t3);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -241,7 +240,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d1->addTable($t1);
 		$t2 = new Table('Bar');
 		$d1->addTable($t2);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table');
 		$c3 = new Column('Foo');
@@ -254,7 +253,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2->addTable($t3);
 		$t4 = new Table('Bar');
 		$d2->addTable($t4);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -280,7 +279,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d1->addTable($t1);
 		$t2 = new Table('Bar');
 		$d1->addTable($t2);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table2');
 		$c3 = new Column('Foo');
@@ -293,7 +292,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d2->addTable($t3);
 		$t4 = new Table('Bar');
 		$d2->addTable($t4);
-		
+
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);
 		$dc->setToDatabase($d2);
@@ -325,7 +324,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$d1->addTable($t2);
 		$t11 = new Table('Baz');
 		$d1->addTable($t11);
-		
+
 		$d2 = new Database();
 		$t3 = new Table('Foo_Table');
 		$c3 = new Column('Foo1');
@@ -346,7 +345,7 @@ class PropelDatabaseTableComparatorTest extends PHPUnit_Framework_TestCase
 		$c5->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
 		$t5->addColumn($c5);
 		$d2->addTable($t5);
-		
+
 		// Foo_Table was modified, Bar was renamed, Baz was removed, Biz was added
 		$dc = new PropelDatabaseComparator();
 		$dc->setFromDatabase($d1);

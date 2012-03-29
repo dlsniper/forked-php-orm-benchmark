@@ -8,14 +8,13 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/builder/util/DefaultEnglishPluralizer.php';
 
 /**
  * Tests for the StandardEnglishPluralizer class
  *
- * @version    $Revision: 2087 $
- * @package    generator.builder.util 
+ * @version    $Revision$
+ * @package    generator.builder.util
  */
 class DefaultEnglishPluralizerTest extends PHPUnit_Framework_TestCase
 {

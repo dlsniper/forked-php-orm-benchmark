@@ -38,7 +38,7 @@ class PHP5TableMapBuilder extends OMBuilder
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the name of the current class being built.
 	 * @return     string
@@ -86,7 +86,8 @@ class PHP5TableMapBuilder extends OMBuilder
  *
  * @package    propel.generator.".$this->getPackage()."
  */
-class ".$this->getClassname()." extends TableMap {
+class ".$this->getClassname()." extends TableMap
+{
 ";
 	}
 
@@ -159,7 +160,7 @@ class ".$this->getClassname()." extends TableMap {
 	 */
 	public function initialize()
 	{
-	  // attributes
+		// attributes
 		\$this->setName('".$table->getName()."');
 		\$this->setPhpName('".$table->getPhpName()."');
 		\$this->setClassname('" . addslashes($this->getStubObjectBuilder()->getFullyQualifiedClassname()) . "');
@@ -181,10 +182,15 @@ class ".$this->getClassname()." extends TableMap {
 			$script .= "
 		\$this->setPrimaryKeyMethodInfo('".$platform->getSequenceName($table)."');";
 		}
-		
+
 		if ($this->getTable()->getChildrenColumn()) {
 			$script .= "
 		\$this->setSingleTableInheritance(true);";
+		}
+
+		if ($this->getTable()->getIsCrossRef()) {
+			$script .= "
+		\$this->setIsCrossRef(true);";
 		}
 
 		// Add columns to map
@@ -192,7 +198,7 @@ class ".$this->getClassname()." extends TableMap {
 		// columns";
 		foreach ($table->getColumns() as $col) {
 			$cup=strtoupper($col->getName());
-		  $cfc=$col->getPhpName();
+			$cfc=$col->getPhpName();
 			if (!$col->getSize()) {
 				$size = "null";
 			} else {
@@ -231,7 +237,7 @@ class ".$this->getClassname()." extends TableMap {
 		} // foreach
 
 		// validators
-    $script .= "
+		$script .= "
 		// validators";
 		foreach ($table->getValidators() as $val) {
 			$col = $val->getColumn();
@@ -244,7 +250,7 @@ class ".$this->getClassname()." extends TableMap {
 					$script .= "
 		\$this->addValidator('$cup', '".$rule->getName()."', '".$rule->getClass()."', '".str_replace("'", "\'", $rule->getValue())."', '".str_replace("'", "\'", $rule->getMessage())."');";
 				} // if ($rule->getTranslation() ...
-  			} // foreach rule
+				} // foreach rule
 		}  // foreach validator
 
 		$script .= "
@@ -265,41 +271,44 @@ class ".$this->getClassname()." extends TableMap {
 	 */
 	public function buildRelations()
 	{";
-    foreach ($this->getTable()->getForeignKeys() as $fkey)
-    {
-      $columnMapping = 'array(';
-      foreach ($fkey->getLocalForeignMapping() as $key => $value)
-      {
-        $columnMapping .= "'$key' => '$value', ";
-      }
-      $columnMapping .= ')';
-      $onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
-      $onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
-      $script .= "
-    \$this->addRelation('" . $this->getFKPhpNameAffix($fkey) . "', '" . addslashes($this->getNewStubObjectBuilder($fkey->getForeignTable())->getFullyQualifiedClassname()) . "', RelationMap::MANY_TO_ONE, $columnMapping, $onDelete, $onUpdate);";
-    }
-    foreach ($this->getTable()->getReferrers() as $fkey)
-    {
-      $columnMapping = 'array(';
-      foreach ($fkey->getForeignLocalMapping() as $key => $value)
-      {
-        $columnMapping .= "'$key' => '$value', ";
-      }
-      $columnMapping .= ')';
-      $onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
-      $onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
-      $script .= "
-    \$this->addRelation('" . $this->getRefFKPhpNameAffix($fkey) . "', '" . addslashes($this->getNewStubObjectBuilder($fkey->getTable())->getFullyQualifiedClassname()) . "', RelationMap::ONE_TO_" . ($fkey->isLocalPrimaryKey() ? "ONE" : "MANY") .", $columnMapping, $onDelete, $onUpdate);";
-    }
-    foreach ($this->getTable()->getCrossFks() as $fkList)
-    {
-      list($refFK, $crossFK) = $fkList;
-      $onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
-      $onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
-      $script .= "
-    \$this->addRelation('" . $this->getFKPhpNameAffix($crossFK) . "', '" . addslashes($this->getNewStubObjectBuilder($crossFK->getForeignTable())->getFullyQualifiedClassname()) . "', RelationMap::MANY_TO_MANY, array(), $onDelete, $onUpdate);";
-    }
-    $script .= "
+		foreach ($this->getTable()->getForeignKeys() as $fkey) {
+			$columnMapping = 'array(';
+			foreach ($fkey->getLocalForeignMapping() as $key => $value) {
+				$columnMapping .= "'$key' => '$value', ";
+			}
+			$columnMapping .= ')';
+			$onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
+			$onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
+			$script .= "
+		\$this->addRelation('" . $this->getFKPhpNameAffix($fkey) . "', '" . addslashes($this->getNewStubObjectBuilder($fkey->getForeignTable())->getFullyQualifiedClassname()) . "', RelationMap::MANY_TO_ONE, $columnMapping, $onDelete, $onUpdate);";
+		}
+		foreach ($this->getTable()->getReferrers() as $fkey) {
+			$relationName = $this->getRefFKPhpNameAffix($fkey);
+			$columnMapping = 'array(';
+			foreach ($fkey->getForeignLocalMapping() as $key => $value) {
+				$columnMapping .= "'$key' => '$value', ";
+			}
+			$columnMapping .= ')';
+			$onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
+			$onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
+			$script .= "
+		\$this->addRelation('$relationName', '" . addslashes($this->getNewStubObjectBuilder($fkey->getTable())->getFullyQualifiedClassname()) . "', RelationMap::ONE_TO_" . ($fkey->isLocalPrimaryKey() ? "ONE" : "MANY") .", $columnMapping, $onDelete, $onUpdate";
+			if ($fkey->isLocalPrimaryKey()) {
+			 	$script .= ");";
+			} else {
+				$script .= ", '" . $this->getRefFKPhpNameAffix($fkey, true) . "');";
+			}
+		}
+		foreach ($this->getTable()->getCrossFks() as $fkList) {
+			list($refFK, $crossFK) = $fkList;
+			$relationName = $this->getFKPhpNameAffix($crossFK);
+			$pluralName = "'" . $this->getFKPhpNameAffix($crossFK, true) . "'";
+			$onDelete = $fkey->hasOnDelete() ? "'" . $fkey->getOnDelete() . "'" : 'null';
+			$onUpdate = $fkey->hasOnUpdate() ? "'" . $fkey->getOnUpdate() . "'" : 'null';
+			$script .= "
+		\$this->addRelation('$relationName', '" . addslashes($this->getNewStubObjectBuilder($crossFK->getForeignTable())->getFullyQualifiedClassname()) . "', RelationMap::MANY_TO_MANY, array(), $onDelete, $onUpdate, $pluralName);";
+		}
+		$script .= "
 	} // buildRelations()
 ";
 	}
@@ -314,48 +323,46 @@ class ".$this->getClassname()." extends TableMap {
 	  {
   		$script .= "
 	/**
-	 * 
+	 *
 	 * Gets the list of behaviors registered for this table
-	 * 
+	 *
 	 * @return array Associative array (name => parameters) of behaviors
 	 */
 	public function getBehaviors()
 	{
 		return array(";
-      foreach ($behaviors as $behavior)
-      {
-        $script .= "
+			foreach ($behaviors as $behavior) {
+				$script .= "
 			'{$behavior->getName()}' => array(";
-        foreach ($behavior->getParameters() as $key => $value)
-        {
-          $script .= "'$key' => '$value', ";
-        }
-        $script .= "),";
-      }
-      $script .= "
+				foreach ($behavior->getParameters() as $key => $value) {
+					$script .= "'$key' => '$value', ";
+				}
+				$script .= "),";
+			}
+			$script .= "
 		);
 	} // getBehaviors()
 ";
-    }
+		}
 	}
 
-  /**
-   * Checks whether any registered behavior on that table has a modifier for a hook
-   * @param string $hookName The name of the hook as called from one of this class methods, e.g. "preSave"
-   * @return boolean
-   */
-  public function hasBehaviorModifier($hookName, $modifier = null)
-  {
-    return parent::hasBehaviorModifier($hookName, 'TableMapBuilderModifier');
-  }
+	/**
+	 * Checks whether any registered behavior on that table has a modifier for a hook
+	 * @param string $hookName The name of the hook as called from one of this class methods, e.g. "preSave"
+	 * @return boolean
+	 */
+	public function hasBehaviorModifier($hookName, $modifier = null)
+	{
+		return parent::hasBehaviorModifier($hookName, 'TableMapBuilderModifier');
+	}
 
-  /**
-   * Checks whether any registered behavior on that table has a modifier for a hook
-   * @param string $hookName The name of the hook as called from one of this class methods, e.g. "preSave"
+	/**
+	 * Checks whether any registered behavior on that table has a modifier for a hook
+	 * @param string $hookName The name of the hook as called from one of this class methods, e.g. "preSave"
 	 * @param string &$script The script will be modified in this method.
-   */
-  public function applyBehaviorModifier($hookName, &$script, $tab = "		")
-  {
-    return $this->applyBehaviorModifierBase($hookName, 'TableMapBuilderModifier', $script, $tab);
-  }
+	 */
+	public function applyBehaviorModifier($hookName, &$script, $tab = "		")
+	{
+		return $this->applyBehaviorModifierBase($hookName, 'TableMapBuilderModifier', $script, $tab);
+	}
 } // PHP5TableMapBuilder

@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelColumnComparator.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
 
@@ -41,14 +40,17 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$this->assertEquals(array(), PropelColumnComparator::compareColumns($c1, $c2));
 	}
-	
+
 	public function testCompareType()
 	{
 		$c1 = new Column();
 		$c1->getDomain()->copy($this->platform->getDomainForType('VARCHAR'));
 		$c2 = new Column();
 		$c2->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
-		$expectedChangedProperties = array('type' => array('VARCHAR', 'TEXT'));
+		$expectedChangedProperties = array(
+			'type'    => array('VARCHAR', 'LONGVARCHAR'),
+			'sqlType' => array('VARCHAR', 'TEXT'),
+		);
 		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
 	}
 
@@ -72,6 +74,17 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
 	}
 
+	public function testCompareSqlType()
+	{
+		$c1 = new Column();
+		$c1->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+		$c2 = new Column();
+		$c2->getDomain()->copy($this->platform->getDomainForType('INTEGER'));
+		$c2->getDomain()->setSqlType('INTEGER(10) UNSIGNED');
+		$expectedChangedProperties = array('sqlType' => array('INTEGER', 'INTEGER(10) UNSIGNED'));
+		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
+	}
+
 	public function testCompareNotNull()
 	{
 		$c1 = new Column();
@@ -88,7 +101,7 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c1->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$c2 = new Column();
 		$expectedChangedProperties = array(
-			'defaultValueType' => array(ColumnDefaultValue::TYPE_VALUE, null), 
+			'defaultValueType' => array(ColumnDefaultValue::TYPE_VALUE, null),
 			'defaultValueValue' => array(123, null)
 		);
 		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
@@ -129,7 +142,7 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		);
 		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
 	}
-	
+
 	/**
 	 * @see http://www.propelorm.org/ticket/1141
 	 */
@@ -151,7 +164,7 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$expectedChangedProperties = array('autoIncrement' => array(true, false));
 		$this->assertEquals($expectedChangedProperties, PropelColumnComparator::compareColumns($c1, $c2));
 	}
-	
+
 	public function testCompareMultipleDifferences()
 	{
 		$c1 = new Column();
@@ -165,6 +178,7 @@ class PropelColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$expectedChangedProperties = array(
 			'type' => array('INTEGER', 'DOUBLE'),
+			'sqlType' => array('INTEGER', 'DOUBLE'),
 			'scale' => array(NULL, 2),
 			'size' => array(NULL, 3),
 			'notNull' => array(false, true),

@@ -16,7 +16,7 @@ require_once dirname(__FILE__) . '/DefaultPlatform.php';
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
  * @author     Niklas Närhinen <niklas@narhinen.net>
- * @version    $Revision: 2238 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 class PgsqlPlatform extends DefaultPlatform
@@ -121,7 +121,7 @@ class PgsqlPlatform extends DefaultPlatform
 
 	protected function getAddSequenceDDL(Table $table)
 	{
-		if ($table->getIdMethod() == IDMethod::NATIVE 
+		if ($table->getIdMethod() == IDMethod::NATIVE
 		 && $table->getIdMethodParameters() != null) {
 			$pattern = "
 CREATE SEQUENCE %s;
@@ -134,7 +134,7 @@ CREATE SEQUENCE %s;
 
 	protected function getDropSequenceDDL(Table $table)
 	{
-		if ($table->getIdMethod() == IDMethod::NATIVE 
+		if ($table->getIdMethod() == IDMethod::NATIVE
 		 && $table->getIdMethodParameters() != null) {
 			$pattern = "
 DROP SEQUENCE %s;
@@ -191,7 +191,7 @@ SET search_path TO public;
 ";
 		}
 	}
-	
+
 	public function getAddTablesDDL(Database $database)
 	{
 		$ret = $this->getBeginDDL();
@@ -208,7 +208,7 @@ SET search_path TO public;
 		$ret .= $this->getEndDDL();
 		return $ret;
 	}
-	
+
 	public function getAddTableDDL(Table $table)
 	{
 		$ret = '';
@@ -241,7 +241,7 @@ CREATE TABLE %s
 			$this->quoteIdentifier($table->getName()),
 			implode($sep, $lines)
 		);
-		
+
 		if ($table->hasDescription()) {
 			$pattern = "
 COMMENT ON TABLE %s IS %s;
@@ -251,13 +251,13 @@ COMMENT ON TABLE %s IS %s;
 				$this->quote($table->getDescription())
 			);
 		}
-		
+
 		$ret .= $this->getAddColumnsComments($table);
 		$ret .= $this->getResetSchemaDDL($table);
-		
+
 		return $ret;
 	}
-	
+
 	protected function getAddColumnsComments(Table $table)
 	{
 		$ret = '';
@@ -286,7 +286,7 @@ COMMENT ON COLUMN %s.%s IS %s;
 		$ret = '';
 		$ret .= $this->getUseSchemaDDL($table);
 		$pattern = "
-DROP TABLE %s CASCADE;
+DROP TABLE IF EXISTS %s CASCADE;
 ";
 		$ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()));
 		$ret .= $this->getDropSequenceDDL($table);
@@ -299,18 +299,18 @@ DROP TABLE %s CASCADE;
 		$tableName = $table->getName();
 		return $tableName . '_pkey';
 	}
-		
+
 	public function getColumnDDL(Column $col)
 	{
 		$domain = $col->getDomain();
-		
+
 		$ddl = array($this->quoteIdentifier($col->getName()));
 		$sqlType = $domain->getSqlType();
 		$table = $col->getTable();
 		if ($col->isAutoIncrement() && $table && $table->getIdMethodParameters() == null) {
 			$sqlType = $col->getType() === PropelTypes::BIGINT ? 'bigserial' : 'serial';
 		}
-		if ($this->hasSize($sqlType)) {
+		if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
 			$ddl []= $sqlType . $domain->printSize();
 		} else {
 			$ddl []= $sqlType;
@@ -335,7 +335,7 @@ DROP TABLE %s CASCADE;
 			$this->getColumnListDDL($unique->getColumns())
 		);
 	}
-	
+
 	/**
 	 * @see        Platform::supportsSchemas()
 	 */
@@ -353,7 +353,12 @@ DROP TABLE %s CASCADE;
 	{
 		return true;
 	}
-	
+
+	public function supportsVarcharWithoutSize()
+	{
+		return true;
+	}
+
 	/**
 	 * Overrides the implementation from DefaultPlatform
 	 *
@@ -365,13 +370,13 @@ DROP TABLE %s CASCADE;
 	{
 		$ret = '';
 		$changedProperties = $columnDiff->getChangedProperties();
-		
+
 		$toColumn = $columnDiff->getToColumn();
-		
+
 		$table = $toColumn->getTable();
-		
+
 		$colName = $this->quoteIdentifier($toColumn->getName());
-		
+
 		$pattern = "
 ALTER TABLE %s ALTER COLUMN %s;
 ";
@@ -392,7 +397,11 @@ ALTER TABLE %s ALTER COLUMN %s;
 					$ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' TYPE ' . $sqlType);
 					break;
 				case 'defaultValueValue':
-					$ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' SET ' . $this->getColumnDefaultValueDDL($toColumn));
+					if ($property[0] !== null && $property[1] === null) {
+					    $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' DROP DEFAULT');
+					} else {
+					    $ret .= sprintf($pattern, $this->quoteIdentifier($table->getName()), $colName . ' SET ' . $this->getColumnDefaultValueDDL($toColumn));
+					}
 					break;
 				case 'notNull':
 					$notNull = " DROP NOT NULL";
@@ -405,7 +414,7 @@ ALTER TABLE %s ALTER COLUMN %s;
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Overrides the implementation from DefaultPlatform
 	 *
@@ -421,7 +430,7 @@ ALTER TABLE %s ALTER COLUMN %s;
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Overrides the implementation from DefaultPlatform
 	 *
@@ -437,10 +446,10 @@ ALTER TABLE %s ALTER COLUMN %s;
 		}
 		return $ret;
 	}
-	
+
 	/**
 	 * Overrides the implementation from DefaultPlatform
-	 * 
+	 *
 	 * @author     Niklas Närhinen <niklas@narhinen.net>
 	 * @return     string
 	 * @see        DefaultPlatform::getDropIndexDDL
@@ -451,12 +460,35 @@ ALTER TABLE %s ALTER COLUMN %s;
 			$pattern = "
 	ALTER TABLE %s DROP CONSTRAINT %s;
 	";
-			return sprintf($pattern, 
+			return sprintf($pattern,
 				$this->quoteIdentifier($index->getTable()->getName()),
 				$this->quoteIdentifier($index->getName())
 			);
 		} else {
 			return parent::getDropIndexDDL($index);
 		}
+	}
+
+	/**
+	 * Get the PHP snippet for getting a Pk from the database.
+	 * Warning: duplicates logic from DBPostgres::getId().
+	 * Any code modification here must be ported there.
+	 */
+	public function getIdentifierPhp($columnValueMutator, $connectionVariableName = '$con', $sequenceName = '', $tab = "			")
+	{
+		if (!$sequenceName) {
+			throw new EngineException('PostgreSQL needs a sequence name to fetch primary keys');
+		}
+		$snippet = "
+\$stmt = %s->query(\"SELECT nextval('%s')\");
+\$row = \$stmt->fetch(PDO::FETCH_NUM);
+%s = \$row[0];";
+		$script = sprintf($snippet,
+			$connectionVariableName,
+			$this->quoteIdentifier($sequenceName),
+			$columnValueMutator
+		);
+
+		return preg_replace('/^/m', $tab, $script);
 	}
 }

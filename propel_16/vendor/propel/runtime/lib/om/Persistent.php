@@ -14,7 +14,7 @@
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     John D. McNally <jmcnally@collab.net> (Torque)
  * @author     Fedor K. <fedor@apache.org> (Torque)
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.runtime.om
  */
 interface Persistent

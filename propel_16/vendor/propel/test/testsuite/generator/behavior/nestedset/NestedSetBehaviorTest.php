@@ -1,7 +1,7 @@
 <?php
 
 /*
- *	$Id: NestedSetBehaviorTest.php 1834 2010-07-20 21:14:29Z francois $
+ *	$Id$
  * This file is part of the Propel package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,10 +15,10 @@ require_once dirname(__FILE__) . '/../../../../tools/helpers/bookstore/Bookstore
  * Tests for NestedSetBehavior class
  *
  * @author		François Zaninotto
- * @version		$Revision: 1834 $
+ * @version		$Revision$
  * @package		generator.behavior.nestedset
  */
-class NestedSetBehaviorTest extends BookstoreTestBase 
+class NestedSetBehaviorTest extends BookstoreTestBase
 {
 	public function testDefault()
 	{
@@ -34,7 +34,7 @@ class NestedSetBehaviorTest extends BookstoreTestBase
 		$this->assertFalse(method_exists('Table9', 'getScopeValue'), 'nested_set does not map the scope_value getter with the tree_scope column by default');
 
 	}
-	
+
 	public function testParameters()
 	{
 		$table10 = Table10Peer::getTableMap();

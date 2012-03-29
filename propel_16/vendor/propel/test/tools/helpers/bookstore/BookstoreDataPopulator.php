@@ -28,7 +28,7 @@ class BookstoreDataPopulator
 			$con = Propel::getConnection(BookPeer::DATABASE_NAME);
 		}
 		$con->beginTransaction();
-		
+
 		// Add publisher records
 		// ---------------------
 
@@ -154,7 +154,7 @@ class BookstoreDataPopulator
 
 		$blc1->addBookListRel($brel1);
 		$blc1->addBookListRel($brel2);
-		
+
 		$blc1->save();
 
 		$bemp1 = new BookstoreEmployee();
@@ -166,6 +166,11 @@ class BookstoreDataPopulator
 		$bemp2->setJobTitle("Clerk");
 		$bemp2->setSupervisor($bemp1);
 		$bemp2->save($con);
+
+		$bemp3 = new BookstoreCashier();
+		$bemp3->setName("Tim");
+		$bemp3->setJobTitle("Cashier");
+		$bemp3->save($con);
 
 		$role = new AcctAccessRole();
 		$role->setName("Admin");
@@ -190,35 +195,35 @@ class BookstoreDataPopulator
 		$store->setPopulationServed(20);
 		$store->setTotalBooks(500000);
 		$store->save($con);
-		
+
 		$summary = new BookSummary();
 		$summary->setSummarizedBook($phoenix);
 		$summary->setSummary("Harry Potter does some amazing magic!");
 		$summary->save();
-		
+
 		$con->commit();
 	}
-	
+
 	public static function populateOpinionFavorite($con = null)
 	{
 		if($con === null) {
 			$con = Propel::getConnection(BookPeer::DATABASE_NAME);
 		}
 		$con->beginTransaction();
-		
+
 		$book1 = BookPeer::doSelectOne(new Criteria(), $con);
 		$reader1 = new BookReader();
 		$reader1->save($con);
-		
+
 		$bo = new BookOpinion();
 		$bo->setBook($book1);
 		$bo->setBookReader($reader1);
 		$bo->save($con);
-		
+
 		$rf = new ReaderFavorite();
 		$rf->setBookOpinion($bo);
 		$rf->save($con);
-		
+
 		$con->commit();
 	}
 
@@ -247,7 +252,10 @@ class BookstoreDataPopulator
 		);
 		// free the memory from existing objects
 		foreach ($peerClasses as $peerClass) {
-			foreach ($peerClass::$instances as $o) {
+			// $peerClass::$instances crashes on PHP 5.2, see http://www.propelorm.org/ticket/1388
+			$r = new ReflectionClass($peerClass);
+			$p = $r->getProperty('instances');
+			foreach ($p->getValue() as $o) {
 				$o->clearAllReferences();
 			}
 		}
@@ -257,7 +265,8 @@ class BookstoreDataPopulator
 		}
 		$con->beginTransaction();
 		foreach ($peerClasses as $peerClass) {
-			$peerClass::doDeleteAll($con);
+			// $peerClass::doDeleteAll() crashes on PHP 5.2, see http://www.propelorm.org/ticket/1388
+			call_user_func(array($peerClass, 'doDeleteAll'), $con);
 		}
 		$con->commit();
 	}

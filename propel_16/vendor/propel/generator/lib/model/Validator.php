@@ -17,7 +17,7 @@ require_once dirname(__FILE__) . '/Rule.php';
  * Validator.
  *
  * @author     Michael Aichler <aichler@mediacluster.de> (Propel)
- * @version    $Revision: 1834 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class Validator extends XMLElement

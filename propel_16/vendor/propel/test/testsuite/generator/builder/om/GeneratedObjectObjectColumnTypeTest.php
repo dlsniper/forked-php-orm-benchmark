@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -20,9 +19,10 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  */
 class GeneratedObjectObjectColumnTypeTest extends PHPUnit_Framework_TestCase
 {
-	public function testObjectColumnType()
+	public function setUp()
 	{
-		$schema = <<<EOF
+		if(!class_exists('ComplexColumnTypeEntity1')) {
+			$schema = <<<EOF
 <database name="generated_object_complex_type_test_1">
 	<table name="complex_column_type_entity_1">
 		<column name="id" primaryKey="true" type="INTEGER" autoIncrement="true" />
@@ -30,7 +30,12 @@ class GeneratedObjectObjectColumnTypeTest extends PHPUnit_Framework_TestCase
 	</table>
 </database>
 EOF;
-		PropelQuickBuilder::buildSchema($schema);
+			PropelQuickBuilder::buildSchema($schema);
+		}
+	}
+
+	public function testObjectColumnType()
+	{
 		$e = new ComplexColumnTypeEntity1();
 		$this->assertNull($e->getBar(), 'object columns are null by default');
 		$c = new FooColumnValue();
@@ -44,6 +49,32 @@ EOF;
 		ComplexColumnTypeEntity1Peer::clearInstancePool();
 		$e = ComplexColumnTypeEntity1Query::create()->findOne();
 		$this->assertEquals($c, $e->getBar(), 'object columns are persisted');
+	}
+
+	public function testGetterDoesNotKeepValueBetweenTwoHydrationsWhenUsingOnDemandFormatter()
+	{
+		ComplexColumnTypeEntity1Query::create()->deleteAll();
+		$e = new ComplexColumnTypeEntity1();
+        $e->setBar(array(
+			'a' => 1,
+            'b' => 2
+        ));
+		$e->save();
+		$e = new ComplexColumnTypeEntity1();
+        $e->setBar(array(
+            'a' => 3,
+            'b' => 4
+        ));
+		$e->save();
+		$q = ComplexColumnTypeEntity1Query::create()
+			->setFormatter(ModelCriteria::FORMAT_ON_DEMAND)
+			->find();
+
+		$objects = array();
+		foreach($q as $e) {
+		  $objects[] = $e->getBar();
+		}
+		$this->assertNotEquals($objects[0], $objects[1]);
 	}
 }
 

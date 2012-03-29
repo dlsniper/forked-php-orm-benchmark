@@ -13,7 +13,7 @@
  *
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @version    $Revision: 2281 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 interface PropelPlatformInterface
@@ -124,7 +124,7 @@ interface PropelPlatformInterface
 	 * @return     string
 	 */
 	public function getPrimaryKeyDDL(Table $table);
-	
+
 	/**
 	 * Returns if the RDBMS-specific SQL type has a size attribute.
 	 *
@@ -160,19 +160,31 @@ interface PropelPlatformInterface
 	 * @return     boolean
 	 */
 	public function supportsNativeDeleteTrigger();
-  
+
 	/**
 	 * Whether RDBMS supports INSERT null values in autoincremented primary keys
 	 * @return     boolean
 	 */
 	public function supportsInsertNullPk();
-	
+
 	/**
 	 * Whether RDBMS supports native schemas for table layout.
 	 * @return boolean
 	 */
 	public function supportsSchemas();
 
+	/**
+	 * Whether RDBMS supports migrations.
+	 * @return boolean
+	 */
+	public function supportsMigrations();
+
+	/**
+	 * Wether RDBMS supports VARCHAR without explicit size
+	 * @return boolean
+	 */
+	public function supportsVarcharWithoutSize();
+	
 	/**
 	 * Returns the boolean value for the RDBMS.
 	 *

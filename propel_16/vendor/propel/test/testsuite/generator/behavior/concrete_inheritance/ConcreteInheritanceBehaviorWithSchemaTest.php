@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/../../../../tools/helpers/schemas/SchemasTest
  * Tests for ConcreteInheritanceBehavior class
  *
  * @author    François Zaniontto
- * @version   $Revision: 2092 $
+ * @version   $Revision$
  * @package   generator.behavior.concrete_inheritance
  */
 class ConcreteInheritanceBehaviorWithSchemaTest extends SchemasTestBase

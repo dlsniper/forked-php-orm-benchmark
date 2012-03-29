@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -43,7 +42,7 @@ EOF;
 			eval($publicAccessorCode);
 		}
 	}
-	
+
 	public function testGetter()
 	{
 		$this->assertTrue(method_exists('ComplexColumnTypeEntity3', 'getBar'));
@@ -67,7 +66,7 @@ EOF;
 		$e->bar = 156;
 		$e->getBar();
 	}
-	
+
 	public function testGetterDefaultValue()
 	{
 		$e = new PublicComplexColumnTypeEntity3();
@@ -87,7 +86,7 @@ EOF;
 		$e->setBar('foo bar');
 		$this->assertEquals(6, $e->bar);
 	}
-	
+
 	/**
 	 * @expectedException PropelException
 	 */
@@ -96,7 +95,7 @@ EOF;
 		$e = new ComplexColumnTypeEntity3();
 		$e->setBar('bazz');
 	}
-	
+
 	public function testValueIsPersisted()
 	{
 		$e = new ComplexColumnTypeEntity3();
@@ -106,7 +105,7 @@ EOF;
 		$e = ComplexColumnTypeEntity3Query::create()->findOne();
 		$this->assertEquals('baz', $e->getBar());
 	}
-	
+
 	public function testValueIsCopied()
 	{
 		$e1 = new ComplexColumnTypeEntity3();
@@ -114,5 +113,32 @@ EOF;
 		$e2 = new ComplexColumnTypeEntity3();
 		$e1->copyInto($e2);
 		$this->assertEquals('baz', $e2->getBar());
+	}
+
+	/**
+	 * @see https://github.com/propelorm/Propel/issues/139
+	 */
+	public function testSetterWithSameValueDoesNotUpdateObject()
+	{
+		$e = new ComplexColumnTypeEntity3();
+		$e->setBar('baz');
+		$e->resetModified();
+		$e->setBar('baz');
+		$this->assertFalse($e->isModified());
+	}
+
+	/**
+	 * @see https://github.com/propelorm/Propel/issues/139
+	 */
+	public function testSetterWithSameValueDoesNotUpdateHydratedObject()
+	{
+		$e = new ComplexColumnTypeEntity3();
+		$e->setBar('baz');
+		$e->save();
+		// force hydration
+		ComplexColumnTypeEntity3Peer::clearInstancePool();
+		$e = ComplexColumnTypeEntity3Query::create()->findPk($e->getPrimaryKey());
+		$e->setBar('baz');
+		$this->assertFalse($e->isModified());
 	}
 }

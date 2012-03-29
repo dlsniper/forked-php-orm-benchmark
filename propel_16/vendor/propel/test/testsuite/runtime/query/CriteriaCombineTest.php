@@ -18,7 +18,7 @@ Propel::init(dirname(__FILE__) . '/../../../fixtures/bookstore/build/conf/bookst
  * Test class for Criteria combinations.
  *
  * @author     Francois Zaninotto
- * @version    $Id: CriteriaCombineTest.php 1833 2010-07-19 21:52:20Z francois $
+ * @version    $Id$
  * @package    runtime.query
  */
 class CriteriaCombineTest extends BaseTestCase
@@ -150,7 +150,7 @@ class CriteriaCombineTest extends BaseTestCase
     $cn1 = $this->c->getNewCriterion("INVOICE.COST", 1000, Criteria::GREATER_EQUAL);
     $cn2 = $this->c->getNewCriterion("INVOICE.COST", 5000, Criteria::LESS_EQUAL);
     $this->c->add($cn1->addAnd($cn2));
-    
+
     $expect = "SELECT  FROM INVOICE WHERE (INVOICE.COST>=:p1 AND INVOICE.COST<=:p2)";
     $expect_params = array(
     	array('table' => 'INVOICE', 'column' => 'COST', 'value' => 1000),

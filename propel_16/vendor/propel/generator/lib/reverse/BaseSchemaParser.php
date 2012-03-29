@@ -14,7 +14,7 @@ require_once dirname(__FILE__) . '/SchemaParser.php';
  * Base class for reverse engineering a database schema.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2008 $
+ * @version    $Revision$
  * @package    propel.generator.reverse
  */
 abstract class BaseSchemaParser implements SchemaParser
@@ -53,16 +53,16 @@ abstract class BaseSchemaParser implements SchemaParser
 	 * @var        array
 	 */
 	protected $reverseTypeMap;
-	
+
 	/**
 	 * Name of the propel migration table - to be ignored in reverse
 	 *
 	 * @var string
 	 */
 	protected $migrationTable = 'propel_migration';
-	
+
 	protected $platform;
-	
+
 	/**
 	 * @param      PDO $dbh Optional database connection
 	 */
@@ -110,7 +110,7 @@ abstract class BaseSchemaParser implements SchemaParser
 		return $this->migrationTable;
 	}
 
-	
+
 	/**
 	 * Pushes a message onto the stack of warnings.
 	 *
@@ -134,9 +134,9 @@ abstract class BaseSchemaParser implements SchemaParser
 	/**
 	 * Sets the GeneratorConfig to use in the parsing.
 	 *
-	 * @param      GeneratorConfig $config
+	 * @param      GeneratorConfigInterface $config
 	 */
-	public function setGeneratorConfig(GeneratorConfig $config)
+	public function setGeneratorConfig(GeneratorConfigInterface $config)
 	{
 		$this->generatorConfig = $config;
 	}
@@ -215,12 +215,12 @@ abstract class BaseSchemaParser implements SchemaParser
 		$vi->setParameters($params);
 		return $vi;
 	}
-	
+
 	public function setPlatform($platform)
 	{
 	  $this->platform = $platform;
 	}
-	
+
 	public function getPlatform()
 	{
 	  if (null === $this->platform)

@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/Behavior.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/behavior/AlternativeCodingStandardsBehavior.php';
 
@@ -17,7 +16,7 @@ require_once dirname(__FILE__) . '/../../../../generator/lib/behavior/Alternativ
  * Tests for TimestampableBehavior class
  *
  * @author     François Zaninotto
- * @version    $Revision: 2140 $
+ * @version    $Revision$
  * @package    generator.behavior
  */
 class AlternativeCodingStandardsBehaviorTest extends PHPUnit_Framework_TestCase
@@ -44,7 +43,7 @@ else
 }"),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider convertBracketsNewlineDataProvider
 	 */

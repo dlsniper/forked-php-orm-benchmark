@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/builder/om/PHP5ObjectBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/Table.php';
@@ -19,10 +18,10 @@ require_once dirname(__FILE__) . '/../../../../../generator/lib/model/ColumnDefa
  * Test class for PHP5ObjectBuilder.
  *
  * @author     François Zaninotto
- * @version    $Id: PHP5ObjectBuilderTest.php 2286 2011-05-16 19:20:39Z francois $
+ * @version    $Id$
  * @package    generator.builder.om
  */
-class PHP5ObjectBuilderTest extends PHPUnit_Framework_TestCase 
+class PHP5ObjectBuilderTest extends PHPUnit_Framework_TestCase
 {
 	protected $builder;
 
@@ -32,7 +31,7 @@ class PHP5ObjectBuilderTest extends PHPUnit_Framework_TestCase
 		$builder->setPlatform(new MysqlPlatform());
 		$this->builder = $builder;
 	}
-	
+
 	public static function getDefaultValueStringProvider()
 	{
 		$col1 = new Column('Bar');
@@ -53,7 +52,7 @@ class PHP5ObjectBuilderTest extends PHPUnit_Framework_TestCase
 			array($col3, $val3),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider getDefaultValueStringProvider
 	 */

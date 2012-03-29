@@ -14,22 +14,22 @@
  * This formatter consumes less memory than the PropelObjectFormatter, but doesn't use Instance Pool
  *
  * @author     Francois Zaninotto
- * @version    $Revision: 2146 $
+ * @version    $Revision$
  * @package    propel.runtime.formatter
  */
 class PropelOnDemandFormatter extends PropelObjectFormatter
 {
 	protected $collectionName = 'PropelOnDemandCollection';
 	protected $isSingleTableInheritance = false;
-	
+
 	public function init(ModelCriteria $criteria)
 	{
 		parent::init($criteria);
 		$this->isSingleTableInheritance = $criteria->getTableMap()->isSingleTableInheritance();
-		
+
 		return $this;
 	}
-	
+
 	public function format(PDOStatement $stmt)
 	{
 		$this->checkInit();
@@ -40,10 +40,10 @@ class PropelOnDemandFormatter extends PropelObjectFormatter
 		$collection = new $class();
 		$collection->setModel($this->class);
 		$collection->initIterator($this, $stmt);
-		
+
 		return $collection;
 	}
-	
+
 	/**
 	 * Hydrates a series of objects from a result row
 	 * The first object to hydrate is the model of the Criteria
@@ -58,22 +58,28 @@ class PropelOnDemandFormatter extends PropelObjectFormatter
 	{
 		$col = 0;
 		// main object
-		$class = $this->isSingleTableInheritance ? call_user_func(array($this->peer, 'getOMClass'), $row, $col, false) : $this->class;
+		$class = $this->isSingleTableInheritance ? call_user_func(array($this->peer, 'getOMClass'), $row, $col) : $this->class;
 		$obj = $this->getSingleObjectFromRow($row, $class, $col);
 		// related objects using 'with'
 		foreach ($this->getWith() as $modelWith) {
 			if ($modelWith->isSingleTableInheritance()) {
-				$class = call_user_func(array($modelWith->getModelPeerName(), 'getOMClass'), $row, $col, false);
+				$class = call_user_func(array($modelWith->getModelPeerName(), 'getOMClass'), $row, $col);
 				$refl = new ReflectionClass($class);
 				if ($refl->isAbstract()) {
 					$col += constant($class . 'Peer::NUM_COLUMNS');
 					continue;
-				} 
+				}
 			} else {
 				$class = $modelWith->getModelName();
 			}
 			$endObject = $this->getSingleObjectFromRow($row, $class, $col);
-			$startObject = $modelWith->isPrimary() ? $obj : $hydrationChain[$modelWith->getLeftPhpName()];
+			if ($modelWith->isPrimary()) {
+				$startObject = $obj;
+			} elseif (isset($hydrationChain)) {
+				$startObject = $hydrationChain[$modelWith->getLeftPhpName()];
+			} else {
+				continue;
+			}
 			// as we may be in a left join, the endObject may be empty
 			// in which case it should not be related to the previous object
 			if (null === $endObject || $endObject->isPrimaryKeyNull()) {
@@ -95,5 +101,5 @@ class PropelOnDemandFormatter extends PropelObjectFormatter
 		}
 		return $obj;
 	}
-	
+
 }

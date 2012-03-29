@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -36,7 +35,7 @@ EOF;
 			PropelQuickBuilder::buildSchema($schema);
 		}
 	}
-	
+
 	public function providerForSetter()
 	{
 		return array(
@@ -58,9 +57,10 @@ EOF;
 			array('N', false),
 			array('+', true),
 			array('-', false),
+			array('', false),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider providerForSetter
 	 */
@@ -74,7 +74,7 @@ EOF;
 			$this->assertFalse($e->getBar());
 		}
 	}
-	
+
 	public function testDefaultValue()
 	{
 		$e = new ComplexColumnTypeEntity4();

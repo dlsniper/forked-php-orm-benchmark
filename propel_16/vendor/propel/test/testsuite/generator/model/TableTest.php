@@ -1,7 +1,7 @@
 <?php
 
 /*
- *	$Id: TableTest.php 2270 2011-04-18 12:52:56Z francois $
+ *	$Id$
  * This file is part of the Propel package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/builder/util/XmlToAppData.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/config/GeneratorConfig.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/platform/DefaultPlatform.php';
@@ -19,7 +18,7 @@ require_once dirname(__FILE__) . '/../../../tools/helpers/DummyPlatforms.php';
  * Tests for Table model class
  *
  * @author     Martin Poeschl (mpoeschl@marmot.at)
- * @version    $Revision: 2270 $
+ * @version    $Revision$
  * @package    generator.model
  */
 class TableTest extends PHPUnit_Framework_TestCase
@@ -55,7 +54,7 @@ EOF;
 		$table2 = $db->getTable("table_none");
 		$this->assertEquals(IDMethod::NO_ID_METHOD, $table2->getIdMethod());
 	}
-	
+
 	public function testGeneratorConfig()
 	{
 		$xmlToAppData = new XmlToAppData();
@@ -74,7 +73,7 @@ EOF;
 		$this->assertThat($table->getGeneratorConfig(), $this->isInstanceOf('GeneratorConfig'), 'getGeneratorConfig() returns an instance of the generator configuration');
 		$this->assertEquals($table->getGeneratorConfig()->getBuildProperty('fooBarClass'), 'bazz', 'getGeneratorConfig() returns the instance of the generator configuration used in the platform');
 	}
-	
+
 	public function testAddBehavior()
 	{
 		$include_path = get_include_path();
@@ -99,7 +98,7 @@ EOF;
 		$table = $appData->getDatabase('test1')->getTable('table1');
 		$this->assertThat($table->getBehavior('timestampable'), $this->isInstanceOf('TimestampableBehavior'), 'addBehavior() uses the behavior class defined in build.properties');
 	}
-	
+
 	/**
 	 * @expectedException EngineException
 	 */
@@ -118,7 +117,7 @@ EOF;
 		// Parsing file with duplicate column names in one table throws exception
 		$appData = $xmlToAppData->parseString($schema);
 	}
-	
+
 	/**
 	 * @expectedException EngineException
 	 */
@@ -150,7 +149,7 @@ EOF;
 			array($table, $column)
 		);
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestHasColumn
 	 */
@@ -190,7 +189,7 @@ EOF;
 		$this->assertEquals($column, $table->getColumn('foo', true));
 		$this->assertEquals($column, $table->getColumn('FOO', true));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestHasColumn
 	 */
@@ -208,7 +207,7 @@ EOF;
 		$table->removeColumn($column->getName());
 		$this->assertFalse($table->hasColumn('Foo'));
 	}
-	
+
 	public function testRemoveColumnFixesPositions()
 	{
 		$table = new Table();
@@ -264,7 +263,7 @@ EOF;
 		$table1->removeValidatorForColumn('title1');
 		$this->assertNull($title1Column->getValidator());
 	}
-	
+
 	public function testTableNamespaceAcrossDatabase()
 	{
 		$schema1 = <<<EOF
@@ -291,7 +290,7 @@ EOF;
 		$this->assertEquals('NS1', $appData1->getDatabase('DB1')->getTable('table1')->getNamespace());
 		$this->assertEquals('NS2', $appData1->getDatabase('DB1')->getTable('table2')->getNamespace());
 	}
-	
+
 	public function testSetNamespaceSetsPackageWhenBuildPropertySet()
 	{
 		$schema = <<<EOF
@@ -344,5 +343,125 @@ EOF;
 		$xmlToAppData->setGeneratorConfig($config);
 		$table = $xmlToAppData->parseString($schema)->getDatabase('DB')->getTable('table');
 		$this->assertEquals('foo', $table->getPackage());
+	}
+
+	public function testAppendXmlPackage() {
+		$schema = <<<EOF
+<?xml version="1.0"?>
+<table name="test" package="test/package"/>
+EOF;
+
+		$doc = new DOMDocument('1.0');
+		$doc->formatOutput = true;
+
+		$table = new Table('test');
+		$table->setPackage('test/package');
+		$table->appendXml($doc);
+
+		$xmlstr = trim($doc->saveXML());
+		$this->assertSame($schema, $xmlstr);
+	}
+
+	public function testAppendXmlNamespace() {
+		$schema = <<<EOF
+<?xml version="1.0"?>
+<table name="test" namespace="\\testNs"/>
+EOF;
+
+		$doc = new DOMDocument('1.0');
+		$doc->formatOutput = true;
+
+		$table = new Table('test');
+		$table->setNamespace('\testNs');
+		$table->appendXml($doc);
+
+		$xmlstr = trim($doc->saveXML());
+		$this->assertSame($schema, $xmlstr);
+
+		$schema = <<<EOF
+<?xml version="1.0"?>
+<table name="test" namespace="\\testNs" package="testPkg"/>
+EOF;
+
+		$doc = new DOMDocument('1.0');
+		$doc->formatOutput = true;
+		$table->setPackage('testPkg');
+		$table->appendXml($doc);
+
+		$xmlstr = trim($doc->saveXML());
+		$this->assertSame($schema, $xmlstr);
+	}
+
+	public function testAppendXmlNamespaceWithAutoPackage() {
+		$schema = <<<EOF
+<?xml version="1.0"?>
+<table name="test" namespace="\\testNs"/>
+EOF;
+
+		$doc = new DOMDocument('1.0');
+		$doc->formatOutput = true;
+
+		$config = new GeneratorConfig();
+		$config->setBuildProperties(array('propel.namespace.autoPackage' => 'true'));
+
+		$appData = new AppData();
+		$appData->setGeneratorConfig($config);
+
+		$db = new Database('testDb');
+		$db->setAppData($appData);
+
+		$table = new Table('test');
+		$table->setDatabase($db);
+		$table->setNamespace('\testNs');
+		$table->appendXml($doc);
+
+		$xmlstr = trim($doc->saveXML());
+		$this->assertSame($schema, $xmlstr);
+
+		$schema = <<<EOF
+<?xml version="1.0"?>
+<table name="test" namespace="\\testNs" package="testPkg"/>
+EOF;
+
+		$doc = new DOMDocument('1.0');
+		$doc->formatOutput = true;
+		$table->setPackage('testPkg');
+		$table->appendXml($doc);
+
+		$xmlstr = trim($doc->saveXML());
+		$this->assertSame($schema, $xmlstr);
+	}
+
+	public function testIsCrossRefAttribute()
+	{
+		$xmlToAppData = new XmlToAppData();
+		$schema = <<<EOF
+	<database name="iddb" defaultIdMethod="native">
+		<table name="table_native">
+			<column name="table_a_id" required="true" primaryKey="true" type="INTEGER" />
+			<column name="col_a" type="CHAR" size="5" />
+		</table>
+		<table name="table_is_cross_ref_true" isCrossRef="true">
+			<column name="table_a_id" required="true" primaryKey="true" type="INTEGER" />
+			<column name="col_a" type="CHAR" size="5" />
+		</table>
+		<table name="table_is_cross_ref_false" isCrossRef="false">
+			<column name="table_a_id" required="true" primaryKey="true" type="INTEGER" />
+			<column name="col_a" type="CHAR" size="5" />
+		</table>
+	</database>
+EOF;
+		$appData = $xmlToAppData->parseString($schema);
+
+		$db = $appData->getDatabase("iddb");
+
+		$table1 = $db->getTable("table_native");
+		$this->assertFalse($table1->getIsCrossRef());
+
+		$table2 = $db->getTable("table_is_cross_ref_true");
+		$this->assertTrue($table2->getIsCrossRef());
+
+		$table3 = $db->getTable("table_is_cross_ref_false");
+		$this->assertFalse($table3->getIsCrossRef());
 	}
 }

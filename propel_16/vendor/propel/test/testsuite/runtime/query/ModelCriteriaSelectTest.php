@@ -44,20 +44,20 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$c->where('Book.Title = ?', 'kdjfhlkdsh');
 		$c->select('Title');
 		$titles = $c->find($this->con);
-		
+
 		$expectedSQL = 'SELECT book.TITLE AS "Title" FROM `book` WHERE book.TITLE = \'kdjfhlkdsh\'';
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'find() called after select(string) selects a single column');
 		$this->assertTrue($titles instanceof PropelArrayCollection, 'find() called after select(string) returns a PropelArrayCollection object');
 		$this->assertTrue(is_array($titles->getData()), 'find() called after select(string) returns an empty PropelArrayCollection object');
 		$this->assertEquals(0, count($titles), 'find() called after select(string) returns an empty array if no record is found');
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->where('Book.Title = ?', 'kdjfhlkdsh');
 		$c->select('Title');
 		$title = $c->findOne();
 		$this->assertTrue(is_null($title), 'findOne() called after select(string) returns null when no record is found');
 	}
-	
+
 	public function testSelectStringAcceptsColumnNames()
 	{
 		$c = new ModelCriteria('bookstore', 'Book');
@@ -78,7 +78,7 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$expectedSQL = 'SELECT book.TITLE AS "b.Title" FROM `book`';
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'select() accepts complete column names with table aliases');
 	}
-	
+
 	public function testSelectStringFind()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
@@ -98,13 +98,32 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$this->assertEquals($authors->count(), 1, 'find() called after select(string) allows for where() statements');
 		$expectedSQL = "SELECT author.FIRST_NAME AS \"FirstName\" FROM `author` WHERE author.FIRST_NAME = 'Neal'";
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'find() called after select(string) allows for where() statements');
+		
+		$c = new ModelCriteria('bookstore', 'Author');
+		$c->select(AuthorPeer::FIRST_NAME);
+		$author = $c->find($this->con);
+		$expectedSQL = "SELECT author.FIRST_NAME AS \"author.FIRST_NAME\" FROM `author`";
+		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'select(string) accepts model Peer Constants');
+	}
+	
+	/**
+	* @expectedException PropelException
+	*/
+	public function testSelectStringFindCalledWithNonExistingColumn()
+	{
+		BookstoreDataPopulator::depopulate($this->con);
+		BookstoreDataPopulator::populate($this->con);
+	
+		$c = new ModelCriteria('bookstore', 'Author');
+		$c->select('author.NOT_EXISTING_COLUMN');
+		$author = $c->find($this->con);
 	}
 
 	public function testSelectStringFindOne()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->select('Title');
 		$title = $c->findOne($this->con);
@@ -112,7 +131,7 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'findOne() called after select(string) selects a single column and requests a single row');
 		$this->assertTrue(is_string($title),'findOne() called after select(string) returns a string');
 		$this->assertEquals($title, 'Harry Potter and the Order of the Phoenix', 'findOne() called after select(string) returns the column value of the first row matching the query');
-		
+
 		$c = new ModelCriteria('bookstore', 'Author');
 		$c->where('Author.FirstName = ?', 'Neal');
 		$c->select('FirstName');
@@ -126,7 +145,7 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->join('Book.Author');
 		$c->where('Author.FirstName = ?', 'Neal');
@@ -164,7 +183,7 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->select('*');
 		$book = $c->findOne($this->con);
@@ -173,9 +192,9 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$this->assertTrue(is_array($book), 'findOne() called after select(\'*\') returns an array');
 		$this->assertEquals(array_keys($book), array('Book.Id', 'Book.Title', 'Book.ISBN', 'Book.Price', 'Book.PublisherId', 'Book.AuthorId'), 'select(\'*\') returns all the columns from the main object, in complete form');
 	}
-	
 
-	
+
+
 	public function testSelectArrayFind()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
@@ -195,12 +214,12 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$expectedSQL = "SELECT author.FIRST_NAME AS \"FirstName\", author.LAST_NAME AS \"LastName\" FROM `author` WHERE author.FIRST_NAME = 'Neal'";
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'find() called after select(array) allows for where() statements');
 	}
-	
+
 	public function testSelectArrayFindOne()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Author');
 		$c->where('Author.FirstName = ?', 'Neal');
 		$c->select(array('FirstName', 'LastName'));
@@ -209,12 +228,12 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		$expectedSQL = "SELECT author.FIRST_NAME AS \"FirstName\", author.LAST_NAME AS \"LastName\" FROM `author` WHERE author.FIRST_NAME = 'Neal' LIMIT 1";
 		$this->assertEquals($expectedSQL, $this->con->getLastExecutedQuery(), 'findOne() called after select(array) allows for where() statements');
 	}
-		
+
 	public function testSelectArrayJoin()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->join('Book.Author');
 		$c->where('Author.FirstName = ?', 'Neal');
@@ -252,7 +271,7 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->join('Book.Author');
 		$c->orderBy('Book.Title');
@@ -310,12 +329,12 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 		);
 		$this->assertEquals(serialize($rows->getData()), serialize($expectedRows), 'find() called after select(array) returns columns from several tables (many-to-one');
 	}
-	
+
 	public function testSelectArrayWithColumn()
 	{
 		BookstoreDataPopulator::depopulate($this->con);
 		BookstoreDataPopulator::populate($this->con);
-		
+
 		$c = new ModelCriteria('bookstore', 'Book');
 		$c->join('Book.Author');
 		$c->withColumn('LOWER(Book.Title)', 'LowercaseTitle');
@@ -344,6 +363,54 @@ class ModelCriteriaSelectTest extends BookstoreTestBase
 			),
 		);
 		$this->assertEquals(serialize($rows->getData()), serialize($expectedRows), 'find() called after select(array) can cope with a column added with withColumn()');
+	}
+
+	public function testSelectArrayPaginate()
+	{
+		BookstoreDataPopulator::depopulate($this->con);
+		BookstoreDataPopulator::populate($this->con);
+
+		$pager =  BookQuery::create()
+			->select(array('Id', 'Title', 'ISBN', 'Price'))
+			->paginate(1, 10, $this->con);
+		$this->assertInstanceOf('PropelModelPager', $pager);
+		foreach ($pager as $result) {
+			$this->assertEquals(array('Id', 'Title', 'ISBN', 'Price'), array_keys($result));
+		}
+	}
+
+	public function testGetSelectReturnsNullByDefault()
+	{
+		$c = new ModelCriteria('bookstore', 'Book');
+		$this->assertNull($c->getSelect());
+	}
+
+	public function testGetSelectReturnsStringWhenSelectingASingleColumn()
+	{
+		$c = new ModelCriteria('bookstore', 'Book');
+		$c->select('Title');
+		$this->assertEquals('Title', $c->getSelect());
+	}
+
+	public function testGetSelectReturnsArrayWhenSelectingSeveralColumns()
+	{
+		$c = new ModelCriteria('bookstore', 'Book');
+		$c->select(array('Id', 'Title'));
+		$this->assertEquals(array('Id', 'Title'), $c->getSelect());
+	}
+
+	public function testGetSelectReturnsArrayWhenSelectingASingleColumnAsArray()
+	{
+		$c = new ModelCriteria('bookstore', 'Book');
+		$c->select(array('Title'));
+		$this->assertEquals(array('Title'), $c->getSelect());
+	}
+
+	public function testGetSelectReturnsArrayWhenSelectingAllColumns()
+	{
+		$c = new ModelCriteria('bookstore', 'Book');
+		$c->select('*');
+		$this->assertEquals(array('Book.Id', 'Book.Title', 'Book.ISBN', 'Book.Price', 'Book.PublisherId', 'Book.AuthorId'), $c->getSelect());
 	}
 }
 

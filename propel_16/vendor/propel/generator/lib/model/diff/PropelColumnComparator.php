@@ -31,6 +31,12 @@ class PropelColumnComparator
 	static public function computeDiff(Column $fromColumn, Column $toColumn)
 	{
 		if ($changedProperties = self::compareColumns($fromColumn, $toColumn)) {
+			if ($fromColumn->hasPlatform() || $toColumn->hasPlatform()) {
+				$platform = $fromColumn->hasPlatform() ? $fromColumn->getPlatform() : $toColumn->getPlatform();
+				if ($platform->getColumnDDL($fromColumn) == $platform->getColumnDDl($toColumn)) {
+					return false;
+				}
+			}
 			$columnDiff = new PropelColumnDiff();
 			$columnDiff->setFromColumn($fromColumn);
 			$columnDiff->setToColumn($toColumn);
@@ -40,16 +46,16 @@ class PropelColumnComparator
 			return false;
 		}
 	}
-	
+
 	static function compareColumns(Column $fromColumn, Column $toColumn)
 	{
 		$changedProperties = array();
-		
+
 		// compare column types
 		$fromDomain = $fromColumn->getDomain();
 		$toDomain = $toColumn->getDomain();
-		if ($fromDomain->getSqlType() != $toDomain->getSqlType()) {
-			$changedProperties['type'] = array($fromDomain->getSqlType(), $toDomain->getSqlType());
+		if ($fromDomain->getType() != $toDomain->getType()) {
+			$changedProperties['type'] = array($fromDomain->getType(), $toDomain->getType());
 		}
 		if ($fromDomain->getScale() != $toDomain->getScale()) {
 			$changedProperties['scale'] = array($fromDomain->getScale(), $toDomain->getScale());
@@ -57,11 +63,13 @@ class PropelColumnComparator
 		if ($fromDomain->getSize() != $toDomain->getSize()) {
 			$changedProperties['size'] = array($fromDomain->getSize(), $toDomain->getSize());
 		}
-		
+		if (strtoupper($fromDomain->getSqlType()) != strtoupper($toDomain->getSqlType())) {
+			$changedProperties['sqlType'] = array($fromDomain->getSqlType(), $toDomain->getSqlType());
+		}
 		if ($fromColumn->isNotNull() != $toColumn->isNotNull()) {
 			$changedProperties['notNull'] = array($fromColumn->isNotNull(), $toColumn->isNotNull());
 		}
-		
+
 		// compare column default value
 		$fromDefaultValue = $fromColumn->getDefaultValue();
 		$toDefaultValue = $toColumn->getDefaultValue();
@@ -81,11 +89,11 @@ class PropelColumnComparator
 				}
 			}
 		}
-		
+
 		if ($fromColumn->isAutoIncrement() != $toColumn->isAutoIncrement()) {
 			$changedProperties['autoIncrement'] = array($fromColumn->isAutoIncrement(), $toColumn->isAutoIncrement());
 		}
-		
+
 		return $changedProperties;
 	}
 }

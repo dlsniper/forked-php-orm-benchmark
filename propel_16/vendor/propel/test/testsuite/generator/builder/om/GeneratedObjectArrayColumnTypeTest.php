@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -35,7 +34,7 @@ EOF;
 			PropelQuickBuilder::buildSchema($schema);
 		}
 	}
-	
+
 	public function testActiveRecordMethods()
 	{
 		$this->assertTrue(method_exists('ComplexColumnTypeEntity2', 'getTags'));
@@ -50,13 +49,13 @@ EOF;
 		$this->assertFalse(method_exists('ComplexColumnTypeEntity2', 'addValueSet'));
 		$this->assertFalse(method_exists('ComplexColumnTypeEntity2', 'removeValueSet'));
 	}
-	
+
 	public function testGetterDefaultValue()
 	{
 		$e = new ComplexColumnTypeEntity2();
 		$this->assertEquals(array(), $e->getTags(), 'array columns return an empty array by default');
 	}
-	
+
 	public function testSetterArrayValue()
 	{
 		$e = new ComplexColumnTypeEntity2();
@@ -64,7 +63,7 @@ EOF;
 		$e->setTags($value);
 		$this->assertEquals($value, $e->getTags(), 'array columns can store arrays');
 	}
-	
+
 	public function testSetterResetValue()
 	{
 		$e = new ComplexColumnTypeEntity2();
@@ -73,7 +72,7 @@ EOF;
 		$e->setTags(array());
 		$this->assertEquals(array(), $e->getTags(), 'object columns can be reset');
 	}
-	
+
 	public function testTester()
 	{
 		$e = new ComplexColumnTypeEntity2();
@@ -86,7 +85,7 @@ EOF;
 		$this->assertFalse($e->hasTag('bar'));
 		$this->assertFalse($e->hasTag(12));
 	}
-	
+
 	public function testAdder()
 	{
 		$e = new ComplexColumnTypeEntity2();
@@ -117,7 +116,7 @@ EOF;
 		$e->removeTag('1234');
 		$this->assertEquals(array(12, 34), $e->getTags());
 	}
-	
+
 	public function testValueIsPersisted()
 	{
 		$e = new ComplexColumnTypeEntity2();
@@ -127,5 +126,25 @@ EOF;
 		ComplexColumnTypeEntity2Peer::clearInstancePool();
 		$e = ComplexColumnTypeEntity2Query::create()->findOne();
 		$this->assertEquals($value, $e->getTags(), 'array columns are persisted');
+	}
+
+	public function testGetterDoesNotKeepValueBetweenTwoHydrationsWhenUsingOnDemandFormatter()
+	{
+		ComplexColumnTypeEntity2Query::create()->deleteAll();
+		$e = new ComplexColumnTypeEntity2();
+		$e->setTags(array(1,2));
+		$e->save();
+		$e = new ComplexColumnTypeEntity2();
+		$e->setTags(array(3,4));
+		$e->save();
+		$q = ComplexColumnTypeEntity2Query::create()
+			->setFormatter(ModelCriteria::FORMAT_ON_DEMAND)
+			->find();
+
+		$tags = array();
+		foreach($q as $e) {
+		  $tags[] = $e->getTags();
+		}
+		$this->assertNotEquals($tags[0], $tags[1]);
 	}
 }

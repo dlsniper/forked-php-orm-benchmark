@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -34,7 +33,7 @@ EOF;
 			PropelQuickBuilder::buildSchema($schema);
 		}
 	}
-	
+
 	public function valueSetConstantProvider()
 	{
 		return array(
@@ -47,7 +46,7 @@ EOF;
 			array('ComplexColumnTypeEntity103Peer::BAR_FOO_BAR', 'foo bar'),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider valueSetConstantProvider
 	 */
@@ -56,13 +55,13 @@ EOF;
 		$this->assertTrue(defined($constantName));
 		$this->assertEquals($value, constant($constantName));
 	}
-	
+
 	public function testGetValueSets()
 	{
 		$expected = array(ComplexColumnTypeEntity103Peer::BAR => array('foo', 'bar', 'baz', '1', '4', '(', 'foo bar'));
 		$this->assertEquals($expected, ComplexColumnTypeEntity103Peer::getValueSets());
 	}
-	
+
 	public function testGetValueSet()
 	{
 		$expected = array('foo', 'bar', 'baz', '1', '4', '(', 'foo bar');

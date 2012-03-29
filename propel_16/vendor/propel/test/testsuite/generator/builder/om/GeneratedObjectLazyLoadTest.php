@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -50,7 +49,7 @@ EOF;
 		$this->assertEquals('hello', $obj2->getFoo());
 		$this->assertEquals($count, $con->getQueryCount());
 	}
-	
+
 	public function testLazyLoadedColumnsRequireAnAdditionalQueryOnGetter()
 	{
 		$con = Propel::getconnection(LazyLoadActiveRecordPeer::DATABASE_NAME);

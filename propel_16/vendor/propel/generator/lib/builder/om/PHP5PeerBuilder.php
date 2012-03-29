@@ -80,7 +80,7 @@ class PHP5PeerBuilder extends PeerBuilder
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds the include() statements for files that this class depends on or utilizes.
 	 * @param      string &$script The script will be modified in this method.
@@ -127,7 +127,7 @@ class PHP5PeerBuilder extends PeerBuilder
 abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 	}
-	
+
 	protected function addClassBody(&$script)
 	{
 		$this->declareClassFromBuilder($this->getStubPeerBuilder());
@@ -146,7 +146,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	{
 	  // apply behaviors
     $this->applyBehaviorModifier('staticMethods', $script, "	");
-		
+
 		$script .= "
 } // " . $this->getClassname() . "
 ";
@@ -160,7 +160,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	protected function addStaticTableMapRegistration(&$script)
 	{
 		$table = $this->getTable();
-		
+
 		$script .= "
 // This is the static code needed to register the TableMap for this table with the main Propel class.
 //
@@ -169,17 +169,17 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 		$this->applyBehaviorModifier('peerFilter', $script, "");
 	}
-	
+
 	public function getTableMapClass()
 	{
-		return $this->getTablePhpName() . 'TableMap';
+		return $this->getStubObjectBuilder()->getClassname() . 'TableMap';
 	}
-	
+
 	public function getTablePhpName()
 	{
 		return ($this->getTable()->isAbstract() ? '' : $this->getStubObjectBuilder()->getClassname());
 	}
-	
+
 	/**
 	 * Adds constant and variable declarations that go at the top of the class.
 	 * @param      string &$script The script will be modified in this method.
@@ -200,12 +200,9 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	/** the related Propel class for this table */
 	const OM_CLASS = '$tablePhpName';
 
-	/** A class that can be returned by this peer. */
-	const CLASS_DEFAULT = '".$this->getStubObjectBuilder()->getClasspath()."';
-
 	/** the related TableMap class for this table */
 	const TM_CLASS = '".$this->getTableMapClass()."';
-	
+
 	/** The total number of columns. */
 	const NUM_COLUMNS = ".$this->getTable()->getNumColumns().";
 
@@ -220,11 +217,11 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if ($this->getTable()->hasEnumColumns()) {
 			$this->addEnumColumnConstants($script);
 		}
-		
+
 		$script .= "
 	/** The default string format for model objects of the related table **/
 	const DEFAULT_STRING_FORMAT = '" . $this->getTable()->getDefaultStringFormat() . "';
-	
+
 	/**
 	 * An identiy map to hold any loaded instances of ".$this->getObjectClassname()." objects.
 	 * This must be public so that other peer classes can access this when hydrating from JOIN
@@ -238,7 +235,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		// apply behaviors
 		$this->applyBehaviorModifier('staticConstants', $script, "	");
 		$this->applyBehaviorModifier('staticAttributes', $script, "	");
-		
+
 		$this->addFieldNamesAttribute($script);
 		$this->addFieldKeysAttribute($script);
 
@@ -280,12 +277,12 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 			}
 		}
 	}
-	
+
 	protected function getEnumValueConstant($value)
 	{
 		return strtoupper(preg_replace('/[^a-zA-Z0-9_\x7f-\xff]/', '_', $value));
 	}
-	
+
 	protected function addFieldNamesAttribute(&$script)
 	{
 		$table = $this->getTable();
@@ -495,7 +492,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	}
 ";
 	}
-	
+
 	/**
 	 * Adds the buildTableMap() method.
 	 * @param      string &$script The script will be modified in this method.
@@ -537,6 +534,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 				foreach ($col->getChildren() as $child) {
 					$childBuilder = $this->getMultiExtendObjectBuilder();
 					$childBuilder->setChild($child);
+					$fqcn = addslashes($childBuilder->getFullyQualifiedClassname());
 
 					$script .= "
 	/** A key representing a particular subclass */
@@ -552,7 +550,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 
 					$script .= "
 	/** A class that can be returned by this peer. */
-	const CLASSNAME_".strtoupper($child->getKey())." = '". $childBuilder->getClasspath() . "';
+	const CLASSNAME_".strtoupper($child->getKey())." = '". $fqcn . "';
 ";
 				} /* foreach children */
 			} /* if col->isenumerated...() */
@@ -668,10 +666,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if (\$con === null) {
 			\$con = Propel::getConnection(".$this->getPeerClassname()."::DATABASE_NAME, Propel::CONNECTION_READ);
 		}";
-		
+
 		// apply behaviors
     $this->applyBehaviorModifier('preSelect', $script);
-    
+
 		$script .= "
 		// BasePeer returns a PDOStatement
 		\$stmt = ".$this->basePeerClassname."::doCount(\$criteria, \$con);
@@ -945,7 +943,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 			// $fk is the foreign key in the other table, so localTableName will
 			// actually be the table name of other table
 			$tblFK = $fk->getTable();
-			
+
 			$joinedTablePeerBuilder = $this->getNewStubPeerBuilder($tblFK);
 			$this->declareClassFromBuilder($joinedTablePeerBuilder);
 			$tblFKPackage = $joinedTablePeerBuilder->getStubPeerBuilder()->getPackage();
@@ -956,7 +954,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 
 				if ($fk->getOnDelete() == ForeignKey::CASCADE || $fk->getOnDelete() == ForeignKey::SETNULL) {
 					$script .= "
-		// Invalidate objects in ".$joinedTablePeerBuilder->getClassname()." instance pool, 
+		// Invalidate objects in ".$joinedTablePeerBuilder->getClassname()." instance pool,
 		// since one or more of them may be deleted by ON DELETE CASCADE/SETNULL rule.
 		".$joinedTablePeerBuilder->getClassname()."::clearInstancePool();";
 				} // if fk is on delete cascade
@@ -1050,7 +1048,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		{
 			$script .= "
 	/**
-	 * Retrieves the primary key from the DB resultset row 
+	 * Retrieves the primary key from the DB resultset row
 	 * For tables with a single-column primary key, that simple pkey value will be returned.  For tables with
 	 * a multi-column primary key, an array of the primary key columns will be returned.
 	 *
@@ -1111,7 +1109,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if (!$table->getChildrenColumn()) {
 			$script .= "
 		// set the class once to avoid overhead in the loop
-		\$cls = ".$this->getPeerClassname()."::getOMClass(false);";
+		\$cls = ".$this->getPeerClassname()."::getOMClass();";
 		}
 
 		$script .= "
@@ -1188,7 +1186,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 			\$cls = ".$this->getPeerClassname()."::OM_CLASS;";
 		} else {
 			$script .= "
-			\$cls = ".$this->getPeerClassname()."::getOMClass(\$row, \$startcol, false);";
+			\$cls = ".$this->getPeerClassname()."::getOMClass(\$row, \$startcol);";
 		}
 		$script .= "
 			\$obj = new \$cls();
@@ -1214,11 +1212,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	 *
 	 * @param      array \$row PropelPDO result row.
 	 * @param      int \$colnum Column to examine for OM class information (first is 0).
-	 * @param      boolean \$withPrefix Whether or not to return the path with the class name
 	 * @throws     PropelException Any exceptions caught during processing will be
 	 *		 rethrown wrapped into a PropelException.
 	 */
-	public static function getOMClass(\$row, \$colnum, \$withPrefix = true)
+	public static function getOMClass(\$row, \$colnum)
 	{
 		try {
 ";
@@ -1238,13 +1235,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 			} /* foreach */
 			$script .= "
 				default:
-					\$omClass = self::CLASS_DEFAULT;
+					\$omClass = ".$this->getPeerClassname()."::OM_CLASS;
 ";
 			$script .= "
 			} // switch
-			if (!\$withPrefix) {
-				\$omClass = substr('.'.\$omClass, strrpos('.'.\$omClass, '.') + 1);
-			}
 ";
 		} else { /* if not enumerated */
 			$script .= "
@@ -1271,17 +1265,12 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	/**
 	 * The class that the Peer will make instances of.
 	 *
-	 * If \$withPrefix is true, the returned path
-	 * uses a dot-path notation which is tranalted into a path
-	 * relative to a location on the PHP include_path.
-	 * (e.g. path.to.MyClass -> 'path/to/MyClass.php')
 	 *
-	 * @param      boolean \$withPrefix Whether or not to return the path with the class name
-	 * @return     string path.to.ClassName
+	 * @return     string ClassName
 	 */
-	public static function getOMClass(\$withPrefix = true)
+	public static function getOMClass()
 	{
-		return \$withPrefix ? ".$this->getPeerClassname()."::CLASS_DEFAULT : ".$this->getPeerClassname()."::OM_CLASS;
+		return ".$this->getPeerClassname()."::OM_CLASS;
 	}
 ";
 	}
@@ -1299,7 +1288,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 	 * This method must be overridden by the stub subclass, because
 	 * ".$this->getObjectClassname()." is declared abstract in the schema.
 	 */
-	abstract public static function getOMClass(\$withPrefix = true);
+	abstract public static function getOMClass();
 ";
 	}
 
@@ -1344,7 +1333,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 				if (!$this->getPlatform()->supportsInsertNullPk())
 				{
 				  $script .= "
-		// remove pkey col since this table uses auto-increment and passing a null value for it is not valid 
+		// remove pkey col since this table uses auto-increment and passing a null value for it is not valid
 		\$criteria->remove(".$this->getColumnConstant($col).");
 ";
 				}
@@ -2077,7 +2066,8 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		  // simple foreign key
 		  $lftCol = $lftCols[0];
 		  $script .= sprintf("
-		\$criteria->addJoin(%s, %s, \$join_behavior);\n",
+		\$criteria->addJoin(%s, %s, \$join_behavior);
+",
         $this->getColumnConstant($table->getColumn($lftCol) ),
         $joinedTablePeerBuilder->getColumnConstant($joinTable->getColumn( $lfMap[$lftCol] ) ));
 		}
@@ -2085,18 +2075,21 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		{
 		  // composite foreign key
 		  $script .= "
-		\$criteria->addMultipleJoin(array(\n";
+		\$criteria->addMultipleJoin(array(
+";
 		  foreach ($lftCols as $columnName ) {
-		    $script .= sprintf("        array(%s, %s),\n", 
+		    $script .= sprintf("        array(%s, %s),
+",
 				  $this->getColumnConstant($table->getColumn($columnName) ),
 				  $joinedTablePeerBuilder->getColumnConstant($joinTable->getColumn( $lfMap[$columnName] ) )
 				);
 			}
-			$script .= "      ), \$join_behavior);\n";
+			$script .= "      ), \$join_behavior);
+";
 		}
 		return $script;
   }
-  
+
 	/**
 	 * Adds the doSelectJoin*() methods.
 	 * @param      string &$script The script will be modified in this method.
@@ -2152,10 +2145,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 
             $script .= $this->addCriteriaJoin($fk, $table, $joinTable, $joinedTablePeerBuilder);
-        		
+
             // apply behaviors
             $this->applyBehaviorModifier('preSelect', $script);
-						
+
             $script .= "
 		\$stmt = ".$this->basePeerClassname."::doSelect(\$criteria, \$con);
 		\$results = array();
@@ -2175,7 +2168,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 						} else {
 							$script .= "
-				\$cls = ".$this->getPeerClassname()."::getOMClass(false);
+				\$cls = ".$this->getPeerClassname()."::getOMClass();
 ";
 						}
 						$script .= "
@@ -2196,7 +2189,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 						} else {
 							$script .= "
-					\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass(false);
+					\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass();
 ";
 						}
 
@@ -2287,9 +2280,9 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if (!\$criteria->hasSelectClause()) {
 			".$this->getPeerClassname()."::addSelectColumns(\$criteria);
 		}
-		
+
 		\$criteria->clearOrderByColumns(); // ORDER BY won't ever affect the count
-		
+
 		// Set the correct dbName
 		\$criteria->setDbName(self::DATABASE_NAME);
 
@@ -2298,10 +2291,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		}
 ";
             $script .= $this->addCriteriaJoin($fk, $table, $joinTable, $joinedTablePeerBuilder);
-         		
+
             // apply behaviors
             $this->applyBehaviorModifier('preSelect', $script);
-            
+
             $script .= "
 		\$stmt = ".$this->basePeerClassname."::doCount(\$criteria, \$con);
 
@@ -2384,10 +2377,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
         $script .= $this->addCriteriaJoin($fk, $table, $joinTable, $joinedTablePeerBuilder);
 			}
 		}
-		
+
 		// apply behaviors
     $this->applyBehaviorModifier('preSelect', $script);
-		
+
     $script .= "
 		\$stmt = ".$this->basePeerClassname."::doSelect(\$criteria, \$con);
 		\$results = array();
@@ -2407,7 +2400,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 		} else {
 			$script .= "
-				\$cls = ".$this->getPeerClassname()."::getOMClass(false);
+				\$cls = ".$this->getPeerClassname()."::getOMClass();
 ";
 		}
 
@@ -2454,7 +2447,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 				} else {
 					$script .= "
-					\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass(false);
+					\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass();
 ";
 				} /* $joinTable->getChildrenColumn() */
 
@@ -2528,9 +2521,9 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if (!\$criteria->hasSelectClause()) {
 			".$this->getPeerClassname()."::addSelectColumns(\$criteria);
 		}
-		
+
 		\$criteria->clearOrderByColumns(); // ORDER BY won't ever affect the count
-		
+
 		// Set the correct dbName
 		\$criteria->setDbName(self::DATABASE_NAME);
 
@@ -2547,10 +2540,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
         $script .= $this->addCriteriaJoin($fk, $table, $joinTable, $joinedTablePeerBuilder);
 			} // if fk->getForeignTableName != table->getName
 		} // foreach [sub] foreign keys
-		
+
 		// apply behaviors
     $this->applyBehaviorModifier('preSelect', $script);
-		
+
     $script .= "
 		\$stmt = ".$this->basePeerClassname."::doCount(\$criteria, \$con);
 
@@ -2654,10 +2647,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 					}
 				}
 			} // foreach fkeys
-			
+
 			// apply behaviors
       $this->applyBehaviorModifier('preSelect', $script);
-			
+
       $script .= "
 
 		\$stmt = ".$this->basePeerClassname ."::doSelect(\$criteria, \$con);
@@ -2677,7 +2670,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 			} else {
 				$script .= "
-				\$cls = ".$this->getPeerClassname()."::getOMClass(false);
+				\$cls = ".$this->getPeerClassname()."::getOMClass();
 ";
 			}
 
@@ -2725,7 +2718,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 ";
 		  		} else {
 		  			$script .= "
-						\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass(false);
+						\$cls = ".$joinedTablePeerBuilder->getPeerClassname()."::getOMClass();
 ";
 		  		} /* $joinTable->getChildrenColumn() */
 		  		$script .= "
@@ -2803,7 +2796,7 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		// it will be impossible for the BasePeer::createSelectSql() method to determine which
 		// tables go into the FROM clause.
 		\$criteria->setPrimaryTableName(".$this->getPeerClassname()."::TABLE_NAME);
-		
+
 		if (\$distinct && !in_array(Criteria::DISTINCT, \$criteria->getSelectModifiers())) {
 			\$criteria->setDistinct();
 		}
@@ -2811,9 +2804,9 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 		if (!\$criteria->hasSelectClause()) {
 			".$this->getPeerClassname()."::addSelectColumns(\$criteria);
 		}
-		
+
 		\$criteria->clearOrderByColumns(); // ORDER BY should not affect count
-		
+
 		// Set the correct dbName
 		\$criteria->setDbName(self::DATABASE_NAME);
 
@@ -2835,10 +2828,10 @@ abstract class ".$this->getClassname(). $extendingPeerClass . " {
 					}
 				}
 			} // foreach fkeys
-			
+
 			// apply behaviors
       $this->applyBehaviorModifier('preSelect', $script);
-			
+
       $script .= "
 		\$stmt = ".$this->basePeerClassname."::doCount(\$criteria, \$con);
 

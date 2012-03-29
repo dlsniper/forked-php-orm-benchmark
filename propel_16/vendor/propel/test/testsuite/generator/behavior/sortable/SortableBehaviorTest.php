@@ -1,7 +1,7 @@
 <?php
 
 /*
- *	$Id: SortableBehaviorTest.php 1834 2010-07-20 21:14:29Z francois $
+ *	$Id$
  * This file is part of the Propel package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/../../../../tools/helpers/bookstore/Bookstore
  * Tests for SortableBehavior class
  *
  * @author		Massimiliano Arione
- * @version		$Revision: 1834 $
+ * @version		$Revision$
  * @package		generator.behavior.sortable
  */
 class SortableBehaviorTest extends BookstoreTestBase

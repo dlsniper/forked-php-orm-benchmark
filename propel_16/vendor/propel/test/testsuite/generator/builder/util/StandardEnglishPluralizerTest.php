@@ -8,14 +8,13 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/builder/util/StandardEnglishPluralizer.php';
 
 /**
  * Tests for the StandardEnglishPluralizer class
  *
- * @version    $Revision: 2087 $
- * @package    generator.builder.util 
+ * @version    $Revision$
+ * @package    generator.builder.util
  */
 class StandardEnglishPluralizerTest extends PHPUnit_Framework_TestCase
 {
@@ -32,6 +31,63 @@ class StandardEnglishPluralizerTest extends PHPUnit_Framework_TestCase
 			array('Wife', 'Wives'),
 			array('country', 'countries'),
 			array('Country', 'Countries'),
+			array('Video', 'Videos'),
+			array('video', 'videos'),
+			array('Photo', 'Photos'),
+			array('photo', 'photos'),
+			array('Tomato', 'Tomatoes'),
+			array('tomato', 'tomatoes'),
+			array('Buffalo', 'Buffaloes'),
+			array('buffalo', 'buffaloes'),
+			array('typo', 'typos'),
+			array('Typo', 'Typos'),
+			array('apple', 'apples'),
+			array('Apple', 'Apples'),
+			array('Man', 'Men'),
+			array('man', 'men'),
+			array('numen', 'numina'),
+			array('Numen', 'Numina'),
+            array('bus', 'buses'),
+            array('Bus', 'Buses'),
+            array('news', 'news'),
+            array('News', 'News'),
+            array('food_menu', 'food_menus'),
+            array('Food_menu', 'Food_menus'),
+            array('quiz', 'quizzes'),
+            array('Quiz', 'Quizzes'),
+            array('alumnus', 'alumni'),
+            array('Alumnus', 'Alumni'),
+            array('vertex', 'vertices'),
+            array('Vertex', 'Vertices'),
+            array('matrix', 'matrices'),
+            array('Matrix', 'Matrices'),
+            array('index', 'indices'),
+            array('Index', 'Indices'),
+            array('alias', 'aliases'),
+            array('Alias', 'Aliases'),
+            array('bacillus', 'bacilli'),
+            array('Bacillus', 'Bacilli'),
+            array('cactus', 'cacti'),
+            array('Cactus', 'Cacti'),
+            array('focus', 'foci'),
+            array('Focus', 'Foci'),
+            array('fungus', 'fungi'),
+            array('Fungus', 'Fungi'),
+            array('nucleus', 'nuclei'),
+            array('Nucleus', 'Nuclei'),
+            array('radius', 'radii'),
+            array('Radius', 'Radii'),
+            array('people', 'people'),
+            array('People', 'People'),
+            array('glove', 'gloves'),
+            array('Glove', 'Gloves'),
+            array('crisis', 'crises'),
+            array('Crisis', 'Crises'),
+            array('tax', 'taxes'),
+            array('Tax', 'Taxes'),
+            array('Tooth', 'Teeth'),
+            array('tooth', 'teeth'),
+            array('Foot', 'Feet'),
 		);
 	}
 

@@ -17,7 +17,7 @@ require_once dirname(__FILE__) . '/VersionableBehaviorPeerBuilderModifier.php';
  * Keeps tracks of all the modifications in an ActiveRecord object
  *
  * @author    Francois Zaninotto
- * @version		$Revision: 2268 $
+ * @version		$Revision$
  * @package		propel.generator.behavior.versionable
  */
 class VersionableBehavior extends Behavior
@@ -34,14 +34,30 @@ class VersionableBehavior extends Behavior
 		'version_comment_column' => 'version_comment'
 	);
 
-	protected 
+	protected
 		$versionTable,
 		$objectBuilderModifier,
 		$queryBuilderModifier,
 		$peerBuilderModifier;
-	
+
 	protected $tableModificationOrder = 80;
-	
+
+	public function modifyDatabase()
+	{
+		foreach ($this->getDatabase()->getTables() as $table) {
+			if ($table->hasBehavior($this->getName())) {
+				// don't add the same behavior twice
+				continue;
+			}
+			if (property_exists($table, 'isVersionTable')) {
+				// don't add the behavior to version tables
+				continue;
+			}
+			$b = clone $this;
+			$table->addBehavior($b);
+		}
+	}
+
 	public function modifyTable()
 	{
 		$this->addVersionColumn();
@@ -49,7 +65,7 @@ class VersionableBehavior extends Behavior
 		$this->addVersionTable();
 		$this->addForeignKeyVersionColumns();
 	}
-	
+
 	protected function addVersionColumn()
 	{
 		$table = $this->getTable();
@@ -62,7 +78,7 @@ class VersionableBehavior extends Behavior
 			));
 		}
 	}
-	
+
 	protected function addLogColumns()
 	{
 		$table = $this->getTable();
@@ -87,7 +103,7 @@ class VersionableBehavior extends Behavior
 			));
 		}
 	}
-	
+
 	protected function addVersionTable()
 	{
 		$table = $this->getTable();
@@ -102,6 +118,7 @@ class VersionableBehavior extends Behavior
 				'schema'    => $table->getSchema(),
 				'namespace' => $table->getNamespace() ? '\\' . $table->getNamespace() : null,
 			));
+			$versionTable->isVersionTable = true;
 			// every behavior adding a table should re-execute database behaviors
 			foreach ($database->getBehaviors() as $behavior) {
 				$behavior->modifyDatabase();
@@ -109,6 +126,7 @@ class VersionableBehavior extends Behavior
 			// copy all the columns
 			foreach ($table->getColumns() as $column) {
 				$columnInVersionTable = clone $column;
+				$columnInVersionTable->clearInheritanceList();
 				if ($columnInVersionTable->hasReferrers()) {
 					$columnInVersionTable->clearReferrers();
 				}
@@ -130,7 +148,9 @@ class VersionableBehavior extends Behavior
 			$versionTable->addForeignKey($fk);
 
 			// add the version column to the primary key
-			$versionTable->getColumn($this->getParameter('version_column'))->setPrimaryKey(true);
+			$versionColumn = $versionTable->getColumn($this->getParameter('version_column'));
+			$versionColumn->setNotNull(true);
+			$versionColumn->setPrimaryKey(true);
 			$this->versionTable = $versionTable;
 		} else {
 			$this->versionTable = $database->getTable($versionTableName);
@@ -169,23 +189,23 @@ class VersionableBehavior extends Behavior
 			}
 		}
 	}
-	
+
 	public function getVersionTable()
 	{
 		return $this->versionTable;
 	}
-	
+
 	public function getVersionTablePhpName()
 	{
 		return $this->getTable()->getPhpName() . 'Version';
 	}
-	
+
 	public function getVersionableFks()
 	{
 		$versionableFKs = array();
 		if ($fks = $this->getTable()->getForeignKeys()) {
 			foreach ($fks as $fk) {
-				if ($fk->getForeignTable()->hasBehavior('versionable') && ! $fk->isComposite()) {
+				if ($fk->getForeignTable()->hasBehavior($this->getName()) && ! $fk->isComposite()) {
 					$versionableFKs []= $fk;
 				}
 			}
@@ -198,21 +218,21 @@ class VersionableBehavior extends Behavior
 		$versionableReferrers = array();
 		if ($fks = $this->getTable()->getReferrers()) {
 			foreach ($fks as $fk) {
-				if ($fk->getTable()->hasBehavior('versionable') && ! $fk->isComposite()) {
+				if ($fk->getTable()->hasBehavior($this->getName()) && ! $fk->isComposite()) {
 					$versionableReferrers []= $fk;
 				}
 			}
 		}
 		return $versionableReferrers;
 	}
-	
+
 	public function getReferrerIdsColumn(ForeignKey $fk)
 	{
 		$fkTableName = $fk->getTable()->getName();
 		$fkIdsColumnName = $fkTableName . '_ids';
 		return $this->versionTable->getColumn($fkIdsColumnName);
 	}
-	
+
 	public function getReferrerVersionsColumn(ForeignKey $fk)
 	{
 		$fkTableName = $fk->getTable()->getName();
@@ -246,5 +266,5 @@ class VersionableBehavior extends Behavior
 		}
 		return $this->peerBuilderModifier;
 	}
-	
+
 }

@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/versionable/VersionableBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for VersionableBehavior class
  *
  * @author     François Zaninotto
- * @version    $Revision: 2111 $
+ * @version    $Revision$
  * @package    generator.behavior.versionable
  */
 class VersionableBehaviorPeerBuilderModifierTest extends PHPUnit_Framework_TestCase

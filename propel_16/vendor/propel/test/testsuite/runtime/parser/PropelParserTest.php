@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelParser.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelXMLParser.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/exception/PropelException.php';
@@ -34,7 +33,7 @@ class PropelParserTest extends PHPUnit_Framework_TestCase
 	{
 		$parser = PropelParser::getParser('Foo');
 	}
-	
+
 	public function testLoad()
 	{
 		$fixtureFile = dirname(__FILE__) . '/fixtures/test_data.xml';
@@ -49,7 +48,7 @@ class PropelParserTest extends PHPUnit_Framework_TestCase
 EOF;
 		$this->assertEquals($expectedContent, $content, 'PropelParser::load() executes PHP code in files');
 	}
-	
+
 	public function testDump()
 	{
 		$testContent = "Foo Content";

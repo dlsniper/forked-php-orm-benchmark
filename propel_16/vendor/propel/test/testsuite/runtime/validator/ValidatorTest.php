@@ -1,7 +1,7 @@
 <?php
 
 /**
- * $Id: ValidatorTest.php 2176 2011-01-21 22:34:44Z francois $
+ * $Id$
  * This file is part of the Propel package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -35,7 +35,7 @@ class ValidatorTest extends BookstoreEmptyTestBase
 		BookstoreDataPopulator::populate();
 		require_once dirname(__FILE__) . '/../../../tools/helpers/bookstore/validator/ISBNValidator.php';
 	}
-	
+
 	/**
 	 * Test minLength validator.
 	 * This also tests the ${value} substitution.

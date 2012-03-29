@@ -15,22 +15,27 @@ require_once dirname(__FILE__) . '/DefaultPlatform.php';
  *
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @version    $Revision: 2281 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 class MysqlPlatform extends DefaultPlatform
 {
-	
+
+	/**
+	 * @var        boolean whether the identifier quoting is enabled
+	 */
+	protected $isIdentifierQuotingEnabled = true;
+
 	protected $tableEngineKeyword = 'ENGINE';  // overwritten in build.properties
 	protected $defaultTableEngine = 'MyISAM';  // overwritten in build.properties
-	
+
 	/**
 	 * Initializes db specific domain mapping.
 	 */
 	protected function initialize()
 	{
 		parent::initialize();
-		$this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, "TINYINT"));
+		$this->setSchemaDomainMapping(new Domain(PropelTypes::BOOLEAN, "TINYINT", 1));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::NUMERIC, "DECIMAL"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::LONGVARCHAR, "TEXT"));
 		$this->setSchemaDomainMapping(new Domain(PropelTypes::BINARY, "BLOB"));
@@ -53,7 +58,7 @@ class MysqlPlatform extends DefaultPlatform
 			$this->tableEngineKeyword = $tableEngineKeyword;
 		}
 	}
-	
+
 	/**
 	 * Setter for the tableEngineKeyword property
 	 *
@@ -200,28 +205,50 @@ CREATE TABLE %s
 			$tableOptions
 		);
 	}
-	
+
 	protected function getTableOptions(Table $table)
 	{
 		$dbVI = $table->getDatabase()->getVendorInfoForType('mysql');
 		$tableVI = $table->getVendorInfoForType('mysql');
 		$vi = $dbVI->getMergedVendorInfo($tableVI);
 		$tableOptions = array();
+		// List of supported table options
+		// see http://dev.mysql.com/doc/refman/5.5/en/create-table.html
 		$supportedOptions = array(
+			'AutoIncrement'   => 'AUTO_INCREMENT',
+			'AvgRowLength'    => 'AVG_ROW_LENGTH',
 			'Charset'         => 'CHARACTER SET',
-			'Collate'         => 'COLLATE',
 			'Checksum'        => 'CHECKSUM',
-			'Pack_Keys'       => 'PACK_KEYS',
+			'Collate'         => 'COLLATE',
+			'Connection'      => 'CONNECTION',
+			'DataDirectory'   => 'DATA DIRECTORY',
 			'Delay_key_write' => 'DELAY_KEY_WRITE',
+			'DelayKeyWrite'   => 'DELAY_KEY_WRITE',
+			'IndexDirectory'  => 'INDEX DIRECTORY',
+			'InsertMethod'    => 'INSERT_METHOD',
+			'KeyBlockSize'    => 'KEY_BLOCK_SIZE',
+			'MaxRows'         => 'MAX_ROWS',
+			'MinRows'         => 'MIN_ROWS',
+			'Pack_Keys'       => 'PACK_KEYS',
+			'PackKeys'        => 'PACK_KEYS',
+			'RowFormat'       => 'ROW_FORMAT',
+			'Union'           => 'UNION',
 		);
 		foreach ($supportedOptions as $name => $sqlName) {
+			$parameterValue = NULL;
+
 			if ($vi->hasParameter($name)) {
-				$tableOptions []= sprintf('%s=%s', 
-					$sqlName, 
-					$this->quote($vi->getParameter($name))
-				);
+				$parameterValue = $vi->getParameter($name);
+			} elseif ($vi->hasParameter($sqlName)) {
+				$parameterValue = $vi->getParameter($sqlName);
+			}
+
+			if (!is_null($parameterValue)) {
+				$parameterValue = is_numeric($parameterValue) ? $parameterValue : $this->quote($parameterValue);
+				$tableOptions[] = sprintf('%s=%s', $sqlName, $parameterValue);
 			}
 		}
+
 		return $tableOptions;
 	}
 
@@ -231,7 +258,7 @@ CREATE TABLE %s
 DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
 ";
 	}
-	
+
 	public function getColumnDDL(Column $col)
 	{
 		$domain = $col->getDomain();
@@ -258,7 +285,7 @@ DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
 		}
 
 		$ddl = array($this->quoteIdentifier($col->getName()));
-		if ($this->hasSize($sqlType)) {
+		if ($this->hasSize($sqlType) && $col->isDefaultSqlType($this)) {
 			$ddl []= $sqlType . $domain->printSize();
 		} else {
 			$ddl []= $sqlType;
@@ -334,7 +361,7 @@ ALTER TABLE %s DROP PRIMARY KEY;
 			$this->quoteIdentifier($table->getName())
 		);
 	}
-	
+
 	/**
 	 * Builds the DDL SQL to add an Index.
 	 *
@@ -346,7 +373,7 @@ ALTER TABLE %s DROP PRIMARY KEY;
 		$pattern = "
 CREATE %sINDEX %s ON %s (%s);
 ";
-		return sprintf($pattern, 
+		return sprintf($pattern,
 			$this->getIndexType($index),
 			$this->quoteIdentifier($index->getName()),
 			$this->quoteIdentifier($index->getTable()->getName()),
@@ -370,7 +397,7 @@ DROP INDEX %s ON %s;
 			$this->quoteIdentifier($index->getTable()->getName())
 		);
 	}
-		
+
 	/**
 	 * Builds the DDL SQL for an Index object.
 	 * @return     string
@@ -383,7 +410,7 @@ DROP INDEX %s ON %s;
 			$this->getIndexColumnListDDL($index)
 		);
 	}
-	
+
 	protected function getIndexType(Index $index)
 	{
 		$type = '';
@@ -427,7 +454,7 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
 ";
 		return sprintf($pattern, $comment);
 	}
-	
+
 	/**
 	 * Builds the DDL SQL to modify a database
 	 * based on a PropelDatabaseDiff instance
@@ -453,9 +480,9 @@ ALTER TABLE %s DROP FOREIGN KEY %s;
 		foreach ($databaseDiff->getAddedTables() as $table) {
 			$ret .= $this->getAddTableDDL($table);
 		}
-		
+
 		$ret .= $this->getEndDDL();
-		
+
 		return $ret;
 	}
 
@@ -562,7 +589,8 @@ ALTER TABLE %s CHANGE %s %s;
 	 */
 	public function disconnectedEscapeText($text)
 	{
-		if (function_exists('mysql_escape_string')) {
+		// mysql_escape_string doesn't work in PHP >= 5.4
+		if (version_compare(PHP_VERSION, '5.4', '<') && function_exists('mysql_escape_string')) {
 			return mysql_escape_string($text);
 		} else {
 			return addslashes($text);
@@ -586,4 +614,22 @@ ALTER TABLE %s CHANGE %s %s;
 	{
 		return 'Y-m-d H:i:s';
 	}
+
+	public function getColumnBindingPHP($column, $identifier, $columnValueAccessor, $tab = "			")
+	{
+		// FIXME - This is a temporary hack to get around apparent bugs w/ PDO+MYSQL
+		// See http://pecl.php.net/bugs/bug.php?id=9919
+		if ($column->getPDOType() == PDO::PARAM_BOOL) {
+			return sprintf(
+				"
+%s\$stmt->bindValue(%s, (int) %s, PDO::PARAM_INT);",
+				$tab,
+				$identifier,
+				$columnValueAccessor
+			);
+		}
+
+		return parent::getColumnBindingPHP($column, $identifier, $columnValueAccessor, $tab);
+	}
+
 }

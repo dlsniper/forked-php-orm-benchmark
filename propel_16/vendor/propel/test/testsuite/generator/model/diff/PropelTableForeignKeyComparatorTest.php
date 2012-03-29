@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableComparator.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableDiff.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
@@ -42,10 +41,10 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$fk2->addReference($c3, $c4);
 		$t2 = new Table('Baz');
 		$t2->addForeignKey($fk2);
-		
+
 		$this->assertFalse(PropelTableComparator::computeDiff($t1, $t2));
 	}
-	
+
 	public function testCompareNotSameFks()
 	{
 		$c1 = new Column('Foo');
@@ -56,7 +55,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$t1->addForeignKey($fk1);
 
 		$t2 = new Table('Baz');
-		
+
 		$diff = PropelTableComparator::computeDiff($t1, $t2);
 		$this->assertTrue($diff instanceof PropelTableDiff);
 	}
@@ -79,7 +78,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 
 		$this->assertFalse(PropelTableComparator::computeDiff($t1, $t2, true));
 	}
-	
+
 	public function testCompareAddedFks()
 	{
 		$db1 = new Database();
@@ -98,7 +97,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$t2->addForeignKey($fk2);
 		$db2->addTable($t2);
 		$t2->doNaming();
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -108,7 +107,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(1, count($tableDiff->getAddedFks()));
 		$this->assertEquals(array('Baz_FK_1' => $fk2), $tableDiff->getAddedFks());
 	}
-	
+
 	public function testCompareRemovedFks()
 	{
 		$db1 = new Database();
@@ -127,7 +126,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$t2 = new Table('Baz');
 		$db2->addTable($t2);
 		$t2->doNaming();
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -137,7 +136,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(1, count($tableDiff->getRemovedFks()));
 		$this->assertEquals(array('Baz_FK_1' => $fk1), $tableDiff->getRemovedFks());
 	}
-	
+
 	public function testCompareModifiedFks()
 	{
 		$db1 = new Database();
@@ -150,7 +149,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$t1->addForeignKey($fk1);
 		$db1->addTable($t1);
 		$t1->doNaming();
-		
+
 		$db2 = new Database();
 		$db2->setPlatform($this->platform);
 		$c3 = new Column('Foo');
@@ -161,7 +160,7 @@ class PropelTableForeignKeyComparatorTest extends PHPUnit_Framework_TestCase
 		$t2->addForeignKey($fk2);
 		$db2->addTable($t2);
 		$t2->doNaming();
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);

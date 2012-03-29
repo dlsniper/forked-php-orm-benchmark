@@ -10,9 +10,9 @@
 
 /**
  * Factory for model queries
- * 
+ *
  * @author     François Zaninotto
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.runtime.query
  */
 class PropelQuery

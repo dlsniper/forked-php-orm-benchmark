@@ -8,12 +8,11 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/util/PropelPHPParser.php';
 
 /**
  *
- * @package    generator.util 
+ * @package    generator.util
  */
 class PropelPHPParserTest extends PHPUnit_Framework_TestCase
 {
@@ -22,14 +21,14 @@ class PropelPHPParserTest extends PHPUnit_Framework_TestCase
 		$code = <<<EOF
 <?php
 class Foo {
-	
+
 	public function bar1()
 	{
 		// this is bar1
 	}
-	
+
 	protected \$bar2;
-	
+
 	public function bar2()
 	{
 		// this is bar2
@@ -52,7 +51,7 @@ class Foo {
 EOF;
 		return array(array($code));
 	}
-	
+
 	/**
 	 * @dataProvider basicClassCodeProvider
 	 */
@@ -70,7 +69,7 @@ EOF;
 		$parser = new PropelPHPParser($code);
 		$expected = <<<EOF
 
-	
+
 	public function bar1()
 	{
 		// this is bar1
@@ -87,7 +86,7 @@ EOF;
 		$parser = new PropelPHPParser($code);
 		$expected = <<<EOF
 
-	
+
 	public function bar2()
 	{
 		// this is bar2
@@ -133,7 +132,7 @@ EOF;
 EOF;
 		$this->assertEquals($expected, $parser->findMethod('bar4'));
 	}
-	
+
 	/**
 	 * @dataProvider basicClassCodeProvider
 	 */
@@ -151,7 +150,7 @@ EOF;
 		$parser = new PropelPHPParser($code);
 		$expected = <<<EOF
 
-	
+
 	public function bar1()
 	{
 		// this is bar1
@@ -170,9 +169,9 @@ EOF;
 		$expected = <<<EOF
 <?php
 class Foo {
-	
+
 	protected \$bar2;
-	
+
 	public function bar2()
 	{
 		// this is bar2
@@ -213,7 +212,7 @@ EOF;
 		$parser = new PropelPHPParser($code);
 		$expected = <<<EOF
 
-	
+
 	public function bar1()
 	{
 		// this is bar1
@@ -247,9 +246,9 @@ class Foo {
 		// yep, I've been replaced
 		echo 'bar';
 	}
-	
+
 	protected \$bar2;
-	
+
 	public function bar2()
 	{
 		// this is bar2

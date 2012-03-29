@@ -8,18 +8,17 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/builder/util/XmlToAppData.php';
 
 /**
  * Tests for XmlToAppData class
  *
- * @version    $Revision: 1965 $
+ * @version    $Revision$
  * @package    generator.builder.util
  */
 class XmlToAppDataTest extends PHPUnit_Framework_TestCase
 {
-	
+
 	public function testParseStringEmptySchema()
 	{
 		$schema = '<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>';
@@ -76,7 +75,7 @@ class XmlToAppDataTest extends PHPUnit_Framework_TestCase
 EOF;
 		$this->assertEquals($expectedTable, $table->toString());
 	}
-	
+
 	public function testParseFile()
 	{
 		$path = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'testSchema.xml');
@@ -93,7 +92,7 @@ EOF;
 EOF;
 		$this->assertEquals($expectedAppData, $appData->toString());
 	}
-	
+
 	public function testParseFileExternalSchema()
 	{
 		$path = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'outerSchema.xml');

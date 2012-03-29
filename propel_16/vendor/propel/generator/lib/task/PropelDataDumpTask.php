@@ -22,7 +22,7 @@
  * @author     Fedor Karpelevitch <fedor.karpelevitch@home.com> (Torque)
  * @author     Jason van Zyl <jvanzyl@zenplex.com> (Torque)
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
- * @version    $Revision: 1919 $
+ * @version    $Revision$
  * @package    propel.generator.task
  */
 class PropelDataDumpTask extends AbstractPropelDataModelTask

@@ -32,7 +32,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query ' . $msg);
 		$this->assertEquals($publisher->getName(), 'Penguin', 'Related object is correctly hydrated ' . $msg);
 	}
-	
+
 	public function testFindOneWith()
 	{
 		BookstoreDataPopulator::populate();
@@ -75,7 +75,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$c->with('p');
 		$this->assertCorrectHydration1($c, 'with main alias');
 	}
-	
+
 	public function testFindOneWithUsingInstancePool()
 	{
 		BookstoreDataPopulator::populate();
@@ -189,7 +189,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$essay->save();
 		AuthorPeer::clearInstancePool();
 		EssayPeer::clearInstancePool();
-		
+
 		$c = new ModelCriteria('bookstore', 'Essay');
 		$c->join('Essay.AuthorRelatedByFirstAuthor');
 		$c->with('AuthorRelatedByFirstAuthor');
@@ -204,7 +204,29 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$secondAuthor = $essay->getAuthorRelatedBySecondAuthor();
 		$this->assertEquals($count + 1, $con->getQueryCount(), 'with() does not hydrate objects not in with');
 	}
-	
+
+	public function testFindOneWithEmptyDuplicateRelation()
+	{
+		EssayPeer::doDeleteAll();
+
+		$author = new Author();
+		$author->setFirstName('Piet');
+		$author->setLastName('Sous');
+		$author->save();
+
+		AuthorPeer::clearInstancePool();
+		EssayPeer::clearInstancePool();
+
+		$query = AuthorQuery::create()
+			->useEssayRelatedByFirstAuthorQuery()
+			->orderByTitle()
+			->endUse()
+			->with('EssayRelatedByFirstAuthor');
+
+		$author = $query->findOne(); // should not throw a notice
+		$this->assertTrue(true);
+	}
+
 	public function testFindOneWithDistantClass()
 	{
 		BookstoreDataPopulator::populate();
@@ -229,7 +251,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query');
 		$this->assertEquals('J.K.', $author->getFirstName(), 'Related object is correctly hydrated');
 	}
-	
+
 	public function testFindOneWithDistantClassRenamedRelation()
 	{
 		BookstoreDataPopulator::populate();
@@ -251,7 +273,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query');
 		$this->assertEquals('J.K.', $author->getFirstName(), 'Related object is correctly hydrated');
 	}
-	
+
 	/**
 	 * @expectedException PropelException
 	 */
@@ -264,7 +286,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$c->limit(5);
 		$books = $c->find();
 	}
-	
+
 	public function testFindOneWithOneToMany()
 	{
 		BookstoreDataPopulator::populate();
@@ -290,7 +312,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 			$this->fail('with() does not force objects to be new');
 		}
 	}
-	
+
 	public function testFindOneWithOneToManyCustomOrder()
 	{
 		$author1 = new Author();
@@ -316,7 +338,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 			->find();
 		$this->assertEquals(2, count($authors), 'with() used on a many-to-many doesn\'t change the main object count');
 	}
-	
+
 	public function testFindOneWithOneToManyThenManyToOne()
 	{
 		BookstoreDataPopulator::populate();
@@ -342,7 +364,40 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query ');
 		$this->assertEquals(2, count($reviews), 'Related objects are correctly hydrated');
 	}
-	
+
+	public function testFindWithLeftJoinWithOneToManyAndNullObject()
+	{
+		BookPeer::clearInstancePool();
+		AuthorPeer::clearInstancePool();
+		ReviewPeer::clearInstancePool();
+		$freud = new Author();
+		$freud->setFirstName("Sigmund");
+		$freud->setLastName("Freud");
+		$freud->save($this->con);
+		$c = new ModelCriteria('bookstore', 'Author');
+		$c->add(AuthorPeer::LAST_NAME, 'Freud');
+		$c->leftJoinWith('Author.Book');
+		$c->leftJoinWith('Book.Review');
+		// should not raise a notice
+		$authors = $c->find($this->con);
+		$this->assertTrue(true);
+	}
+
+	public function testFindWithLeftJoinWithManyToOneAndNullObject()
+	{
+		BookPeer::clearInstancePool();
+		AuthorPeer::clearInstancePool();
+		ReviewPeer::clearInstancePool();
+		$review = new Review();
+		$review->save($this->con);
+		$c = new ModelCriteria('bookstore', 'Review');
+		$c->leftJoinWith('Review.Book');
+		$c->leftJoinWith('Book.Author');
+		// should not raise a notice
+		$reviews = $c->find($this->con);
+		$this->assertTrue(true);
+	}
+
 	public function testFindOneWithOneToManyThenManyToOneUsingJoinRelated()
 	{
 		BookstoreDataPopulator::populate();
@@ -356,8 +411,8 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 			->joinBook('book')
 			->with('book')
 			->useQuery('book')
-				->joinReview('review')
-				->with('review')
+			->joinReview('review')
+			->with('review')
 			->endUse()
 			->find($con);
 		$this->assertEquals(1, count($authors), 'with() does not duplicate the main object');
@@ -372,7 +427,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$reviews = $book->getReviews();
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query ');
 		$this->assertEquals(2, count($reviews), 'Related objects are correctly hydrated');
-	}	
+	}
 
 	public function testFindOneWithOneToManyThenManyToOneUsingAlias()
 	{
@@ -399,7 +454,7 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query ');
 		$this->assertEquals(2, count($reviews), 'Related objects are correctly hydrated');
 	}
-	
+
 	public function testFindOneWithColumn()
 	{
 		BookstoreDataPopulator::populate();
@@ -484,5 +539,43 @@ class PropelObjectFormatterWithTest extends BookstoreEmptyTestBase
 		$reviews = $book->getReviews();
 		$this->assertEquals($count, $con->getQueryCount(), 'with() hydrates the related objects to save a query ');
 		$this->assertEquals(2, count($reviews), 'Related objects are correctly hydrated');
+	}
+
+	public function testFindOneWithLeftJoinWithOneToManyAndNullObjectsAndWithAdditionalJoins()
+	{
+		BookPeer::clearInstancePool();
+		AuthorPeer::clearInstancePool();
+		BookOpinionPeer::clearInstancePool();
+		BookReaderPeer::clearInstancePool();
+
+		$freud = new Author();
+		$freud->setFirstName("Sigmund");
+		$freud->setLastName("Freud");
+		$freud->save($this->con);
+
+		$publisher = new Publisher();
+		$publisher->setName('Psycho Books');
+		$publisher->save();
+
+		$book = new Book();
+		$book->setAuthor($freud);
+		$book->setTitle('Weirdness');
+		$book->setIsbn('abc123456');
+		$book->setPrice('14.99');
+		$book->setPublisher($publisher);
+		$book->save();
+
+		$query = BookQuery::create()
+			->filterByTitle('Weirdness')
+			->innerJoinAuthor()
+			->useBookOpinionQuery(null, Criteria::LEFT_JOIN)
+			->leftJoinBookReader()
+			->endUse()
+			->with('Author')
+			->with('BookOpinion')
+			->with('BookReader');
+
+		$books = $query->findOne($this->con);
+		$this->assertEquals(0, count($books->getBookOpinions()));
 	}
 }

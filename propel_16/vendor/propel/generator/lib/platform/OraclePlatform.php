@@ -16,7 +16,7 @@ require_once dirname(__FILE__) . '/DefaultPlatform.php';
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
  * @author     Denis Dalmais
- * @version    $Revision: 2194 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 class OraclePlatform extends DefaultPlatform
@@ -331,5 +331,50 @@ CREATE %sINDEX %s ON %s (%s)%s;
 			$this->getColumnListDDL($index->getColumns()),
 			$this->generateBlockStorage($index)
 		);
+	}
+
+	/**
+	 * Get the PHP snippet for binding a value to a column.
+	 * Warning: duplicates logic from DBOracle::bindValue().
+	 * Any code modification here must be ported there.
+	 */
+	public function getColumnBindingPHP($column, $identifier, $columnValueAccessor, $tab = "			")
+	{
+		if ($column->getPDOType() == PropelTypes::CLOB_EMU) {
+			return sprintf(
+				"%s\$stmt->bindParam(%s, %s, %s, strlen(%s));
+",
+				$tab,
+				$identifier,
+				$columnValueAccessor,
+				PropelTypes::getPdoTypeString($column->getType()),
+				$columnValueAccessor
+			);
+		}
+
+		return parent::getColumnBindingPHP($column, $identifier, $columnValueAccessor, $tab);
+	}
+
+	/**
+	 * Get the PHP snippet for getting a Pk from the database.
+	 * Warning: duplicates logic from DBOracle::getId().
+	 * Any code modification here must be ported there.
+	 */
+	public function getIdentifierPhp($columnValueMutator, $connectionVariableName = '$con', $sequenceName = '', $tab = "			")
+	{
+		if (!$sequenceName) {
+			throw new EngineException('Oracle needs a sequence name to fetch primary keys');
+		}
+		$snippet = "
+\$stmt = %s->query('SELECT %s.nextval FROM dual');
+\$row = \$stmt->fetch(PDO::FETCH_NUM);
+%s = \$row[0];";
+		$script = sprintf($snippet,
+			$connectionVariableName,
+			$sequenceName,
+			$columnValueMutator
+		);
+
+		return preg_replace('/^/m', $tab, $script);
 	}
 }

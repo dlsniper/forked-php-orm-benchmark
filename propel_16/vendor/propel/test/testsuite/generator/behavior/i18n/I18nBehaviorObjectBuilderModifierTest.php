@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/i18n/I18nBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for I18nBehavior class object modifier
  *
  * @author     François Zaninotto
- * @version    $Revision: 2251 $
+ * @version    $Revision$
  * @package    generator.behavior.i18n
  */
 class I18nBehaviorObjectBuilderModifierTest extends PHPUnit_Framework_TestCase
@@ -47,6 +46,38 @@ class I18nBehaviorObjectBuilderModifierTest extends PHPUnit_Framework_TestCase
 			<parameter name="i18n_columns" value="bar1,bar2,bar3,bar4" />
 			<parameter name="default_locale" value="fr_FR" />
 			<parameter name="locale_alias" value="culture" />
+		</behavior>
+	</table>
+
+	<table name="movie">
+		<column name="id" type="integer" required="true" primaryKey="true" autoincrement="true" />
+		<column name="director" type="varchar" size="255" />
+		<column name="title" type="varchar" primaryString="true" />
+		<behavior name="i18n">
+			<parameter name="i18n_columns" value="title" />
+			<parameter name="locale_alias" value="culture" />
+		</behavior>
+	</table>
+	<table name="toy">
+		<column name="id" type="integer" required="true" primaryKey="true" autoincrement="true" />
+		<column name="ref" type="varchar" size="255" />
+		<column name="name" type="varchar" size="255" />
+		<behavior name="i18n">
+			<parameter name="i18n_columns" value="name" />
+			<parameter name="locale_alias" value="culture" />
+		</behavior>
+		<column name="movie_id" type="integer" />
+		<foreign-key foreignTable="movie">
+			<reference local="movie_id" foreign="id" />
+		</foreign-key>
+	</table>
+	<table name="i18n_behavior_test_local_column">
+		<column name="id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+		<column name="foo" type="INTEGER" />
+		<column name="bar" type="VARCHAR" size="100" />
+		<behavior name="i18n">
+			<parameter name="i18n_columns" value="bar" />
+			<parameter name="locale_column" value="my_lang" />
 		</behavior>
 	</table>
 </database>
@@ -117,7 +148,7 @@ EOF;
 		$this->assertEquals($translation1, $o->getTranslation('en_EN'));
 		$this->assertEquals($translation2, $o->getTranslation('fr_FR'));
 	}
-	
+
 	public function testGetTranslationSetsTheLocaleOnTheTranslation()
 	{
 		$o = new I18nBehaviorTest1();
@@ -142,7 +173,7 @@ EOF;
 		$translation = $o->getTranslation('en_EN');
 		$this->assertEquals($translation1, $translation);
 	}
-	
+
 	public function testRemoveTranslation()
 	{
 		$o = new I18nBehaviorTest1();
@@ -227,7 +258,7 @@ EOF;
 		$o->setLocale('pt_PT');
 		$this->assertEquals('pt_PT', $o->getCurrentTranslation()->getLocale());
 	}
-	
+
 	public function testI18nColumnGetterUsesCurrentTranslation()
 	{
 		$o = new I18nBehaviorTest1();
@@ -254,7 +285,7 @@ EOF;
 		$o->setLocale('fr_FR');
 		$this->assertEquals('bonjour', $o->getBar());
 	}
-	
+
 	public function testTranslationsArePersisted()
 	{
 		$o = new I18nBehaviorTest1();
@@ -272,7 +303,7 @@ EOF;
 			->count();
 		$this->assertEquals(2, $count);
 	}
-	
+
 	public function testClearRemovesExistingTranlsations()
 	{
 		$o = new I18nBehaviorTest1();
@@ -286,4 +317,94 @@ EOF;
 		$this->assertEquals('', $t1->getBar());
 	}
 
+	public function testI18nWithRelations()
+	{
+		MovieQuery::create()->deleteAll();
+		$count = MovieQuery::create()->count();
+		$this->assertEquals(0, $count, 'No movie before the test');
+		ToyQuery::create()->deleteAll();
+		$count = ToyQuery::create()->count();
+		$this->assertEquals(0, $count, 'No toy before the test');
+		MovieI18nQuery::create()->deleteAll();
+		$count = MovieI18nQuery::create()->count();
+		$this->assertEquals(0, $count, 'No i18n movies before the test');
+
+		$m = new Movie();
+		$m->setLocale('en');
+		$m->setTitle('V For Vendetta');
+		$m->setLocale('fr');
+		$m->setTitle('V Pour Vendetta');
+
+		$m->setLocale('en');
+		$this->assertEquals('V For Vendetta', $m->getTitle());
+		$m->setLocale('fr');
+		$this->assertEquals('V Pour Vendetta', $m->getTitle());
+
+		$t = new Toy();
+		$t->setMovie($m);
+		$t->save();
+
+		$count = MovieQuery::create()->count();
+		$this->assertEquals(1, $count, '1 movie');
+		$count = ToyQuery::create()->count();
+		$this->assertEquals(1, $count, '1 toy');
+		$count = MovieI18nQuery::create()->count();
+		$this->assertEquals(2, $count, '2 i18n movies');
+		$count = ToyI18nQuery::create()->count();
+		$this->assertEquals(0, $count, '0 i18n toys');
+	}
+
+	public function testI18nWithRelations2()
+	{
+		MovieQuery::create()->deleteAll();
+		$count = MovieQuery::create()->count();
+		$this->assertEquals(0, $count, 'No movie before the test');
+		ToyQuery::create()->deleteAll();
+		$count = ToyQuery::create()->count();
+		$this->assertEquals(0, $count, 'No toy before the test');
+		ToyI18nQuery::create()->deleteAll();
+		$count = ToyI18nQuery::create()->count();
+		$this->assertEquals(0, $count, 'No i18n toys before the test');
+		MovieI18nQuery::create()->deleteAll();
+		$count = MovieI18nQuery::create()->count();
+		$this->assertEquals(0, $count, 'No i18n movies before the test');
+
+		$t = new Toy();
+		$t->setLocale('en');
+		$t->setName('My Name');
+		$t->setLocale('fr');
+		$t->setName('Mon Nom');
+
+		$t->setLocale('en');
+		$this->assertEquals('My Name', $t->getName());
+		$t->setLocale('fr');
+		$this->assertEquals('Mon Nom', $t->getName());
+
+		$m = new Movie();
+		$m->addToy($t);
+		$m->save();
+
+		$count = MovieQuery::create()->count();
+		$this->assertEquals(1, $count, '1 movie');
+		$count = ToyQuery::create()->count();
+		$this->assertEquals(1, $count, '1 toy');
+		$count = ToyI18nQuery::create()->count();
+		$this->assertEquals(2, $count, '2 i18n toys');
+		$count = MovieI18nQuery::create()->count();
+		$this->assertEquals(0, $count, '0 i18n movies');
+	}
+
+	public function testUseLocalColumnParameter()
+	{
+		$o = new I18nBehaviorTestLocalColumn();
+		$translation1 = new I18nBehaviorTestLocalColumnI18n();
+		$translation1->setMyLang('en_EN');
+		$o->addI18nBehaviorTestLocalColumnI18n($translation1);
+		$translation2 = new I18nBehaviorTestLocalColumnI18n();
+		$translation2->setMyLang('fr_FR');
+		$o->addI18nBehaviorTestLocalColumnI18n($translation2);
+		$o->save();
+		$this->assertEquals($translation1, $o->getTranslation('en_EN'));
+		$this->assertEquals($translation2, $o->getTranslation('fr_FR'));
+	}
 }

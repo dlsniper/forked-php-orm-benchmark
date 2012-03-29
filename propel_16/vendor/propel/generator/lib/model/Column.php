@@ -25,7 +25,7 @@ require_once dirname(__FILE__) . '/ColumnDefaultValue.php';
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
  * @author     Byron Foster <byron_foster@yahoo.com> (Torque)
  * @author     Bernd Goldschmidt <bgoldschmidt@rapidsoft.de>
- * @version    $Revision: 2209 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class Column extends XMLElement
@@ -86,7 +86,7 @@ class Column extends XMLElement
 	private $isEnumeratedClasses;
 	private $inheritanceList;
 	private $needsTransactionInPostgres; //maybe this can be retrieved from vendorSpecificInfo
-	
+
 	/**
 	 * @var stores the possible values of an ENUM column
 	 */
@@ -195,7 +195,7 @@ class Column extends XMLElement
 			$this->phpNamingMethod = $this->getAttribute("phpNamingMethod", $this->parentTable->getDatabase()->getDefaultPhpNamingMethod());
 
 			$this->isPrimaryString = $this->booleanValue($this->getAttribute("primaryString"));
-			
+
 			$this->isPrimaryKey = $this->booleanValue($this->getAttribute("primaryKey"));
 
 			$this->isNodeKey = $this->booleanValue($this->getAttribute("nodeKey"));
@@ -213,7 +213,7 @@ class Column extends XMLElement
 
 			// Add type, size information to associated Domain object
 			$this->getDomain()->replaceSqlType($this->getAttribute("sqlType"));
-			if (!$this->getAttribute("size") && $this->getDomain()->getType() == 'VARCHAR' && !$this->getAttribute("sqlType")) {
+			if (!$this->getAttribute("size") && $this->getDomain()->getType() == 'VARCHAR' && $this->hasPlatform() && !$this->getAttribute("sqlType") && !$this->getPlatform()->supportsVarcharWithoutSize()) {
 				$size = 255;
 			} else {
 				$size = $this->getAttribute("size");
@@ -227,7 +227,7 @@ class Column extends XMLElement
 			} elseif ($this->getAttribute("defaultExpr") !== null) {
 				$this->getDomain()->setDefaultValue(new ColumnDefaultValue($this->getAttribute("defaultExpr"), ColumnDefaultValue::TYPE_EXPR));
 			}
-			
+
 			if ($this->getAttribute('valueSet', null) !== null) {
 				$valueSet = explode(',', $this->getAttribute("valueSet"));
 				$valueSet = array_map('trim', $valueSet);
@@ -297,7 +297,7 @@ class Column extends XMLElement
 	{
 		return $this->getSingularName() != $this->name;
 	}
-	
+
 	/**
 	 * Gets the singular name for the column
 	 */
@@ -305,7 +305,7 @@ class Column extends XMLElement
 	{
 		return rtrim($this->name, 's');
 	}
-	
+
 	/**
 	 * Get the description for the Table
 	 */
@@ -340,10 +340,10 @@ class Column extends XMLElement
 
 	/**
 	 * Set name to use in PHP sources.
-	 * 
+	 *
 	 * It will generate a phpName from it's name if no
 	 * $phpName is passed.
-	 * 
+	 *
 	 * @param		String $phpName PhpName to be set
 	 */
 	public function setPhpName($phpName = null)
@@ -593,7 +593,7 @@ class Column extends XMLElement
 	}
 
 	/**
-	 * Set whether the column is the primary string, 
+	 * Set whether the column is the primary string,
 	 * i.e. whether its value is the default string representation of the table
 	 * @param			 boolean $v
 	 */
@@ -792,12 +792,17 @@ class Column extends XMLElement
 
 	public function hasReferrer(ForeignKey $fk)
 	{
-		return $this->hasReferrers() && in_array($fk, $this->referrers);
+		return $this->hasReferrers() && in_array($fk, $this->referrers, true);
 	}
-	
+
 	public function clearReferrers()
 	{
 		$this->referrers = null;
+	}
+
+	public function clearInheritanceList()
+	{
+		$this->inheritanceList = array();
 	}
 
 	/**
@@ -853,6 +858,18 @@ class Column extends XMLElement
 		return $this->getType();
 	}
 
+	public function isDefaultSqlType(PropelPlatformInterface $platform = null)
+	{
+		if (null === $this->domain || null === $this->domain->getSqlType() || null === $platform) {
+			return true;
+		}
+		$defaultSqlType = $platform->getDomainForType($this->getType())->getSqlType();
+		if ($defaultSqlType == $this->getDomain()->getSqlType()) {
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Utility method to know whether column needs Blob/Lob handling.
 	 * @return		 boolean
@@ -887,7 +904,7 @@ class Column extends XMLElement
 	{
 		return PropelTypes::isBooleanType($this->getType());
 	}
-	
+
 	/**
 	 * Utility method to know whether column is a temporal column.
 	 * @return		 boolean
@@ -896,7 +913,7 @@ class Column extends XMLElement
 	{
 		return PropelTypes::isTemporalType($this->getType());
 	}
-	
+
 	/**
 	 * Utility method to know whether column is an ENUM column.
 	 * @return		 boolean
@@ -908,16 +925,16 @@ class Column extends XMLElement
 
 	/**
 	 * Sets the list of possible values for an ENUM column
-	 * @param array 
+	 * @param array
 	 */
 	public function setValueSet($valueSet)
 	{
 		$this->valueSet = $valueSet;
 	}
-	
+
 	/**
 	 * Returns the list of possible values for an ENUM column
-	 * @return array 
+	 * @return array
 	 */
 	public function getValueSet()
 	{
@@ -948,6 +965,10 @@ class Column extends XMLElement
 
 		if ($domain->getScale() !== null) {
 			$colNode->setAttribute('scale', $domain->getScale());
+		}
+
+		if ($this->hasPlatform() && !$this->isDefaultSqlType($this->getPlatform())) {
+			$colNode->setAttribute('sqlType', $domain->getSqlType());
 		}
 
 		if ($this->description !== null) {
@@ -1073,10 +1094,10 @@ class Column extends XMLElement
 		}
 		return $dflt;
 	}
-	
+
 	/**
 	 * Set a string that will give this column a default value.
-	 * 
+	 *
 	 * @param ColumnDefaultValue|scalar column default value
 	 */
 	public function setDefaultValue($def)
@@ -1085,7 +1106,7 @@ class Column extends XMLElement
 			$def = new ColumnDefaultValue($def, ColumnDefaultValue::TYPE_VALUE);
 		}
 		$this->domain->setDefaultValue($def);
-		
+
 		return $this;
 	}
 
@@ -1119,7 +1140,7 @@ class Column extends XMLElement
 	}
 
 	/**
-	 * Return true if the columns has to be lazy loaded, i.e. if a runtime query 
+	 * Return true if the columns has to be lazy loaded, i.e. if a runtime query
 	 * on the table doesn't hydrate this column, but a getter does.
 	 */
 	public function isLazyLoad()
@@ -1142,7 +1163,7 @@ class Column extends XMLElement
 				$this->getTable()->getName()
 			));
 		}
-		
+
 		return '';
 	}
 
@@ -1237,7 +1258,12 @@ class Column extends XMLElement
 	{
 		return $this->getTable()->getDatabase()->getPlatform();
 	}
-	
+
+	public function hasPlatform()
+	{
+		return null !== $this->getTable() && null !== $this->getTable()->getDatabase() && null !== $this->getTable()->getDatabase()->getPlatform();
+	}
+
 	public function getValidator()
 	{
 		foreach ($this->getTable()->getValidators() as $validator) {
@@ -1246,12 +1272,12 @@ class Column extends XMLElement
 			}
 		}
 	}
-	
+
 	public function __clone()
 	{
 		$this->referrers = null;
 	}
-	
+
 	public static function generatePhpName($name, $phpNamingMethod = PhpNameGenerator::CONV_METHOD_CLEAN, $namePrefix = null) {
 		return NameFactory::generateName(NameFactory::PHP_GENERATOR, array($name, $phpNamingMethod, $namePrefix));
 	}

@@ -220,12 +220,25 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	{
 		$this->declareClassFromBuilder($this->getStubPeerBuilder());
 		$this->declareClassFromBuilder($this->getStubQueryBuilder());
-		$this->declareClasses('Propel', 'PropelException', 'PDO', 'PropelPDO', 'Criteria', 'BaseObject', 'Persistent', 'BasePeer', 'PropelObjectCollection');
+		$this->declareClasses('Propel', 'PropelException', 'PDO', 'PropelPDO', 'Criteria', 'BaseObject', 'Persistent', 'BasePeer', 'PropelCollection', 'PropelObjectCollection', 'Exception');
 
 		$table = $this->getTable();
 		if (!$table->isAlias()) {
 			$this->addConstants($script);
 			$this->addAttributes($script);
+		}
+
+		if ($table->hasCrossForeignKeys()) {
+			foreach ($table->getCrossFks() as $fkList) {
+				list($refFK, $crossFK) = $fkList;
+				$fkName = $this->getFKPhpNameAffix($crossFK, $plural = true);
+				$this->addScheduledForDeletionAttribute($script, $fkName);
+			}
+		}
+
+		foreach ($table->getReferrers() as $refFK) {
+			$fkName = $this->getRefFKPhpNameAffix($refFK, $plural = true);
+			$this->addScheduledForDeletionAttribute($script, $fkName);
 		}
 
 		if ($this->hasDefaultValues()) {
@@ -329,6 +342,12 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 * @var        ".$this->getPeerClassname()."
 	 */
 	protected static \$peer;
+
+	/**
+	 * The flag var to prevent infinit loop in deep copy
+	 * @var       boolean
+	 */
+	protected \$startCopy = false;
 ";
 		if (!$table->isAlias()) {
 			$this->addColumnAttributes($script);
@@ -347,7 +366,6 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 				$crossFK = $fkList[1];
 				$this->addCrossFKAttributes($script, $crossFK);
 		}
-
 
 		$this->addAlreadyInSaveAttribute($script);
 		$this->addAlreadyInValidationAttribute($script);
@@ -450,7 +468,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	}
 
 	/**
-	 * Adds the comment about the serialized attribute 
+	 * Adds the comment about the serialized attribute
 	 * @param      string &$script The script will be modified in this method.
 	 * @param      Column $col
 	 **/
@@ -776,7 +794,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$script .= ")
 	{";
 	}
-	
+
 	protected function getAccessorLazyLoadSnippet(Column $col)
 	{
 		if ($col->isLazyLoad()) {
@@ -976,7 +994,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 		return \$this->$cloUnserialized;";
 	}
-	
+
 	/**
 	 * Adds an enum getter method.
 	 * @param      string &$script The script will be modified in this method.
@@ -1015,7 +1033,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 		return \$valueSet[\$this->$clo];";
 	}
-	
+
 	/**
 	 * Adds a tester method for an array column.
 	 * @param      string &$script The script will be modified in this method.
@@ -1049,7 +1067,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	} // has$singularPhpName()
 ";
 	}
-	
+
 	/**
 	 * Adds a normal (non-temporal) getter method.
 	 * @param      string &$script The script will be modified in this method.
@@ -1476,7 +1494,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
 			$defaultValue = $this->getDefaultValueString($col);
 			$script .= "
-			if ( (\$currentDateAsString !== \$newDateAsString) // normalized values don't match 
+			if ( (\$currentDateAsString !== \$newDateAsString) // normalized values don't match
 				|| (\$dt->format($fmt) === $defaultValue) // or the entered value matches the default
 				 ) {";
 		} else {
@@ -1521,11 +1539,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$this->addMutatorOpen($script, $col);
 
 		$script .= "
-		if (\$this->$cloUnserialized !== \$v";
-		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
-			$script .= " || \$this->isNew()";
-		}
-		$script .= ") {
+		if (\$this->$cloUnserialized !== \$v) {
 			\$this->$cloUnserialized = \$v;
 			\$this->$clo = serialize(\$v);
 			\$this->modifiedColumns[] = ".$this->getColumnConstant($col).";
@@ -1547,11 +1561,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$this->addMutatorOpen($script, $col);
 
 		$script .= "
-		if (\$this->$cloUnserialized !== \$v";
-		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
-			$script .= " || \$this->isNew()";
-		}
-		$script .= ") {
+		if (\$this->$cloUnserialized !== \$v) {
 			\$this->$cloUnserialized = \$v;
 			\$this->$clo = '| ' . implode(' | ', \$v) . ' |';
 			\$this->modifiedColumns[] = ".$this->getColumnConstant($col).";
@@ -1592,7 +1602,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$script .= ");
 		\$currentArray []= \$value;
 		\$this->set$cfc(\$currentArray);
-		
+
 		return \$this;
 	} // add$singularPhpName()
 ";
@@ -1661,11 +1671,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			\$v = array_search(\$v, \$valueSet);
 		}
 
-		if (\$this->$clo !== \$v";
-		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
-			$script .= " || \$this->isNew()";
-		}
-		$script .= ") {
+		if (\$this->$clo !== \$v) {
 			\$this->$clo = \$v;
 			\$this->modifiedColumns[] = ".$this->getColumnConstant($col).";
 		}
@@ -1690,7 +1696,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			$script .= "
 		if (\$v !== null) {
 			if (is_string(\$v)) {
-				\$v = in_array(strtolower(\$v), array('false', 'off', '-', 'no', 'n', '0')) ? false : true;
+				\$v = in_array(strtolower(\$v), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
 			} else {
 				\$v = (boolean) \$v;
 			}
@@ -1698,11 +1704,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 ";
 
 		$script .= "
-		if (\$this->$clo !== \$v";
-		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
-			$script .= " || \$this->isNew()";
-		}
-		$script .= ") {
+		if (\$this->$clo !== \$v) {
 			\$this->$clo = \$v;
 			\$this->modifiedColumns[] = ".$this->getColumnConstant($col).";
 		}
@@ -1717,7 +1719,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 
 		$script .= "
 	/**
-	 * Sets the value of the [$clo] column. 
+	 * Sets the value of the [$clo] column.
 	 * Non-boolean arguments are converted using the following rules:
 	 *   * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
 	 *   * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
@@ -1727,7 +1729,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 * @return     ".$this->getObjectClassname()." The current object (for fluent API support)
 	 */";
 	}
-		
+
 	/**
 	 * Adds setter method for "normal" columns.
 	 * @param      string &$script The script will be modified in this method.
@@ -1751,11 +1753,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 
 		$script .= "
-		if (\$this->$clo !== \$v";
-		if (($def = $col->getDefaultValue()) !== null && !$def->isExpression()) {
-			$script .= " || \$this->isNew()";
-		}
-		$script .= ") {
+		if (\$this->$clo !== \$v) {
 			\$this->$clo = \$v;
 			\$this->modifiedColumns[] = ".$this->getColumnConstant($col).";
 		}
@@ -2361,8 +2359,25 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		foreach ($table->getColumns() as $col) {
 			$cfc = $col->getPhpName();
 			$cptype = $col->getPhpType();
+
 			$script .= "
-			case $i:
+			case $i:";
+
+			if (PropelTypes::ENUM === $col->getType()) {
+				$script .= "
+				\$valueSet = " . $this->getPeerClassname() . "::getValueSet(" . $this->getColumnConstant($col) . ");
+				if (isset(\$valueSet[\$value])) {
+					\$value = \$valueSet[\$value];
+				}";
+			} elseif (PropelTypes::PHP_ARRAY === $col->getType()) {
+				$script .= "
+				if (!is_array(\$value)) {
+					\$v = trim(substr(\$value, 2, -2));
+					\$value = \$v ? explode(' | ', \$v) : array();
+				}";
+			}
+
+			$script .= "
 				\$this->set$cfc(\$value);
 				break;";
 			$i++;
@@ -2466,7 +2481,9 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 
 		\$con->beginTransaction();
-		try {";
+		try {
+			\$deleteQuery = ".$this->getQueryClassname()."::create()
+				->filterByPrimaryKey(\$this->getPrimaryKey());";
 		if($this->getGeneratorConfig()->getBuildProperty('addHooks')) {
 			$script .= "
 			\$ret = \$this->preDelete(\$con);";
@@ -2474,9 +2491,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			$this->applyBehaviorModifier('preDelete', $script, "			");
 			$script .= "
 			if (\$ret) {
-				".$this->getQueryClassname()."::create()
-					->filterByPrimaryKey(\$this->getPrimaryKey())
-					->delete(\$con);
+				\$deleteQuery->delete(\$con);
 				\$this->postDelete(\$con);";
 			// apply behaviors
 			$this->applyBehaviorModifier('postDelete', $script, "				");
@@ -2490,7 +2505,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			// apply behaviors
 			$this->applyBehaviorModifier('preDelete', $script, "			");
 			$script .= "
-			".$this->getPeerClassname()."::doDelete(\$this, \$con);";
+			\$deleteQuery->delete(\$con);";
 			// apply behaviors
 			$this->applyBehaviorModifier('postDelete', $script, "			");
 			$script .= "
@@ -2499,7 +2514,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 
 		$script .= "
-		} catch (PropelException \$e) {
+		} catch (Exception \$e) {
 			\$con->rollBack();
 			throw \$e;
 		}";
@@ -2616,6 +2631,8 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$this->addDelete($script);
 		$this->addSave($script);
 		$this->addDoSave($script);
+		$script .= $this->addDoInsert();
+		$script .= $this->addDoUpdate();
 	}
 
 	/**
@@ -3295,7 +3312,11 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 */
 	protected function addRefFKMethods(&$script)
 	{
-		foreach ($this->getTable()->getReferrers() as $refFK) {
+		if (!$referrers = $this->getTable()->getReferrers()) {
+			return;
+		}
+		$this->addInitRelations($script, $referrers);
+		foreach ($referrers as $refFK) {
 			$this->declareClassFromBuilder($this->getNewStubObjectBuilder($refFK->getTable()));
 			$this->declareClassFromBuilder($this->getNewStubQueryBuilder($refFK->getTable()));
 			if ($refFK->isLocalPrimaryKey()) {
@@ -3305,11 +3326,42 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 				$this->addRefFKClear($script, $refFK);
 				$this->addRefFKInit($script, $refFK);
 				$this->addRefFKGet($script, $refFK);
+				$this->addRefFKSet($script, $refFK);
 				$this->addRefFKCount($script, $refFK);
 				$this->addRefFKAdd($script, $refFK);
+				$this->addRefFKDoAdd($script, $refFK);
 				$this->addRefFKGetJoinMethods($script, $refFK);
 			}
 		}
+	}
+
+	protected function addInitRelations(&$script, $referrers)
+	{
+		$script .= "
+
+	/**
+	 * Initializes a collection based on the name of a relation.
+	 * Avoids crafting an 'init[\$relationName]s' method name
+	 * that wouldn't work when StandardEnglishPluralizer is used.
+	 *
+	 * @param      string \$relationName The name of the relation to initialize
+	 * @return     void
+	 */
+	public function initRelation(\$relationName)
+	{";
+		foreach ($referrers as $refFK) {
+			if (!$refFK->isLocalPrimaryKey()) {
+				$relationName = $this->getRefFKPhpNameAffix($refFK);
+				$relCol = $this->getRefFKPhpNameAffix($refFK, $plural = true);
+				$script .= "
+		if ('$relationName' == \$relationName) {
+			return \$this->init$relCol();
+		}";
+			}
+		}
+		$script .= "
+	}
+";
 	}
 
 	/**
@@ -3382,6 +3434,12 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$joinedTableObjectBuilder = $this->getNewObjectBuilder($refFK->getTable());
 		$className = $joinedTableObjectBuilder->getObjectClassname();
 
+		if ($tblFK->getChildrenColumn()) {
+			$className = 'Base' . $className;
+            $namespace = $joinedTableObjectBuilder->getNamespace();
+            $this->declareClass($namespace.'\\'.$className);
+		}
+
 		$collName = $this->getRefFKCollVarName($refFK);
 
 		$script .= "
@@ -3390,8 +3448,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 * through the $className foreign key attribute.
 	 *
 	 * @param      $className \$l $className
-	 * @return     void
-	 * @throws     PropelException
+	 * @return     ".$this->getObjectClassname()." The current object (for fluent API support)
 	 */
 	public function add".$this->getRefFKPhpNameAffix($refFK, $plural = false)."($className \$l)
 	{
@@ -3399,9 +3456,10 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			\$this->init".$this->getRefFKPhpNameAffix($refFK, $plural = true)."();
 		}
 		if (!\$this->{$collName}->contains(\$l)) { // only add it if the **same** object is not already associated
-			\$this->{$collName}[]= \$l;
-			\$l->set".$this->getFKPhpNameAffix($refFK, $plural = false)."(\$this);
+			\$this->doAdd" . $this->getRefFKPhpNameAffix($refFK, $plural = false)  . "(\$l);
 		}
+
+		return \$this;
 	}
 ";
 	} // addRefererAdd
@@ -3509,6 +3567,75 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 ";
 	} // addRefererGet()
 
+	protected function addRefFKSet(&$script, $refFK)
+	{
+		$relatedName = $this->getRefFKPhpNameAffix($refFK, $plural = true);
+		$relatedObjectClassName = $this->getRefFKPhpNameAffix($refFK, $plural = false);
+
+		// No lcfirst() in PHP < 5.3
+		$inputCollection = $relatedName;
+		$inputCollection[0] = strtolower($inputCollection[0]);
+
+		// No lcfirst() in PHP < 5.3
+		$inputCollectionEntry = $this->getRefFKPhpNameAffix($refFK, $plural = false);
+		$inputCollectionEntry[0] = strtolower($inputCollectionEntry[0]);
+
+		$collName = $this->getRefFKCollVarName($refFK);
+
+		$script .= "
+	/**
+	 * Sets a collection of $relatedObjectClassName objects related by a one-to-many relationship
+	 * to the current object.
+	 * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+	 * and new objects from the given Propel collection.
+	 *
+	 * @param      PropelCollection \${$inputCollection} A Propel collection.
+	 * @param      PropelPDO \$con Optional connection object
+	 */
+	public function set{$relatedName}(PropelCollection \${$inputCollection}, PropelPDO \$con = null)
+	{
+		\$this->{$inputCollection}ScheduledForDeletion = \$this->get{$relatedName}(new Criteria(), \$con)->diff(\${$inputCollection});
+
+		foreach (\${$inputCollection} as \${$inputCollectionEntry}) {
+			// Fix issue with collection modified by reference
+			if (\${$inputCollectionEntry}->isNew()) {
+				\${$inputCollectionEntry}->set" . $this->getFKPhpNameAffix($refFK, $plural = false)."(\$this);
+			}
+			\$this->add{$relatedObjectClassName}(\${$inputCollectionEntry});
+		}
+
+		\$this->{$collName} = \${$inputCollection};
+	}
+";
+	}
+
+	/**
+	 * @param		string &$script The script will be modified in this method.
+	 * @param		ForeignKey $refFK
+	 * @param		ForeignKey $crossFK
+	 */
+	protected function addRefFKDoAdd(&$script, $refFK)
+	{
+		$relatedObjectClassName = $this->getRefFKPhpNameAffix($refFK, $plural = false);
+
+		// lcfirst() doesn't exist in PHP < 5.3
+		$lowerRelatedObjectClassName = $relatedObjectClassName;
+		$lowerRelatedObjectClassName[0] = strtolower($lowerRelatedObjectClassName[0]);
+
+		$collName = $this->getRefFKCollVarName($refFK);
+
+		$script .= "
+	/**
+	 * @param	{$relatedObjectClassName} \${$lowerRelatedObjectClassName} The $lowerRelatedObjectClassName object to add.
+	 */
+	protected function doAdd{$relatedObjectClassName}(\${$lowerRelatedObjectClassName})
+	{
+		\$this->{$collName}[]= \${$lowerRelatedObjectClassName};
+		\${$lowerRelatedObjectClassName}->set" . $this->getFKPhpNameAffix($refFK, $plural = false)."(\$this);
+	}
+";
+	}
+
 	/**
 	 * Adds the method that gets a one-to-one related referrer fkey.
 	 * This is for one-to-one relationship special case.
@@ -3588,11 +3715,80 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	{
 		$joinedTableObjectBuilder = $this->getNewObjectBuilder($crossFK->getForeignTable());
 		$className = $joinedTableObjectBuilder->getObjectClassname();
+		$relatedName = $this->getFKPhpNameAffix($crossFK, $plural = true);
 		$script .= "
 	/**
 	 * @var        array {$className}[] Collection to store aggregation of $className objects.
 	 */
 	protected $" . $this->getCrossFKVarName($crossFK) . ";
+";
+	}
+
+	protected function addScheduledForDeletionAttribute(&$script, $fkName)
+	{
+		// No lcfirst() in PHP < 5.3
+		$fkName[0] = strtolower($fkName[0]);
+
+		$script .= "
+	/**
+	 * An array of objects scheduled for deletion.
+	 * @var		array
+	 */
+	protected \${$fkName}ScheduledForDeletion = null;
+";
+	}
+
+	protected function addCrossFkScheduledForDeletion(&$script, $refFK, $crossFK)
+	{
+		$queryClassName = $this->getRefFKPhpNameAffix($refFK, $plural = false) . 'Query';
+		$relatedName = $this->getFKPhpNameAffix($crossFK, $plural = true);
+		// No lcfirst() in PHP < 5.3
+		$lowerRelatedName = $relatedName;
+		$lowerRelatedName[0] = strtolower($lowerRelatedName[0]);
+		// No lcfirst() in PHP < 5.3
+		$lowerSingleRelatedName = $this->getFKPhpNameAffix($crossFK, $plural = false);
+		$lowerSingleRelatedName[0] = strtolower($lowerSingleRelatedName[0]);
+
+		$script .= "
+			if (\$this->{$lowerRelatedName}ScheduledForDeletion !== null) {
+				if (!\$this->{$lowerRelatedName}ScheduledForDeletion->isEmpty()) {
+					$queryClassName::create()
+						->filterByPrimaryKeys(\$this->{$lowerRelatedName}ScheduledForDeletion->getPrimaryKeys(false))
+						->delete(\$con);
+					\$this->{$lowerRelatedName}ScheduledForDeletion = null;
+				}
+
+				foreach (\$this->get{$relatedName}() as \${$lowerSingleRelatedName}) {
+					if (\${$lowerSingleRelatedName}->isModified()) {
+						\${$lowerSingleRelatedName}->save(\$con);
+					}
+				}
+			}
+";
+	}
+
+	protected function addRefFkScheduledForDeletion(&$script, $refFK)
+	{
+		$relatedName = $this->getRefFKPhpNameAffix($refFK, $plural = true);
+
+		// No lcfirst() in PHP < 5.3
+		$lowerRelatedName = $relatedName;
+		$lowerRelatedName[0] = strtolower($lowerRelatedName[0]);
+		// No lcfirst() in PHP < 5.3
+		$lowerSingleRelatedName = $this->getRefFKPhpNameAffix($refFK, $plural = false);
+		$lowerSingleRelatedName[0] = strtolower($lowerSingleRelatedName[0]);
+
+		$queryClassName = $this->getNewStubQueryBuilder($refFK->getTable())->getClassname();
+
+		$script .= "
+			if (\$this->{$lowerRelatedName}ScheduledForDeletion !== null) {
+				if (!\$this->{$lowerRelatedName}ScheduledForDeletion->isEmpty()) {
+					$queryClassName::create()
+						->filterByPrimaryKeys(\$this->{$lowerRelatedName}ScheduledForDeletion->getPrimaryKeys(false))
+						->delete(\$con);
+					\$this->{$lowerRelatedName}ScheduledForDeletion = null;
+				}
+			}
 ";
 	}
 
@@ -3611,12 +3807,14 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			$this->addCrossFKClear($script, $crossFK);
 			$this->addCrossFKInit($script, $crossFK);
 			$this->addCrossFKGet($script, $refFK, $crossFK);
+			$this->addCrossFKSet($script, $refFK, $crossFK);
 			$this->addCrossFKCount($script, $refFK, $crossFK);
 			$this->addCrossFKAdd($script, $refFK, $crossFK);
+			$this->addCrossFKDoAdd($script, $refFK, $crossFK);
 		}
 	}
 
-		/**
+	/**
 	 * Adds the method that clears the referrer fkey collection.
 	 * @param      string &$script The script will be modified in this method.
 	 */
@@ -3715,6 +3913,69 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 ";
 	}
 
+	protected function addCrossFKSet(&$script, $refFK, $crossFK)
+	{
+		$relatedName = $this->getFKPhpNameAffix($crossFK, $plural = true);
+		$relatedObjectClassName = $this->getNewStubObjectBuilder($crossFK->getForeignTable())->getClassname();
+		$selfRelationName = $this->getFKPhpNameAffix($refFK, $plural = false);
+		$relatedQueryClassName = $this->getNewStubQueryBuilder($crossFK->getForeignTable())->getClassname();
+		$crossRefQueryClassName = $this->getRefFKPhpNameAffix($refFK, $plural = false);
+		$crossRefTableName = $crossFK->getTableName();
+		$collName = $this->getCrossFKVarName($crossFK);
+		$joinedTableObjectBuilder = $this->getNewObjectBuilder($refFK->getTable());
+		$className = $joinedTableObjectBuilder->getObjectClassname();
+
+		// No lcfirst() in PHP < 5.3
+		$lowerClassName = $className;
+		$lowerClassName[0] = strtolower($lowerClassName[0]);
+
+		$crossRefObjectClassName = '$' . $lowerClassName;
+
+		// No lcfirst() in PHP < 5.3
+		$inputCollection = $relatedName;
+		$inputCollection[0] = strtolower($inputCollection[0]);
+
+		// No lcfirst() in PHP < 5.3
+		$inputCollectionEntry = $this->getFKPhpNameAffix($crossFK, $plural = false);
+		$inputCollectionEntry[0] = strtolower($inputCollectionEntry[0]);
+
+		$relCol = $this->getRefFKPhpNameAffix($refFK, $plural = true);
+		$relColVarName = $this->getRefFKCollVarName($crossFK);
+
+		$script .= "
+	/**
+	 * Sets a collection of $relatedObjectClassName objects related by a many-to-many relationship
+	 * to the current object by way of the $crossRefTableName cross-reference table.
+	 * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+	 * and new objects from the given Propel collection.
+	 *
+	 * @param      PropelCollection \${$inputCollection} A Propel collection.
+	 * @param      PropelPDO \$con Optional connection object
+	 */
+	public function set{$relatedName}(PropelCollection \${$inputCollection}, PropelPDO \$con = null)
+	{
+		{$crossRefObjectClassName}s = {$crossRefQueryClassName}Query::create()
+			->filterBy{$relatedObjectClassName}(\${$inputCollection})
+			->filterBy{$selfRelationName}(\$this)
+			->find(\$con);
+
+		\$this->{$inputCollection}ScheduledForDeletion = \$this->get{$relCol}()->diff({$crossRefObjectClassName}s);
+		\$this->{$relColVarName} = {$crossRefObjectClassName}s;
+
+		foreach (\${$inputCollection} as \${$inputCollectionEntry}) {
+			// Fix issue with collection modified by reference
+			if (\${$inputCollectionEntry}->isNew()) {
+				\$this->doAdd{$relatedObjectClassName}(\${$inputCollectionEntry});
+			} else {
+				\$this->add{$relatedObjectClassName}(\${$inputCollectionEntry});
+			}
+		}
+
+		\$this->$collName = \${$inputCollection};
+	}
+";
+	}
+
 	protected function addCrossFKCount(&$script, $refFK, $crossFK)
 	{
 		$relatedName = $this->getFKPhpNameAffix($crossFK, $plural = true);
@@ -3769,9 +4030,10 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		$joinedTableObjectBuilder = $this->getNewObjectBuilder($refFK->getTable());
 		$className = $joinedTableObjectBuilder->getObjectClassname();
 
-		$foreignObjectName = '$' . $tblFK->getStudlyPhpName();
 		$crossObjectName = '$' . $crossFK->getForeignTable()->getStudlyPhpName();
 		$crossObjectClassName = $this->getNewObjectBuilder($crossFK->getForeignTable())->getObjectClassname();
+
+		$relatedObjectClassName = $this->getFKPhpNameAffix($crossFK, $plural = false);
 
 		$script .= "
 	/**
@@ -3781,18 +4043,48 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 * @param      " . $crossObjectClassName . " " . $crossObjectName . " The $className object to relate
 	 * @return     void
 	 */
-	public function add" . $this->getFKPhpNameAffix($crossFK, $plural = false) . "(" . $crossObjectName. ")
+	public function add{$relatedObjectClassName}($crossObjectClassName $crossObjectName)
 	{
 		if (\$this->" . $collName . " === null) {
 			\$this->init" . $relCol . "();
 		}
 		if (!\$this->" . $collName . "->contains(" . $crossObjectName . ")) { // only add it if the **same** object is not already associated
-			" . $foreignObjectName . " = new " . $className . "();
-			" . $foreignObjectName . "->set" . $this->getFKPhpNameAffix($crossFK, $plural = false) . "(" . $crossObjectName . ");
-			\$this->add" . $this->getRefFKPhpNameAffix($refFK, $plural = false) . "(" . $foreignObjectName . ");
+			\$this->doAdd{$relatedObjectClassName}($crossObjectName);
 
 			\$this->" . $collName . "[]= " . $crossObjectName . ";
 		}
+	}
+";
+	}
+
+	/**
+	 * @param		string &$script The script will be modified in this method.
+	 * @param		ForeignKey $refFK
+	 * @param		ForeignKey $crossFK
+	 */
+	protected function addCrossFKDoAdd(&$script, ForeignKey $refFK, ForeignKey $crossFK)
+	{
+		$relatedObjectClassName = $this->getFKPhpNameAffix($crossFK, $plural = false);
+
+		// lcfirst() doesn't exist in PHP < 5.3
+		$lowerRelatedObjectClassName = $relatedObjectClassName;
+		$lowerRelatedObjectClassName[0] = strtolower($lowerRelatedObjectClassName[0]);
+
+		$joinedTableObjectBuilder = $this->getNewObjectBuilder($refFK->getTable());
+		$className = $joinedTableObjectBuilder->getObjectClassname();
+
+		$tblFK = $refFK->getTable();
+		$foreignObjectName = '$' . $tblFK->getStudlyPhpName();
+
+		$script .= "
+	/**
+	 * @param	{$relatedObjectClassName} \${$lowerRelatedObjectClassName} The $lowerRelatedObjectClassName object to add.
+	 */
+	protected function doAdd{$relatedObjectClassName}(\${$lowerRelatedObjectClassName})
+	{
+		{$foreignObjectName} = new {$className}();
+		{$foreignObjectName}->set{$relatedObjectClassName}(\${$lowerRelatedObjectClassName});
+		\$this->add{$className}({$foreignObjectName});
 	}
 ";
 	}
@@ -3865,88 +4157,29 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			} // foreach foreign k
 		} // if (count(foreign keys))
 
-		if ($table->hasAutoIncrementPrimaryKey() ) {
 		$script .= "
-			if (\$this->isNew() ) {
-				\$this->modifiedColumns[] = " . $this->getColumnConstant($table->getAutoIncrementPrimaryKey() ) . ";
-			}";
-		}
-
-		$script .= "
-
-			// If this object has been modified, then save it to the database.
-			if (\$this->isModified()) {
+			if (\$this->isNew() || \$this->isModified()) {
+				// persist changes
 				if (\$this->isNew()) {
-					\$criteria = \$this->buildCriteria();";
-
-
-		foreach ($table->getColumns() as $col) {
-			if ($col->isPrimaryKey() && $col->isAutoIncrement() && $table->getIdMethod() != "none" && !$table->isAllowPkInsert()) {
-				$colConst = $this->getColumnConstant($col);
-				$script .= "
-					if (\$criteria->keyContainsValue(" . $colConst . ") ) {
-						throw new PropelException('Cannot insert a value for auto-increment primary key ('." . $colConst . ".')');
-					}
-";
-				if (!$this->getPlatform()->supportsInsertNullPk()) {
-					$script .= "
-					// remove pkey col since this table uses auto-increment and passing a null value for it is not valid
-					\$criteria->remove(" . $colConst . ");
-";
-				}
-			} elseif ($col->isPrimaryKey() && $col->isAutoIncrement() && $table->getIdMethod() != "none" && $table->isAllowPkInsert() && !$this->getPlatform()->supportsInsertNullPk()) {
-					$script .= "
-					// remove pkey col if it is null since this table does not accept that
-				if (\$criteria->containsKey(" . $colConst . ") && !\$criteria->keyContainsValue(" . $colConst . ") ) {
-					\$criteria->remove(" . $colConst . ");
-				}";
-			}
-		}
-
-		$script .= "
-					\$pk = " . $this->getNewPeerBuilder($table)->getBasePeerClassname() . "::doInsert(\$criteria, \$con);";
+					\$this->doInsert(\$con);";
 		if ($reloadOnInsert) {
 			$script .= "
 					if (!\$skipReload) {
 						\$reloadObject = true;
 					}";
 		}
-		$operator = count($table->getForeignKeys()) ? '+=' : '=';
 		$script .= "
-					\$affectedRows " . $operator . " 1;";
-		if ($table->getIdMethod() != IDMethod::NO_ID_METHOD) {
-
-			if (count($pks = $table->getPrimaryKey())) {
-				foreach ($pks as $pk) {
-					if ($pk->isAutoIncrement()) {
-						if ($table->isAllowPkInsert()) {
-								$script .= "
-					if (\$pk !== null) {
-						\$this->set".$pk->getPhpName()."(\$pk);  //[IMV] update autoincrement primary key
-					}";
-						} else {
-								$script .= "
-					\$this->set".$pk->getPhpName()."(\$pk);  //[IMV] update autoincrement primary key";
-						}
-					}
-				}
-			}
-		} // if (id method != "none")
-
-		$script .= "
-					\$this->setNew(false);
-				} else {";
+				} else {
+					\$this->doUpdate(\$con);";
 		if ($reloadOnUpdate) {
 			$script .= "
 					if (!\$skipReload) {
 						\$reloadObject = true;
 					}";
 		}
-		$operator = count($table->getForeignKeys()) ? '+=' : '=';
 		$script .= "
-					\$affectedRows " . $operator . " ".$this->getPeerClassname()."::doUpdate(\$this, \$con);
 				}
-";
+				\$affectedRows += 1;";
 
 		// We need to rewind any LOB columns
 		foreach ($table->getColumns() as $col) {
@@ -3962,11 +4195,19 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 
 		$script .= "
-				\$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
+				\$this->resetModified();
 			}
 ";
 
+		if ($table->hasCrossForeignKeys()) {
+			foreach ($table->getCrossFks() as $fkList) {
+				list($refFK, $crossFK) = $fkList;
+				$this->addCrossFkScheduledForDeletion($script, $refFK, $crossFK);
+			}
+		}
+
 		foreach ($table->getReferrers() as $refFK) {
+			$this->addRefFkScheduledForDeletion($script, $refFK);
 
 			if ($refFK->isLocalPrimaryKey()) {
 				$varName = $this->getPKRefFKVarName($refFK);
@@ -3991,6 +4232,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			} // if refFK->isLocalPrimaryKey()
 
 		} /* foreach getReferrers() */
+
 		$script .= "
 			\$this->alreadyInSave = false;
 ";
@@ -4008,6 +4250,262 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 ";
 
 	}
+
+	/**
+	 * get the doInsert() method code
+	 *
+	 * @return string the doInsert() method code
+	 */
+	protected function addDoInsert()
+	{
+		$table = $this->getTable();
+		$script = "
+	/**
+	 * Insert the row in the database.
+	 *
+	 * @param      PropelPDO \$con
+	 *
+	 * @throws     PropelException
+	 * @see        doSave()
+	 */
+	protected function doInsert(PropelPDO \$con)
+	{";
+		if ($this->getPlatform() instanceof MssqlPlatform) {
+			if ($table->hasAutoIncrementPrimaryKey() ) {
+				$script .= "
+		\$this->modifiedColumns[] = " . $this->getColumnConstant($table->getAutoIncrementPrimaryKey() ) . ";";
+			}
+			$script .= "
+		\$criteria = \$this->buildCriteria();";
+			if ($this->getTable()->getIdMethod() != IDMethod::NO_ID_METHOD) {
+				$script .= $this->addDoInsertBodyWithIdMethod();
+			} else {
+				$script .= $this->addDoInsertBodyStandard();
+			}
+		} else {
+			$script .= $this->addDoInsertBodyRaw();
+		}
+			$script .= "
+		\$this->setNew(false);
+	}
+";
+
+		return $script;
+	}
+
+	protected function addDoInsertBodyStandard()
+	{
+		return "
+		\$pk = " . $this->getNewPeerBuilder($this->getTable())->getBasePeerClassname() . "::doInsert(\$criteria, \$con);";
+	}
+
+	protected function addDoInsertBodyWithIdMethod()
+	{
+		$table = $this->getTable();
+		$reloadOnInsert = $table->isReloadOnInsert();
+		$basePeerClassname = $this->getNewPeerBuilder($table)->getBasePeerClassname();
+		$script = '';
+		foreach ($table->getPrimaryKey() as $col) {
+			if (!$col->isAutoIncrement()) {
+				continue;
+			}
+			$colConst = $this->getColumnConstant($col);
+			if (!$table->isAllowPkInsert()) {
+				$script .= "
+		if (\$criteria->keyContainsValue($colConst) ) {
+			throw new PropelException('Cannot insert a value for auto-increment primary key (' . $colConst . ')');
+		}";
+				if (!$this->getPlatform()->supportsInsertNullPk()) {
+					$script .= "
+		// remove pkey col since this table uses auto-increment and passing a null value for it is not valid
+		\$criteria->remove($colConst);";
+				}
+			} else if (!$this->getPlatform()->supportsInsertNullPk()) {
+				$script .= "
+		// remove pkey col if it is null since this table does not accept that
+		if (\$criteria->containsKey($colConst) && !\$criteria->keyContainsValue($colConst) ) {
+			\$criteria->remove($colConst);
+		}";
+			}
+		}
+
+		$script .= $this->addDoInsertBodyStandard();
+
+		foreach ($table->getPrimaryKey() as $col) {
+			if (!$col->isAutoIncrement()) {
+				continue;
+			}
+			if ($table->isAllowPkInsert()) {
+				$script .= "
+		if (\$pk !== null) {
+			\$this->set".$col->getPhpName()."(\$pk);  //[IMV] update autoincrement primary key
+		}";
+			} else {
+				$script .= "
+		\$this->set".$col->getPhpName()."(\$pk);  //[IMV] update autoincrement primary key";
+			}
+		}
+
+		return $script;
+	}
+
+	/**
+	 * Boosts ActiveRecord::doInsert() by doing more calculations at buildtime.
+	 */
+	protected function addDoInsertBodyRaw()
+	{
+		$this->declareClasses('Propel', 'PDO');
+		$table = $this->getTable();
+		$peerClassname = $this->getPeerClassname();
+		$platform = $this->getPlatform();
+		$primaryKeyMethodInfo = '';
+		if ($table->getIdMethodParameters()) {
+			$params = $table->getIdMethodParameters();
+			$imp = $params[0];
+			$primaryKeyMethodInfo = $imp->getValue();
+		} elseif ($table->getIdMethod() == IDMethod::NATIVE && ($platform->getNativeIdMethod() == PropelPlatformInterface::SEQUENCE || $platform->getNativeIdMethod() == PropelPlatformInterface::SERIAL)) {
+			$primaryKeyMethodInfo = $platform->getSequenceName($table);
+		}
+		$query = 'INSERT INTO ' . $platform->quoteIdentifier($table->getName()) . ' (%s) VALUES (%s)';
+		$script = "
+		\$modifiedColumns = array();
+		\$index = 0;
+";
+
+		foreach ($table->getPrimaryKey() as $column) {
+			if (!$column->isAutoIncrement()) {
+				continue;
+			}
+			$constantName = $this->getColumnConstant($column);
+			if ($platform->supportsInsertNullPk()) {
+				$script .= "
+		\$this->modifiedColumns[] = $constantName;";
+			}
+			$columnProperty = strtolower($column->getName());
+			if (!$table->isAllowPkInsert()) {
+				$script .= "
+		if (null !== \$this->{$columnProperty}) {
+			throw new PropelException('Cannot insert a value for auto-increment primary key (' . $constantName . ')');
+		}";
+			} elseif (!$platform->supportsInsertNullPk()) {
+				$script .= "
+		// add primary key column only if it is not null since this database does not accept that
+		if (null !== \$this->{$columnProperty}) {
+			\$this->modifiedColumns[] = $constantName;
+		}";
+			}
+		}
+
+		// if non auto-increment but using sequence, get the id first
+		if (!$platform->isNativeIdMethodAutoIncrement() && $table->getIdMethod() == "native") {
+			$column = $table->getFirstPrimaryKeyColumn();
+			$columnProperty = strtolower($column->getName());
+			$script .= "
+		if (null === \$this->{$columnProperty}) {
+			try {";
+			$script .= $platform->getIdentifierPhp('$this->'. $columnProperty, '$con', $primaryKeyMethodInfo, '				');
+			$script .= "
+			} catch (Exception \$e) {
+				throw new PropelException('Unable to get sequence id.', \$e);
+			}
+		}
+";
+		}
+
+		$script .= "
+
+		 // check the columns in natural order for more readable SQL queries";
+		foreach ($table->getColumns() as $column) {
+			$constantName = $this->getColumnConstant($column);
+			$identifier = var_export($platform->quoteIdentifier(strtoupper($column->getName())), true);
+			$script .= "
+		if (\$this->isColumnModified($constantName)) {
+			\$modifiedColumns[':p' . \$index++]  = $identifier;
+		}";
+		}
+
+		$script .= "
+
+		\$sql = sprintf(
+			'$query',
+			implode(', ', \$modifiedColumns),
+			implode(', ', array_keys(\$modifiedColumns))
+		);
+
+		try {
+			\$stmt = \$con->prepare(\$sql);
+			foreach (\$modifiedColumns as \$identifier => \$columnName) {
+				switch (\$columnName) {";
+		foreach ($table->getColumns() as $column) {
+			$columnNameCase = var_export($platform->quoteIdentifier(strtoupper($column->getName())), true);
+			$script .= "
+					case $columnNameCase:";
+			$script .= $platform->getColumnBindingPHP($column, "\$identifier", '$this->' . strtolower($column->getName()), '						');
+			$script .= "
+						break;";
+		}
+		$script .= "
+				}
+			}
+			\$stmt->execute();
+		} catch (Exception \$e) {
+			Propel::log(\$e->getMessage(), Propel::LOG_ERR);
+			throw new PropelException(sprintf('Unable to execute INSERT statement [%s]', \$sql), \$e);
+		}
+";
+
+		// if auto-increment, get the id after
+		if ($platform->isNativeIdMethodAutoIncrement() && $table->getIdMethod() == "native") {
+			$column = $table->getFirstPrimaryKeyColumn();
+			$columnProperty = strtolower($column->getName());
+			$script .= "
+		try {";
+			$script .= $platform->getIdentifierPhp('$pk', '$con', $primaryKeyMethodInfo);
+			$script .= "
+		} catch (Exception \$e) {
+			throw new PropelException('Unable to get autoincrement id.', \$e);
+		}";
+			if ($table->isAllowPkInsert()) {
+				$script .= "
+		if (\$pk !== null) {
+			\$this->set".$column->getPhpName()."(\$pk);
+		}";
+			} else {
+				$script .= "
+		\$this->set".$column->getPhpName()."(\$pk);";
+			}
+			$script .= "
+";
+		}
+
+		return $script;
+	}
+
+	/**
+	 * get the doUpdate() method code
+	 *
+	 * @return string the doUpdate() method code
+	 */
+	protected function addDoUpdate()
+	{
+		$basePeerClassname = $this->getNewPeerBuilder($this->getTable())->getBasePeerClassname();
+		return "
+	/**
+	 * Update the row in the database.
+	 *
+	 * @param      PropelPDO \$con
+	 *
+	 * @see        doSave()
+	 */
+	protected function doUpdate(PropelPDO \$con)
+	{
+		\$selectCriteria = \$this->buildPkeyCriteria();
+		\$valuesCriteria = \$this->buildCriteria();
+		{$basePeerClassname}::doUpdate(\$selectCriteria, \$valuesCriteria, \$con);
+	}
+";
+	}
+
 
 	/**
 	 * Adds the $alreadyInSave attribute, which prevents attempting to re-save the same object.
@@ -4200,7 +4698,7 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 		}
 
 		$script .= "
-		} catch (PropelException \$e) {
+		} catch (Exception \$e) {
 			\$con->rollBack();
 			throw \$e;
 		}";
@@ -4463,11 +4961,15 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	{";
 
 		$autoIncCols = array();
-		foreach ($table->getColumns() as $col) {
-			/* @var        $col Column */
-			if ($col->isAutoIncrement()) {
-				$autoIncCols[] = $col;
+		if ($table->hasCompositePrimaryKey()) {
+			foreach ($table->getColumns() as $col) {
+				/* @var        $col Column */
+				if ($col->isAutoIncrement()) {
+					$autoIncCols[] = $col;
+				}
 			}
+		} else {
+			$autoIncCols = $table->getPrimaryKey();
 		}
 
 		foreach ($table->getColumns() as $col) {
@@ -4479,13 +4981,15 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 
 		// Avoid useless code by checking to see if there are any referrers
 		// to this table:
-		if (count($table->getReferrers()) > 0) {
+		if (count($table->getReferrers()) > 0 || count($table->getForeignKeys()) > 0 ) {
 			$script .= "
 
-		if (\$deepCopy) {
+		if (\$deepCopy && !\$this->startCopy) {
 			// important: temporarily setNew(false) because this affects the behavior of
 			// the getter/setter methods for fkey referrer objects.
 			\$copyObj->setNew(false);
+			// store object hash to prevent cycle
+			\$this->startCopy = true;
 ";
 			foreach ($table->getReferrers() as $fk) {
 				//HL: commenting out self-referrential check below
@@ -4514,7 +5018,21 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 				// HL: commenting out close of self-referential check
 				// } /* if tblFK != table */
 			} /* foreach */
+			// do deep copy for one to one relation
+			foreach ($table->getForeignKeys() as $fk) {
+				if ($fk->isLocalPrimaryKey()) {
+					$afx = $this->getFKPhpNameAffix($fk, $plural = false);
+					$script .= "
+			\$relObj = \$this->get$afx();
+			if (\$relObj) {
+				\$copyObj->set$afx(\$relObj->copy(\$deepCopy));
+			}
+";
+				}
+			}
 			$script .= "
+			//unflag object copy
+			\$this->startCopy = false;
 		} // if (\$deepCopy)
 ";
 		} /* if (count referrers > 0 ) */
@@ -4558,6 +5076,11 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 			if($col->isLazyLoad()){
 				$script .= "
 		\$this->".$clo."_isLoaded = false;";
+			}
+			if($col->getType() == PropelTypes::OBJECT || $col->getType() == PropelTypes::PHP_ARRAY) {
+				$cloUnserialized = $clo.'_unserialized';
+				$script .="
+		\$this->$cloUnserialized = null;";
 			}
 		}
 
@@ -4699,27 +5222,19 @@ abstract class ".$this->getClassname()." extends ".$parentClass." ";
 	 */
 	protected function addMagicCall(&$script)
 	{
-		$script .= "
+		$behaviorCallScript = '';
+		$this->applyBehaviorModifier('objectCall', $behaviorCallScript, "		");
+		if ($behaviorCallScript) {
+			$script .= "
 	/**
 	 * Catches calls to virtual methods
 	 */
 	public function __call(\$name, \$params)
-	{";
-		$this->applyBehaviorModifier('objectCall', $script, "		");
-		$script .= "
-		if (preg_match('/get(\w+)/', \$name, \$matches)) {
-			\$virtualColumn = \$matches[1];
-			if (\$this->hasVirtualColumn(\$virtualColumn)) {
-				return \$this->getVirtualColumn(\$virtualColumn);
-			}
-			// no lcfirst in php<5.3...
-			\$virtualColumn[0] = strtolower(\$virtualColumn[0]);
-			if (\$this->hasVirtualColumn(\$virtualColumn)) {
-				return \$this->getVirtualColumn(\$virtualColumn);
-			}
-		}
+	{
+		$behaviorCallScript
 		return parent::__call(\$name, \$params);
 	}
 ";
+		}
 	}
 } // PHP5ObjectBuilder

@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/../exception/EngineException.php';
  * Object to hold vendor-specific info.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2184 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class VendorInfo extends XMLElement
@@ -138,7 +138,7 @@ class VendorInfo extends XMLElement
 	{
 		return $this->parameters;
 	}
-	
+
 	/**
 	 * Tests whether this vendor info is empty
 	 *

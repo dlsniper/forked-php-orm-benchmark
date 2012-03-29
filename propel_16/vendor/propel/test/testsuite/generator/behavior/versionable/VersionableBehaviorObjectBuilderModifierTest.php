@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/versionable/VersionableBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for VersionableBehavior class
  *
  * @author     François Zaninotto
- * @version    $Revision: 2266 $
+ * @version    $Revision$
  * @package    generator.behavior.versionable
  */
 class VersionableBehaviorObjectBuilderModifierTest extends PHPUnit_Framework_TestCase
@@ -71,34 +70,65 @@ class VersionableBehaviorObjectBuilderModifierTest extends PHPUnit_Framework_Tes
 EOF;
 			PropelQuickBuilder::buildSchema($schema);
 		}
+
 		if (!class_exists('VersionableBehaviorTest6')) {
 			$schema2 = <<<EOF
-<database name="versionable_behavior_test_2" defaultPhpNamingMethod="nochange">
-	<table name="VersionableBehaviorTest6">
-		<column name="Id" primaryKey="true" type="INTEGER" autoIncrement="true" />
-		<column name="FooBar" type="VARCHAR" size="100" />
-		<behavior name="versionable">
-			<parameter name="log_created_at" value="true" />
-			<parameter name="log_created_by" value="true" />
-			<parameter name="log_comment" value="true" />
-		</behavior>
-	</table>
-	
-	<table name="VersionableBehaviorTest7">
-		<column name="Id" primaryKey="true" type="INTEGER" autoIncrement="true" />
-		<column name="FooBar" type="VARCHAR" size="100" />
-		<behavior name="versionable">
-			<parameter name="log_created_at" value="true" />
-			<parameter name="log_created_by" value="true" />
-			<parameter name="log_comment" value="true" />
-			
-			<parameter name="version_created_by_column" value="VersionCreatedBy" />
-			<parameter name="version_created_at_column" value="VersionCreatedAt" />
-			<parameter name="version_comment_column" value="MyComment" />
-		</behavior>
-	</table>
+		<database name="versionable_behavior_test_2" defaultPhpNamingMethod="nochange">
+			<table name="VersionableBehaviorTest6">
+				<column name="Id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+				<column name="FooBar" type="VARCHAR" size="100" />
+				<behavior name="versionable">
+					<parameter name="log_created_at" value="true" />
+					<parameter name="log_created_by" value="true" />
+					<parameter name="log_comment" value="true" />
+				</behavior>
+			</table>
+
+			<table name="VersionableBehaviorTest7">
+				<column name="Id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+				<column name="FooBar" type="VARCHAR" size="100" />
+
+				<column name="Style" type="ENUM" valueSet="novel, essay, poetry" />
+
+				<behavior name="versionable">
+					<parameter name="log_created_at" value="true" />
+					<parameter name="log_created_by" value="true" />
+					<parameter name="log_comment" value="true" />
+
+					<parameter name="version_created_by_column" value="VersionCreatedBy" />
+					<parameter name="version_created_at_column" value="VersionCreatedAt" />
+					<parameter name="version_comment_column" value="MyComment" />
+				</behavior>
+			</table>
 EOF;
 			PropelQuickBuilder::buildSchema($schema2);
+		}
+
+		if (!class_exists('VersionableBehaviorTest8')) {
+			$schema3 = <<<EOF
+		<database name="versionable_behavior_test_3">
+			<table name="VersionableBehaviorTest8">
+				<column name="alter_id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+				<column name="FooBar" type="VARCHAR" size="100" />
+				<column name="class_key" type="INTEGER" required="true" default="1" inheritance="single">
+					<inheritance key="1" class="VersionableBehaviorTest8" />
+					<inheritance key="2" class="VersionableBehaviorTest8Foo" extends="VersionableBehaviorTest8" />
+					<inheritance key="3" class="VersionableBehaviorTest8Bar" extends="VersionableBehaviorTest8Foo" />
+				</column>
+				<behavior name="versionable" />
+			</table>
+
+			<table name="VersionableBehaviorTest9">
+				<column name="id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+				<column name="foo" type="VARCHAR" size="100" />
+				<column name="foreign_id" type="INTEGER" />
+				<foreign-key foreignTable="VersionableBehaviorTest8">
+					<reference local="foreign_id" foreign="alter_id" />
+				</foreign-key>
+				<behavior name="versionable" />
+			</table>
+EOF;
+			PropelQuickBuilder::buildSchema($schema3);
 		}
 	}
 
@@ -113,21 +143,21 @@ EOF;
 		$this->assertTrue(method_exists('VersionableBehaviorTest1', 'setVersion'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest2', 'setVersion'));
 	}
-	
+
 	public function testMethodsExistsNoChangeNaming()
 	{
 		$this->assertTrue(method_exists('VersionableBehaviorTest6', 'setFooBar'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest6', 'setversion_created_at'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest6', 'setversion_created_by'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest6', 'setversion_comment'));
-		
+
 		$this->assertTrue(method_exists('VersionableBehaviorTest7', 'setFooBar'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest7', 'setVersionCreatedAt'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest7', 'setVersionCreatedBy'));
 		$this->assertTrue(method_exists('VersionableBehaviorTest7', 'setMyComment'));
-		
+
 	}
-	
+
 	public function providerForNewActiveRecordTests()
 	{
 		return array(
@@ -145,7 +175,7 @@ EOF;
 		$o->setVersion(1234);
 		$this->assertEquals(1234, $o->getVersion());
 	}
-	
+
 	/**
 	 * @dataProvider providerForNewActiveRecordTests
 	 */
@@ -216,7 +246,7 @@ EOF;
 		VersionableBehaviorTest2Peer::enableVersioning();
 
 	}
-	
+
 	public function testNewVersionCreatesRecordInVersionTable()
 	{
 		VersionableBehaviorTest1Query::create()->deleteAll();
@@ -238,7 +268,7 @@ EOF;
 		$this->assertEquals($o->getId(), $versions[1]->getId());
 		$this->assertEquals(123, $versions[1]->getBar());
 	}
-	
+
 	public function testNewVersionCreatesRecordInVersionTableWithCustomName()
 	{
 		VersionableBehaviorTest3Query::create()->deleteAll();
@@ -302,7 +332,7 @@ EOF;
 		$nbVersions = VersionableBehaviorTest3VersionQuery::create()->count();
 		$this->assertEquals(0, $nbVersions);
 	}
-	
+
 	public function testToVersion()
 	{
 		$o = new VersionableBehaviorTest1();
@@ -315,7 +345,7 @@ EOF;
 		$o->toVersion(2);
 		$this->assertEquals(456, $o->getBar());
 	}
-	
+
 	public function testToVersionAllowsFurtherSave()
 	{
 		$o = new VersionableBehaviorTest1();
@@ -395,6 +425,11 @@ EOF;
 		$this->assertEquals(2, $bs[0]->getVersion());
 		$this->assertEquals(1, $bs[1]->getVersion());
 		$this->assertEquals(1, $bs[2]->getVersion());
+
+		$a->toVersion(1);
+		$bs = $a->getVersionableBehaviorTest5s();
+		$this->assertEquals(1, $bs[0]->getVersion());
+		$this->assertEquals(1, $bs[1]->getVersion());
 	}
 
 	public function testGetLastVersionNumber()
@@ -411,7 +446,7 @@ EOF;
 		$o->save();
 		$this->assertEquals(3, $o->getLastVersionNumber());
 	}
-	
+
 	public function testIsLastVersion()
 	{
 		$o = new VersionableBehaviorTest1();
@@ -427,7 +462,7 @@ EOF;
 		$o->save();
 		$this->assertTrue($o->isLastVersion());
 	}
-	
+
 	public function testIsVersioningNecessary()
 	{
 		$o = new VersionableBehaviorTest1();
@@ -449,8 +484,45 @@ EOF;
 		$o->save();
 		$this->assertFalse($o->isVersioningNecessary());
 		VersionableBehaviorTest1Peer::enableVersioning();
+
+		$b1 = new VersionableBehaviorTest5();
+		$b1->setFoo('Hello');
+		$b2 = new VersionableBehaviorTest5();
+		$b2->setFoo('World');
+		$a = new VersionableBehaviorTest4();
+		$a->setBar(123); // a1
+		$this->assertTrue($a->isVersioningNecessary());
+		$a->save();
+		$this->assertFalse($a->isVersioningNecessary());
+		$a->addVersionableBehaviorTest5($b1);
+		$this->assertTrue($a->isVersioningNecessary());
+		$a->save();
+		$this->assertFalse($a->isVersioningNecessary());
+		$a->addVersionableBehaviorTest5($b2);
+		$this->assertTrue($a->isVersioningNecessary());
+		$a->save();
+		$this->assertFalse($a->isVersioningNecessary());
+		$b2->setFoo('World !');
+		$this->assertTrue($b2->isVersioningNecessary());
+		$this->assertTrue($a->isVersioningNecessary());
+		$a->save();
+		$this->assertFalse($b2->isVersioningNecessary());
+		$this->assertFalse($a->isVersioningNecessary());
 	}
-	
+
+	public function testIsVersioningNecessaryWithNullFk()
+	{
+		// the purpose of this tests is to highlight a bug with FK and isVersioningNecessary()
+		$b1 = new VersionableBehaviorTest5();
+		$b1->setNew(false);
+
+		// this time, the object isn't modified, so the isVersioningNecessary()
+		// method is called on FK objects... which can be null.
+		$b1->isVersioningNecessary();
+
+		$this->assertTrue(true, 'getting here means that nothing went wrong');
+	}
+
 	public function testAddVersionNewObject()
 	{
 		VersionableBehaviorTest1Peer::disableVersioning();
@@ -474,7 +546,7 @@ EOF;
 			->filterByVersionableBehaviorTest4($o)
 			->findOne();
 		$this->assertEquals($t, $version->getVersionCreatedAt('U'));
-		
+
 		$o = new VersionableBehaviorTest4();
 		$inThePast = time() - 123456;
 		$o->setVersionCreatedAt($inThePast);
@@ -496,7 +568,7 @@ EOF;
 			->findOne();
 		$this->assertEquals('me me me', $version->getVersionCreatedBy());
 	}
-	
+
 	public function testSaveAndModifyWithNoChangeSchema()
 	{
 		$o = new VersionableBehaviorTest7();
@@ -506,7 +578,7 @@ EOF;
 		$o->setFooBar('Something');
 		$o->save();
 		$this->assertEquals(2, $o->getVersion());
-		
+
 		$o = new VersionableBehaviorTest6();
 		//$o->setVersionCreatedBy('You and I');
 		$o->save();
@@ -557,7 +629,7 @@ EOF;
 		$this->assertEquals(2, $version->getVersion());
 		$this->assertEquals(456, $version->getBar());
 	}
-		
+
 	public function testGetAllVersions()
 	{
 		$o = new VersionableBehaviorTest1();
@@ -575,7 +647,70 @@ EOF;
 		$this->assertEquals(2, $versions[1]->getVersion());
 		$this->assertEquals(456, $versions[1]->getBar());
 	}
-	
+
+	public function testGetLastVersions()
+	{
+		$o = new VersionableBehaviorTest1();
+		$versions = $o->getAllVersions();
+		$this->assertTrue($versions->isEmpty());
+		$o->setBar(123); // version 1
+		$o->save();
+		$o->setBar(456); // version 2
+		$o->save();
+		$o->setBar(789); // version 3
+		$o->save();
+		$o->setBar(101112); // version 4
+		$o->save();
+
+		$versions = $o->getLastVersions();
+		$this->assertTrue($versions instanceof PropelObjectCollection);
+		$this->assertEquals(4, $versions->count());
+		$this->assertEquals(4, $versions[0]->getVersion());
+		$this->assertEquals(101112, $versions[0]->getBar());
+		$this->assertEquals(3, $versions[1]->getVersion());
+		$this->assertEquals(789, $versions[1]->getBar());
+		$this->assertEquals(2, $versions[2]->getVersion());
+		$this->assertEquals(456, $versions[2]->getBar());
+		$this->assertEquals(1, $versions[3]->getVersion());
+		$this->assertEquals(123, $versions[3]->getBar());
+
+		$versions = $o->getLastVersions(2);
+		$this->assertTrue($versions instanceof PropelObjectCollection);
+		$this->assertEquals(2, $versions->count());
+		$this->assertEquals(4, $versions[0]->getVersion());
+		$this->assertEquals(101112, $versions[0]->getBar());
+		$this->assertEquals(3, $versions[1]->getVersion());
+		$this->assertEquals(789, $versions[1]->getBar());
+	}
+
+	public function testCompareVersion()
+	{
+		$o = new VersionableBehaviorTest4();
+		$versions = $o->getAllVersions();
+		$this->assertTrue($versions->isEmpty());
+		$o->setBar(123); // version 1
+		$o->save();
+		$o->setBar(456); // version 2
+		$o->save();
+		$o->setBar(789); // version 3
+		$o->setVersionComment('Foo');
+		$o->save();
+		$diff = $o->compareVersion(3); // $o is in version 3
+		$expected = array();
+		$this->assertEquals($expected, $diff);
+		$diff = $o->compareVersion(2);
+		$expected = array(
+			'Bar' => array(2 => 456, 3 => 789),
+		);
+		$this->assertEquals($expected, $diff);
+
+		$diff = $o->compareVersion(1);
+		$expected = array(
+			'Bar' => array(1 => 123, 3 => 789),
+		);
+		$this->assertEquals($expected, $diff);
+	}
+
 	public function testCompareVersions()
 	{
 		$o = new VersionableBehaviorTest4();
@@ -600,7 +735,7 @@ EOF;
 		);
 		$this->assertEquals($expected, $diff);
 	}
-	
+
 	public function testForeignKeyVersion()
 	{
 		$a = new VersionableBehaviorTest4();
@@ -620,7 +755,7 @@ EOF;
 		$this->assertEquals($b->getVersion(), 3);
 		$this->assertEquals($b->getVersionableBehaviorTest4()->getVersion(), 2);
 	}
-	
+
 	public function testReferrerVersion()
 	{
 		$b1 = new VersionableBehaviorTest5();
@@ -647,4 +782,48 @@ EOF;
 		$this->assertEquals(3, $a->getVersion());
 		$this->assertEquals(array(2, 1, 1), $a->getOneVersion(3)->getVersionableBehaviorTest5Versions());
 	}
+
+	public function testEnumField()
+	{
+		$o = new VersionableBehaviorTest7();
+		$o->setStyle('novel');
+		$o->save();
+
+		$this->assertEquals('novel', $o->getStyle(), 'Set style to novel');
+		$this->assertEquals(1, $o->getVersion(), '');
+
+		$o->setStyle('essay');
+		$o->save();
+
+		$this->assertEquals('essay', $o->getStyle(), 'Set style to essay');
+		$this->assertEquals(2, $o->getVersion(), '');
+
+		$this->assertEquals('novel', $o->getOneVersion(1)->getStyle(), 'First version is a novel');
+		$this->assertEquals('essay', $o->getOneVersion(2)->getStyle(), 'Second version is an essay');
+	}
+
+	public function testCustomIdName()
+	{
+		$b1 = new VersionableBehaviorTest8();
+		$b2 = new VersionableBehaviorTest9();
+		$b1->save();
+		$b2->setVersionableBehaviorTest8($b1);
+		$b2->save();
+		$b2->setFoo('test2');
+		$b2->save();
+		$b1->setFoobar('test1');
+		$b1->save();
+	}
+
+  public function testWithInheritance()
+  {
+		$b1 = new VersionableBehaviorTest8Foo();
+		$b1->save();
+
+		$b1->setFoobar('name');
+		$b1->save();
+
+		$object = $b1->getOneVersion($b1->getVersion());
+		$this->assertTrue($object instanceof Versionablebehaviortest8Version);
+  }
 }

@@ -25,6 +25,12 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 	protected static $peer;
 
 	/**
+	 * The flag var to prevent infinit loop in deep copy
+	 * @var       boolean
+	 */
+	protected $startCopy = false;
+
+	/**
 	 * The value for the id field.
 	 * @var        int
 	 */
@@ -66,6 +72,12 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 	 * @var        boolean
 	 */
 	protected $alreadyInValidation = false;
+
+	/**
+	 * An array of objects scheduled for deletion.
+	 * @var		array
+	 */
+	protected $booksScheduledForDeletion = null;
 
 	/**
 	 * Get the [id] column value.
@@ -330,7 +342,7 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 			} else {
 				$con->commit();
 			}
-		} catch (PropelException $e) {
+		} catch (Exception $e) {
 			$con->rollBack();
 			throw $e;
 		}
@@ -382,7 +394,7 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 			}
 			$con->commit();
 			return $affectedRows;
-		} catch (PropelException $e) {
+		} catch (Exception $e) {
 			$con->rollBack();
 			throw $e;
 		}
@@ -405,27 +417,24 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 		if (!$this->alreadyInSave) {
 			$this->alreadyInSave = true;
 
-			if ($this->isNew() ) {
-				$this->modifiedColumns[] = AuthorPeer::ID;
+			if ($this->isNew() || $this->isModified()) {
+				// persist changes
+				if ($this->isNew()) {
+					$this->doInsert($con);
+				} else {
+					$this->doUpdate($con);
+				}
+				$affectedRows += 1;
+				$this->resetModified();
 			}
 
-			// If this object has been modified, then save it to the database.
-			if ($this->isModified()) {
-				if ($this->isNew()) {
-					$criteria = $this->buildCriteria();
-					if ($criteria->keyContainsValue(AuthorPeer::ID) ) {
-						throw new PropelException('Cannot insert a value for auto-increment primary key ('.AuthorPeer::ID.')');
-					}
-
-					$pk = BasePeer::doInsert($criteria, $con);
-					$affectedRows = 1;
-					$this->setId($pk);  //[IMV] update autoincrement primary key
-					$this->setNew(false);
-				} else {
-					$affectedRows = AuthorPeer::doUpdate($this, $con);
+			if ($this->booksScheduledForDeletion !== null) {
+				if (!$this->booksScheduledForDeletion->isEmpty()) {
+					BookQuery::create()
+						->filterByPrimaryKeys($this->booksScheduledForDeletion->getPrimaryKeys(false))
+						->delete($con);
+					$this->booksScheduledForDeletion = null;
 				}
-
-				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
 			}
 
 			if ($this->collBooks !== null) {
@@ -441,6 +450,92 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 		}
 		return $affectedRows;
 	} // doSave()
+
+	/**
+	 * Insert the row in the database.
+	 *
+	 * @param      PropelPDO $con
+	 *
+	 * @throws     PropelException
+	 * @see        doSave()
+	 */
+	protected function doInsert(PropelPDO $con)
+	{
+		$modifiedColumns = array();
+		$index = 0;
+
+		$this->modifiedColumns[] = AuthorPeer::ID;
+		if (null !== $this->id) {
+			throw new PropelException('Cannot insert a value for auto-increment primary key (' . AuthorPeer::ID . ')');
+		}
+
+		 // check the columns in natural order for more readable SQL queries
+		if ($this->isColumnModified(AuthorPeer::ID)) {
+			$modifiedColumns[':p' . $index++]  = 'ID';
+		}
+		if ($this->isColumnModified(AuthorPeer::FIRST_NAME)) {
+			$modifiedColumns[':p' . $index++]  = 'FIRST_NAME';
+		}
+		if ($this->isColumnModified(AuthorPeer::LAST_NAME)) {
+			$modifiedColumns[':p' . $index++]  = 'LAST_NAME';
+		}
+		if ($this->isColumnModified(AuthorPeer::EMAIL)) {
+			$modifiedColumns[':p' . $index++]  = 'EMAIL';
+		}
+
+		$sql = sprintf(
+			'INSERT INTO author (%s) VALUES (%s)',
+			implode(', ', $modifiedColumns),
+			implode(', ', array_keys($modifiedColumns))
+		);
+
+		try {
+			$stmt = $con->prepare($sql);
+			foreach ($modifiedColumns as $identifier => $columnName) {
+				switch ($columnName) {
+					case 'ID':
+						$stmt->bindValue($identifier, $this->id, PDO::PARAM_INT);
+						break;
+					case 'FIRST_NAME':
+						$stmt->bindValue($identifier, $this->first_name, PDO::PARAM_STR);
+						break;
+					case 'LAST_NAME':
+						$stmt->bindValue($identifier, $this->last_name, PDO::PARAM_STR);
+						break;
+					case 'EMAIL':
+						$stmt->bindValue($identifier, $this->email, PDO::PARAM_STR);
+						break;
+				}
+			}
+			$stmt->execute();
+		} catch (Exception $e) {
+			Propel::log($e->getMessage(), Propel::LOG_ERR);
+			throw new PropelException(sprintf('Unable to execute INSERT statement [%s]', $sql), $e);
+		}
+
+		try {
+			$pk = $con->lastInsertId();
+		} catch (Exception $e) {
+			throw new PropelException('Unable to get autoincrement id.', $e);
+		}
+		$this->setId($pk);
+
+		$this->setNew(false);
+	}
+
+	/**
+	 * Update the row in the database.
+	 *
+	 * @param      PropelPDO $con
+	 *
+	 * @see        doSave()
+	 */
+	protected function doUpdate(PropelPDO $con)
+	{
+		$selectCriteria = $this->buildPkeyCriteria();
+		$valuesCriteria = $this->buildCriteria();
+		BasePeer::doUpdate($selectCriteria, $valuesCriteria, $con);
+	}
 
 	/**
 	 * Array of ValidationFailed objects.
@@ -750,10 +845,12 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 		$copyObj->setLastName($this->getLastName());
 		$copyObj->setEmail($this->getEmail());
 
-		if ($deepCopy) {
+		if ($deepCopy && !$this->startCopy) {
 			// important: temporarily setNew(false) because this affects the behavior of
 			// the getter/setter methods for fkey referrer objects.
 			$copyObj->setNew(false);
+			// store object hash to prevent cycle
+			$this->startCopy = true;
 
 			foreach ($this->getBooks() as $relObj) {
 				if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
@@ -761,6 +858,8 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 				}
 			}
 
+			//unflag object copy
+			$this->startCopy = false;
 		} // if ($deepCopy)
 
 		if ($makeNew) {
@@ -892,6 +991,30 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 	}
 
 	/**
+	 * Sets a collection of Book objects related by a one-to-many relationship
+	 * to the current object.
+	 * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+	 * and new objects from the given Propel collection.
+	 *
+	 * @param      PropelCollection $books A Propel collection.
+	 * @param      PropelPDO $con Optional connection object
+	 */
+	public function setBooks(PropelCollection $books, PropelPDO $con = null)
+	{
+		$this->booksScheduledForDeletion = $this->getBooks(new Criteria(), $con)->diff($books);
+
+		foreach ($books as $book) {
+			// Fix issue with collection modified by reference
+			if ($book->isNew()) {
+				$book->setAuthor($this);
+			}
+			$this->addBook($book);
+		}
+
+		$this->collBooks = $books;
+	}
+
+	/**
 	 * Returns the number of related Book objects.
 	 *
 	 * @param      Criteria $criteria
@@ -932,11 +1055,19 @@ abstract class BaseAuthor extends BaseObject  implements Persistent
 			$this->initBooks();
 		}
 		if (!$this->collBooks->contains($l)) { // only add it if the **same** object is not already associated
-			$this->collBooks[]= $l;
-			$l->setAuthor($this);
+			$this->doAddBook($l);
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @param	Book $book The book object to add.
+	 */
+	protected function doAddBook($book)
+	{
+		$this->collBooks[]= $book;
+		$book->setAuthor($this);
 	}
 
 	/**

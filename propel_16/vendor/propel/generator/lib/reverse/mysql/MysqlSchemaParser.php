@@ -14,7 +14,7 @@ require_once dirname(__FILE__) . '/../BaseSchemaParser.php';
  * Mysql database schema parser.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2090 $
+ * @version    $Revision$
  * @package    propel.generator.reverse.mysql
  */
 class MysqlSchemaParser extends BaseSchemaParser
@@ -30,7 +30,7 @@ class MysqlSchemaParser extends BaseSchemaParser
 	 * @var        array
 	 */
 	private static $mysqlTypeMap = array(
-		'tinyint' => PropelTypes::BOOLEAN,
+		'tinyint' => PropelTypes::TINYINT,
 		'smallint' => PropelTypes::SMALLINT,
 		'mediumint' => PropelTypes::SMALLINT,
 		'int' => PropelTypes::INTEGER,
@@ -60,7 +60,7 @@ class MysqlSchemaParser extends BaseSchemaParser
 		'enum' => PropelTypes::CHAR,
 		'set' => PropelTypes::CHAR,
 	);
-	
+
 	protected static $defaultTypeSizes = array(
 		'char'     => 1,
 		'tinyint'  => 4,
@@ -87,41 +87,64 @@ class MysqlSchemaParser extends BaseSchemaParser
 	{
 		$this->addVendorInfo = $this->getGeneratorConfig()->getBuildProperty('addVendorInfo');
 
-		$stmt = $this->dbh->query("SHOW TABLES");
+		$stmt = $this->dbh->query("SHOW FULL TABLES");
 
 		// First load the tables (important that this happen before filling out details of tables)
 		$tables = array();
-		if ($task) $task->log("Reverse Engineering Tables", Project::MSG_VERBOSE);
+
+		if ($task) {
+			$task->log("Reverse Engineering Tables", Project::MSG_VERBOSE);
+		}
+
 		while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
 			$name = $row[0];
-			if ($name == $this->getMigrationTable()) {
+			$type = $row[1];
+
+			if ($name == $this->getMigrationTable() || $type != "BASE TABLE") {
 				continue;
 			}
-			if ($task) $task->log("  Adding table '" . $name . "'", Project::MSG_VERBOSE);
+
+			if ($task) {
+				$task->log("  Adding table '" . $name . "'", Project::MSG_VERBOSE);
+			}
+
 			$table = new Table($name);
+			$table->setIdMethod($database->getDefaultIdMethod());
 			$database->addTable($table);
 			$tables[] = $table;
 		}
-		
+
 		// Now populate only columns.
-		if ($task) $task->log("Reverse Engineering Columns", Project::MSG_VERBOSE);
+		if ($task) {
+			$task->log("Reverse Engineering Columns", Project::MSG_VERBOSE);
+		}
+
 		foreach ($tables as $table) {
-			if ($task) $task->log("  Adding columns for table '" . $table->getName() . "'", Project::MSG_VERBOSE);
+			if ($task) {
+				$task->log("  Adding columns for table '" . $table->getName() . "'", Project::MSG_VERBOSE);
+			}
 			$this->addColumns($table);
 		}
 
 		// Now add indices and constraints.
-		if ($task) $task->log("Reverse Engineering Indices And Constraints", Project::MSG_VERBOSE);
+		if ($task) {
+			$task->log("Reverse Engineering Indices And Constraints", Project::MSG_VERBOSE);
+		}
+
 		foreach ($tables as $table) {
-			if ($task) $task->log("  Adding indices and constraints for table '" . $table->getName() . "'", Project::MSG_VERBOSE);
+			if ($task) {
+				$task->log("  Adding indices and constraints for table '" . $table->getName() . "'", Project::MSG_VERBOSE);
+			}
+
 			$this->addForeignKeys($table);
 			$this->addIndexes($table);
 			$this->addPrimaryKey($table);
+
 			if ($this->addVendorInfo) {
 				$this->addTableVendorInfo($table);
 			}
 		}
-		
+
 		return count($tables);
 	}
 
@@ -136,79 +159,113 @@ class MysqlSchemaParser extends BaseSchemaParser
 		$stmt = $this->dbh->query("SHOW COLUMNS FROM `" . $table->getName() . "`");
 
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-			$name = $row['Field'];
-			$is_nullable = ($row['Null'] == 'YES');
-			$autoincrement = (strpos($row['Extra'], 'auto_increment') !== false);
-			$size = null;
-			$precision = null;
-			$scale = null;
-
-			if (preg_match('/^(\w+)[\(]?([\d,]*)[\)]?( |$)/', $row['Type'], $matches)) {
-				//            colname[1]   size/precision[2]
-				$nativeType = $matches[1];
-				if ($matches[2]) {
-					if ( ($cpos = strpos($matches[2], ',')) !== false) {
-						$size = (int) substr($matches[2], 0, $cpos);
-						$precision = $size;
-						$scale = (int) substr($matches[2], $cpos + 1);
-					} else {
-						$size = (int) $matches[2];
-					}
-				}
-				foreach (self::$defaultTypeSizes as $type => $defaultSize) {
-					if ($nativeType == $type && $size == $defaultSize) {
-						$size = null;
-						continue;
-					}
-				}
-			} elseif (preg_match('/^(\w+)\(/', $row['Type'], $matches)) {
-				$nativeType = $matches[1];
-			} else {
-				$nativeType = $row['Type'];
-			}
-
-			//BLOBs can't have any default values in MySQL
-			$default = preg_match('~blob|text~', $nativeType) ? null : $row['Default'];
-
-			$propelType = $this->getMappedPropelType($nativeType);
-			if (!$propelType) {
-				$propelType = Column::DEFAULT_TYPE;
-				$this->warn("Column [" . $table->getName() . "." . $name. "] has a column type (".$nativeType.") that Propel does not support.");
-			}
-
-			$column = new Column($name);
-			$column->setTable($table);
-			$column->setDomainForType($propelType);
-			// We may want to provide an option to include this:
-			// $column->getDomain()->replaceSqlType($type);
-			$column->getDomain()->replaceSize($size);
-			$column->getDomain()->replaceScale($scale);
-			if ($default !== null) {
-				if ($propelType == PropelTypes::BOOLEAN) {
-					if ($default == '1') $default = 'true';
-					if ($default == '0') $default = 'false';
-				}
-				if (in_array($default, array('CURRENT_TIMESTAMP'))) {
-					$type = ColumnDefaultValue::TYPE_EXPR;
-				} else {
-					$type = ColumnDefaultValue::TYPE_VALUE;
-				}
-				$column->getDomain()->setDefaultValue(new ColumnDefaultValue($default, $type));
-			}
-			$column->setAutoIncrement($autoincrement);
-			$column->setNotNull(!$is_nullable);
-
-			if ($this->addVendorInfo) {
-				$vi = $this->getNewVendorInfoObject($row);
-				$column->addVendorInfo($vi);
-			}
-
+			$column = $this->getColumnFromRow($row, $table);
 			$table->addColumn($column);
 		}
 
 
 	} // addColumn()
+
+	/**
+	 * Factory method creating a Column object
+	 * based on a row from the 'show columns from ' MySQL query result.
+	 *
+	 * @param     array $row An associative array with the following keys:
+	 *                       Field, Type, Null, Key, Default, Extra.
+	 * @return    Column
+	 */
+	public function getColumnFromRow($row, Table $table)
+	{
+		$name = $row['Field'];
+		$is_nullable = ($row['Null'] == 'YES');
+		$autoincrement = (strpos($row['Extra'], 'auto_increment') !== false);
+		$size = null;
+		$precision = null;
+		$scale = null;
+		$sqlType = false;
+
+		$regexp = '/^
+			(\w+)        # column type [1]
+			[\(]         # (
+				?([\d,]*)  # size or size, precision [2]
+			[\)]         # )
+			?\s*         # whitespace
+			(\w*)        # extra description (UNSIGNED, CHARACTER SET, ...) [3]
+		$/x';
+		if (preg_match($regexp, $row['Type'], $matches)) {
+			$nativeType = $matches[1];
+			if ($matches[2]) {
+				if (($cpos = strpos($matches[2], ',')) !== false) {
+					$size = (int) substr($matches[2], 0, $cpos);
+					$precision = $size;
+					$scale = (int) substr($matches[2], $cpos + 1);
+				} else {
+					$size = (int) $matches[2];
+				}
+			}
+			if ($matches[3]) {
+				$sqlType = $row['Type'];
+			}
+			foreach (self::$defaultTypeSizes as $type => $defaultSize) {
+				if ($nativeType == $type && $size == $defaultSize) {
+					$size = null;
+					continue;
+				}
+			}
+		} elseif (preg_match('/^(\w+)\(/', $row['Type'], $matches)) {
+			$nativeType = $matches[1];
+			if ($nativeType == 'enum') {
+				$sqlType = $row['Type'];
+			}
+		} else {
+			$nativeType = $row['Type'];
+		}
+
+		//BLOBs can't have any default values in MySQL
+		$default = preg_match('~blob|text~', $nativeType) ? null : $row['Default'];
+
+		$propelType = $this->getMappedPropelType($nativeType);
+		if (!$propelType) {
+			$propelType = Column::DEFAULT_TYPE;
+			$sqlType = $row['Type'];
+			$this->warn("Column [" . $table->getName() . "." . $name. "] has a column type (".$nativeType.") that Propel does not support.");
+		}
+
+		// Special case for TINYINT(1) which is a BOOLEAN
+		if (PropelTypes::TINYINT === $propelType && 1 === $size) {
+			$propelType = PropelTypes::BOOLEAN;
+		}
+
+		$column = new Column($name);
+		$column->setTable($table);
+		$column->setDomainForType($propelType);
+		if ($sqlType) {
+			$column->getDomain()->replaceSqlType($sqlType);
+		}
+		$column->getDomain()->replaceSize($size);
+		$column->getDomain()->replaceScale($scale);
+		if ($default !== null) {
+			if ($propelType == PropelTypes::BOOLEAN) {
+				if ($default == '1') $default = 'true';
+				if ($default == '0') $default = 'false';
+			}
+			if (in_array($default, array('CURRENT_TIMESTAMP'))) {
+				$type = ColumnDefaultValue::TYPE_EXPR;
+			} else {
+				$type = ColumnDefaultValue::TYPE_VALUE;
+			}
+			$column->getDomain()->setDefaultValue(new ColumnDefaultValue($default, $type));
+		}
+		$column->setAutoIncrement($autoincrement);
+		$column->setNotNull(!$is_nullable);
+
+		if ($this->addVendorInfo) {
+			$vi = $this->getNewVendorInfoObject($row);
+			$column->addVendorInfo($vi);
+		}
+
+		return $column;
+	}
 
 	/**
 	 * Load foreign keys for this table.
@@ -232,17 +289,17 @@ class MysqlSchemaParser extends BaseSchemaParser
 				$ftbl = $matches[3][$curKey];
 				$rawfcol = $matches[4][$curKey];
 				$fkey = $matches[5][$curKey];
-				
+
 				$lcols = array();
 				foreach(preg_split('/`, `/', $rawlcol) as $piece) {
 					$lcols[] = trim($piece, '` ');
 				}
-				
+
 				$fcols = array();
 				foreach(preg_split('/`, `/', $rawfcol) as $piece) {
 					$fcols[] = trim($piece, '` ');
 				}
-				
+
 				//typical for mysql is RESTRICT
 				$fkactions = array(
 					'ON DELETE'	=> ForeignKey::RESTRICT,
@@ -259,19 +316,19 @@ class MysqlSchemaParser extends BaseSchemaParser
 						}
 					}
 				}
-				
+
 				// restrict is the default
 				foreach ($fkactions as $key => $action) {
 					if ($action == ForeignKey::RESTRICT) {
 						$fkactions[$key] = null;
 					}
 				}
-				
+
 				$localColumns = array();
 				$foreignColumns = array();
 				;
 				$foreignTable = $database->getTable($ftbl, true);
-				
+
 				foreach($fcols as $fcol) {
 					$foreignColumns[] = $foreignTable->getColumn($fcol);
 				}
@@ -288,11 +345,11 @@ class MysqlSchemaParser extends BaseSchemaParser
 					$table->addForeignKey($fk);
 					$foreignKeys[$name] = $fk;
 				}
-				
+
 				for($i=0; $i < count($localColumns); $i++) {
 					$foreignKeys[$name]->addReference($localColumns[$i], $foreignColumns[$i]);
 				}
-				
+
 			}
 
 		}

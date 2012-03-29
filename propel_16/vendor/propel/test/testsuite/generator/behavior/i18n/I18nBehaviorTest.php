@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/i18n/I18nBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for I18nBehavior class
  *
  * @author     François Zaninotto
- * @version    $Revision: 2202 $
+ * @version    $Revision$
  * @package    generator.behavior.i18n
  */
 class I18nBehaviorTest extends PHPUnit_Framework_TestCase
@@ -43,18 +42,18 @@ EOF;
 -- i18n_behavior_test_0_i18n
 -----------------------------------------------------------------------
 
-DROP TABLE [i18n_behavior_test_0_i18n];
+DROP TABLE IF EXISTS i18n_behavior_test_0_i18n;
 
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'fr_FR' NOT NULL,
-	PRIMARY KEY ([id],[locale])
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'fr_FR' NOT NULL,
+	PRIMARY KEY (id,locale)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
-	
+
 	public function testModifyDatabaseDoesNotOverrideTableLocale()
 	{
 		$schema = <<<EOF
@@ -77,18 +76,18 @@ EOF;
 -- i18n_behavior_test_0_i18n
 -----------------------------------------------------------------------
 
-DROP TABLE [i18n_behavior_test_0_i18n];
+DROP TABLE IF EXISTS i18n_behavior_test_0_i18n;
 
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'pt_PT' NOT NULL,
-	PRIMARY KEY ([id],[locale])
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'pt_PT' NOT NULL,
+	PRIMARY KEY (id,locale)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
-	
+
 	public function schemaDataProvider()
 	{
 		$schema1 = <<<EOF
@@ -135,9 +134,9 @@ EOF;
 -- i18n_behavior_test_0_i18n
 -----------------------------------------------------------------------
 
-DROP TABLE [i18n_behavior_test_0_i18n];
+DROP TABLE IF EXISTS i18n_behavior_test_0_i18n;
 
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -150,7 +149,7 @@ EOF;
 		$builder = new PropelQuickBuilder();
 		$builder->setSchema($schema);
 		$expected = <<<EOF
--- FOREIGN KEY ([id]) REFERENCES i18n_behavior_test_0 ([id])
+-- FOREIGN KEY (id) REFERENCES i18n_behavior_test_0 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -163,10 +162,10 @@ EOF;
 		$builder = new PropelQuickBuilder();
 		$builder->setSchema($schema);
 		$expected = <<<EOF
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -179,12 +178,12 @@ EOF;
 		$builder = new PropelQuickBuilder();
 		$builder->setSchema($schema);
 		$expected = <<<EOF
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
-	[bar] VARCHAR(100),
-	PRIMARY KEY ([id],[locale])
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
+	bar VARCHAR(100),
+	PRIMARY KEY (id,locale)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -198,10 +197,10 @@ EOF;
 		$builder = new PropelQuickBuilder();
 		$builder->setSchema($schema);
 		$expected = <<<EOF
-CREATE TABLE [i18n_behavior_test_0]
+CREATE TABLE i18n_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[foo] INTEGER
+	id INTEGER NOT NULL PRIMARY KEY,
+	foo INTEGER
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -276,18 +275,18 @@ EOF;
 -- foo_table
 -----------------------------------------------------------------------
 
-DROP TABLE [foo_table];
+DROP TABLE IF EXISTS foo_table;
 
-CREATE TABLE [foo_table]
+CREATE TABLE foo_table
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
-	PRIMARY KEY ([id],[locale])
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
+	PRIMARY KEY (id,locale)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
-	
+
 	public function testModiFyTableUsesCustomLocaleColumnName()
 	{
 		$schema = <<<EOF
@@ -307,13 +306,13 @@ EOF;
 -- i18n_behavior_test_0_i18n
 -----------------------------------------------------------------------
 
-DROP TABLE [i18n_behavior_test_0_i18n];
+DROP TABLE IF EXISTS i18n_behavior_test_0_i18n;
 
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[culture] VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
-	PRIMARY KEY ([id],[culture])
+	id INTEGER NOT NULL,
+	culture VARCHAR(5) DEFAULT 'en_EN' NOT NULL,
+	PRIMARY KEY (id,culture)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -338,13 +337,13 @@ EOF;
 -- i18n_behavior_test_0_i18n
 -----------------------------------------------------------------------
 
-DROP TABLE [i18n_behavior_test_0_i18n];
+DROP TABLE IF EXISTS i18n_behavior_test_0_i18n;
 
-CREATE TABLE [i18n_behavior_test_0_i18n]
+CREATE TABLE i18n_behavior_test_0_i18n
 (
-	[id] INTEGER NOT NULL,
-	[locale] VARCHAR(5) DEFAULT 'fr_FR' NOT NULL,
-	PRIMARY KEY ([id],[locale])
+	id INTEGER NOT NULL,
+	locale VARCHAR(5) DEFAULT 'fr_FR' NOT NULL,
+	PRIMARY KEY (id,locale)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());

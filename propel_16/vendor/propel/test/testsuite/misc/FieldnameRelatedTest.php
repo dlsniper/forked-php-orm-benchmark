@@ -8,8 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
-
 /**
  * Tests some of the methods of generated Object classes. These are:
  *
@@ -39,7 +37,7 @@ class FieldnameRelatedTest extends PHPUnit_Framework_TestCase
 		require_once 'bookstore/BookPeer.php';
 		require_once 'bookstore/Book.php';
 	}
-	
+
 	/**
 	 * Tests if fieldname type constants are defined
 	 */

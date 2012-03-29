@@ -16,7 +16,7 @@ require_once dirname(__FILE__) . '/../model/Domain.php';
  *
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Martin Poeschl <mpoeschl@marmot.at> (Torque)
- * @version    $Revision: 2194 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 class MssqlPlatform extends DefaultPlatform

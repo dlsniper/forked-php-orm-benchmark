@@ -17,7 +17,7 @@ require_once dirname(__FILE__) . '/NameGenerator.php';
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
  * @author     Byron Foster <byron_foster@yahoo.com> (Torque)
  * @author     Bernd Goldschmidt <bgoldschmidt@rapidsoft.de>
- * @version    $Revision: 1834 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class PhpNameGenerator implements NameGenerator
@@ -95,19 +95,19 @@ class PhpNameGenerator implements NameGenerator
 	{
 		$name = "";
 		$tok = strtok($schemaName, self::STD_SEPARATOR_CHAR);
-		while ($tok) {
+		while ($tok !== false) {
 			$name .= ucfirst(strtolower($tok));
 			$tok = strtok(self::STD_SEPARATOR_CHAR);
 		}
 		return $name;
 	}
-	
+
 	/**
 	 * Converts a database schema name to php object name.  Removes
-	 * any character that is not a letter or a number and capitilizes 
-	 * first letter of the name, the first letter of each alphanumeric 
+	 * any character that is not a letter or a number and capitilizes
+	 * first letter of the name, the first letter of each alphanumeric
 	 * block and converts the rest of the letters to lowercase.
-	 * 
+	 *
 	 * T$NAMA$RFO_max => TNamaRfoMax
 	 *
 	 * @param      string $schemaName name to be converted.

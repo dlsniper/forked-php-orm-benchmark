@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelParser.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelXMLParser.php';
 
@@ -26,7 +25,7 @@ class PropelXMLParserTest extends PHPUnit_Framework_TestCase
 		return array(
 			array(array(), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <data/>
-", 'empty array'), 
+", 'empty array'),
 			array(array('a' => 1, 'b' => 2), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <data>
   <a>1</a>
@@ -80,7 +79,7 @@ class PropelXMLParserTest extends PHPUnit_Framework_TestCase
 ", 'keys with numbers'),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider arrayXmlConversionDataProvider
 	 */
@@ -116,7 +115,7 @@ class PropelXMLParserTest extends PHPUnit_Framework_TestCase
 		$parser = new PropelXMLParser();
 		$this->assertEquals($arrayData, $parser->fromXML($xmlData), 'PropelXMLParser::fromXML() converts to ' . $type . ' correctly');
 	}
-	
+
 	public function testToArrayRespectsNullValues()
 	{
 		$xmlData = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>

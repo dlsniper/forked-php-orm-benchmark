@@ -1,7 +1,7 @@
 <?php
 
 /*
- *	$Id: NestedSetBehaviorPeerBuilderModifierWithScopeTest.php 2168 2011-01-20 15:07:57Z francois $
+ *	$Id$
  * This file is part of the Propel package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,10 +15,10 @@ require_once dirname(__FILE__) . '/../../../../tools/helpers/bookstore/behavior/
  * Tests for NestedSetBehaviorPeerBuilderModifier class
  *
  * @author		François Zaninotto
- * @version		$Revision: 2168 $
+ * @version		$Revision$
  * @package		generator.behavior.nestedset
  */
-class NestedSetBehaviorPeerBuilderModifierWithScopeTest extends BookstoreNestedSetTestBase 
+class NestedSetBehaviorPeerBuilderModifierWithScopeTest extends BookstoreNestedSetTestBase
 {
 	public function testConstants()
 	{
@@ -70,7 +70,7 @@ class NestedSetBehaviorPeerBuilderModifierWithScopeTest extends BookstoreNestedS
 		$t2->save();
 		$this->assertEquals(Table10Peer::retrieveRoot(1), $t2, 'retrieveRoot() retrieves the root node in the required scope');
 	}
-	
+
 	public function testRetrieveTree()
 	{
 		list($t1, $t2, $t3, $t4, $t5, $t6, $t7, $t8, $t9, $t10) = $this->initTreeWithScope();
@@ -97,7 +97,7 @@ class NestedSetBehaviorPeerBuilderModifierWithScopeTest extends BookstoreNestedS
 		$tree = Table10Peer::retrieveTree(1, $c);
 		$this->assertEquals(array($t3, $t4, $t5, $t6, $t7), $tree, 'retrieveTree() accepts a Criteria as first parameter');
 	}
-	
+
 	public function testDeleteTree()
 	{
 		$this->initTreeWithScope();
@@ -190,7 +190,7 @@ class NestedSetBehaviorPeerBuilderModifierWithScopeTest extends BookstoreNestedS
 		);
 		$this->assertEquals($this->dumpTreeWithScope(2), $expected, 'shiftRLValues does not shift anything out of the scope');
 	}
-	
+
 	public function testShiftLevel()
 	{
 		$this->initTreeWithScope();

@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/platform/DefaultPlatform.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/Column.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/util/PropelQuickBuilder.php';
@@ -16,12 +15,12 @@ require_once dirname(__FILE__) . '/../../../../runtime/lib/Propel.php';
 
 /**
  *
- * @package    generator.platform 
+ * @package    generator.platform
  */
 class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 {
 	protected $platform;
-	
+
 	/**
 	 * Get the Platform object for this class
 	 *
@@ -34,7 +33,7 @@ class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 		}
 		return $this->platform;
 	}
-	
+
 	protected function tearDown()
 	{
 		$this->platform = null;
@@ -55,7 +54,7 @@ class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 		$expected = "'Naughty '' string'";
 		$this->assertEquals($expected, $quoted);
 	}
-	
+
 	protected function createColumn($type, $defaultValue)
 	{
 		$column = new Column();
@@ -63,7 +62,7 @@ class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 		$column->setDefaultValue($defaultValue);
 		return $column;
 	}
-	
+
 	public function createEnumColumn($defaultValues, $defaultValue)
 	{
 		$column = new Column();
@@ -72,7 +71,7 @@ class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 		$column->setDefaultValue($defaultValue);
 		return $column;
 	}
-	
+
 	public function getColumnDefaultValueDDLDataProvider()
 	{
 		return array(
@@ -91,7 +90,7 @@ class DefaultPlatformTest extends PHPUnit_Framework_TestCase
 			array($this->createEnumColumn(array('foo', 'bar', 'baz'), 'baz'), "DEFAULT 2"),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider getColumnDefaultValueDDLDataProvider
 	 */

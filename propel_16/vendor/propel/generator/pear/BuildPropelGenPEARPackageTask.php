@@ -8,7 +8,7 @@
  * @license    MIT License
  */
 /*
- *  $Id: BuildPropelGenPEARPackageTask.php 1681 2010-04-16 20:03:57Z francois $
+ *  $Id$
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -35,7 +35,7 @@ include_once 'phing/tasks/ext/pearpackage/Fileset.php';
  *
  * @author     Hans Lellelid <hans@xmpl.org>
  * @package    phing.tasks.ext
- * @version    $Revision: 1681 $
+ * @version    $Revision$
  */
 class BuildPropelGenPEARPackageTask extends MatchingTask
 {
@@ -96,9 +96,9 @@ class BuildPropelGenPEARPackageTask extends MatchingTask
 			'lib' => 'data',
 			'resources' => 'data'
 		);
-		
+
 		$options['exceptions'] = array(
-			'pear-propel-gen.bat' => 'script', 
+			'pear-propel-gen.bat' => 'script',
 			'pear-propel-gen' => 'script',
 		);
 
@@ -145,6 +145,7 @@ class BuildPropelGenPEARPackageTask extends MatchingTask
 		$package->addMaintainer('lead', 'hans', 'Hans Lellelid', 'hans@xmpl.org');
 		$package->addMaintainer('lead', 'david', 'David Zuelke', 'dz@bitxtender.com');
 		$package->addMaintainer('lead', 'francois', 'Francois Zaninotto', 'fzaninotto@[gmail].com');
+		$package->addMaintainer('lead', 'couac', 'William Durand', 'william.durand1@[gmail].com');
 
 		// creating a sub-section for 'windows'
 		$package->addRelease();

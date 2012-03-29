@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/../../../../generator/lib/model/VendorInfo.ph
 
 /**
  *
- * @package    generator.platform 
+ * @package    generator.platform
  */
 class MysqlPlatformTest extends PlatformTestProvider
 {
@@ -28,7 +28,7 @@ class MysqlPlatformTest extends PlatformTestProvider
 	{
 		return new MysqlPlatform();
 	}
-	
+
 	public function testGetSequenceNameDefault()
 	{
 		$table = new Table('foo');
@@ -188,7 +188,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddTablesDDL($database));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetAddTableDDLSimplePK
 	 */
@@ -299,7 +299,7 @@ CREATE TABLE `foo`
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddTableDDL($table));
 	}
-	
+
 	public function testGetAddTableDDLForeignKeySkipSql()
 	{
 		$schema = <<<EOF
@@ -363,6 +363,7 @@ CREATE TABLE `foo`
 		<vendor type="mysql">
 			<parameter name="Engine" value="InnoDB"/>
 			<parameter name="Charset" value="utf8"/>
+			<parameter name="AutoIncrement" value="1000"/>
 		</vendor>
 	</table>
 </database>
@@ -373,7 +374,7 @@ CREATE TABLE `foo`
 (
 	`id` INTEGER NOT NULL AUTO_INCREMENT,
 	PRIMARY KEY (`id`)
-) ENGINE=InnoDB CHARACTER SET='utf8';
+) ENGINE=InnoDB AUTO_INCREMENT=1000 CHARACTER SET='utf8';
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddTableDDL($table));
 	}
@@ -394,7 +395,7 @@ CREATE TABLE `Woopah`.`foo`
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddTableDDL($table));
 	}
-	
+
 	public function testGetDropTableDDL()
 	{
 		$table = new Table('foo');
@@ -415,7 +416,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getDropTableDDL($table));
 	}
-	
+
 	public function testGetColumnDDL()
 	{
 		$column = new Column('foo');
@@ -427,7 +428,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
 		$expected = '`foo` DOUBLE(3,2) DEFAULT 123 NOT NULL';
 		$this->assertEquals($expected, $this->getPlatform()->getColumnDDL($column));
 	}
-	
+
 	public function testGetColumnDDLCharsetVendor()
 	{
 		$column = new Column('foo');
@@ -466,7 +467,7 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
 		$expected = '`foo` INTEGER COMMENT \'This is column Foo\'';
 		$this->assertEquals($expected, $this->getPlatform()->getColumnDDL($column));
 	}
-	
+
 	public function testGetColumnDDLCharsetNotNull()
 	{
 		$column = new Column('foo');
@@ -477,9 +478,21 @@ DROP TABLE IF EXISTS `Woopah`.`foo`;
 		$column->addVendorInfo($vendor);
 		$expected = '`foo` TEXT CHARACTER SET \'greek\' NOT NULL';
 		$this->assertEquals($expected, $this->getPlatform()->getColumnDDL($column));
-
 	}
-	
+
+	public function testGetColumnDDLCustomSqlType()
+	{
+		$column = new Column('foo');
+		$column->getDomain()->copy($this->getPlatform()->getDomainForType('DOUBLE'));
+		$column->getDomain()->replaceScale(2);
+		$column->getDomain()->replaceSize(3);
+		$column->setNotNull(true);
+		$column->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
+		$column->getDomain()->replaceSqlType('DECIMAL(5,6)');
+		$expected = '`foo` DECIMAL(5,6) DEFAULT 123 NOT NULL';
+		$this->assertEquals($expected, $this->getPlatform()->getColumnDDL($column));
+	}
+
 	public function testGetPrimaryKeyDDLSimpleKey()
 	{
 		$table = new Table('foo');
@@ -513,7 +526,7 @@ ALTER TABLE `foo` DROP PRIMARY KEY;
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getDropPrimaryKeyDDL($table));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestPrimaryKeyDDL
 	 */
@@ -524,7 +537,7 @@ ALTER TABLE `foo` ADD PRIMARY KEY (`bar`);
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddPrimaryKeyDDL($table));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetIndicesDDL
 	 */
@@ -537,7 +550,7 @@ CREATE INDEX `foo_index` ON `foo` (`bar1`);
 ";
 		$this->assertEquals($expected, $this->getPLatform()->getAddIndicesDDL($table));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetIndexDDL
 	 */
@@ -559,7 +572,7 @@ DROP INDEX `babar` ON `foo`;
 ";
 		$this->assertEquals($expected, $this->getPLatform()->getDropIndexDDL($index));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetIndexDDL
 	 */
@@ -626,7 +639,7 @@ ALTER TABLE `foo` ADD CONSTRAINT `foo_baz_FK`
 ";
 		$this->assertEquals($expected, $this->getPlatform()->getAddForeignKeysDDL($table));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetForeignKeyDDL
 	 */
@@ -649,7 +662,7 @@ ALTER TABLE `foo` ADD CONSTRAINT `foo_bar_FK`
 		$expected = '';
 		$this->assertEquals($expected, $this->getPlatform()->getAddForeignKeyDDL($fk));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetForeignKeyDDL
 	 */
@@ -669,7 +682,7 @@ ALTER TABLE `foo` DROP FOREIGN KEY `foo_bar_FK`;
 		$expected = '';
 		$this->assertEquals($expected, $this->getPlatform()->getDropForeignKeyDDL($fk));
 	}
-	
+
 	/**
 	 * @dataProvider providerForTestGetForeignKeyDDL
 	 */
@@ -690,7 +703,7 @@ ALTER TABLE `foo` DROP FOREIGN KEY `foo_bar_FK`;
 		$expected = '';
 		$this->assertEquals($expected, $this->getPlatform()->getForeignKeyDDL($fk));
 	}
-	
+
 	public function testGetCommentBlockDDL()
 	{
 		$expected = "

@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/i18n/I18nBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for I18nBehavior class peer modifier
  *
  * @author     François Zaninotto
- * @version    $Revision: 2193 $
+ * @version    $Revision$
  * @package    generator.behavior.i18n
  */
 class I18nBehaviorPeerBuilderModifierTest extends PHPUnit_Framework_TestCase
@@ -43,7 +42,7 @@ EOF;
 		$this->assertEquals('en_EN', I18nBehaviorTest01Peer::DEFAULT_LOCALE);
 		$this->assertEquals('fr_FR', I18nBehaviorTest02Peer::DEFAULT_LOCALE);
 	}
-	
+
 	public function testFieldKeys()
 	{
 		$schema = <<<EOF

@@ -14,7 +14,7 @@ require_once dirname(__FILE__) . '/../BaseSchemaParser.php';
  * Postgresql database schema parser.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2238 $
+ * @version    $Revision$
  * @package    propel.generator.reverse.pgsql
  */
 class PgsqlSchemaParser extends BaseSchemaParser
@@ -115,6 +115,7 @@ class PgsqlSchemaParser extends BaseSchemaParser
 			if ($namespacename != 'public') {
 				$table->setSchema($namespacename);
 			}
+			$table->setIdMethod($database->getDefaultIdMethod());
 			$database->addTable($table);
 
 			// Create a wrapper to hold these tables and their associated OID
@@ -141,7 +142,7 @@ class PgsqlSchemaParser extends BaseSchemaParser
 		}
 
 		// TODO - Handle Sequences ...
-		
+
 		return count($tableWraps);
 
 	}
@@ -224,8 +225,8 @@ class PgsqlSchemaParser extends BaseSchemaParser
 			// if column has a default
 			if (($boolHasDefault == 't') && (strlen (trim ($default)) > 0)) {
 				if (!preg_match('/^nextval\(/', $default)) {
-					$strDefault= preg_replace('/::[\W\D]*/', '', $default);
-					$default = preg_replace('/(\'?)\'/', '${1}', $strDefault);
+					$strDefault= preg_replace ('/::[\W\D]*/', '', $default);
+					$default = str_replace ("'", '', $strDefault);
 				} else {
 					$autoincrement = true;
 					$default = null;
@@ -424,7 +425,7 @@ class PgsqlSchemaParser extends BaseSchemaParser
 				$table->addForeignKey($fk);
 				$foreignKeys[$name] = $fk;
 			}
-			
+
 			for ($i = 0; $i < count($local_columns); $i++) {
 				$foreignKeys[$name]->addReference(
 					$localTable->getColumn($local_columns[$i]),

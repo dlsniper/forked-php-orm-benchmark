@@ -14,39 +14,39 @@ require_once 'AggregateColumnRelationBehavior.php';
  * Keeps an aggregate column updated with related table
  *
  * @author     François Zaninotto
- * @version    $Revision: 1785 $
+ * @version    $Revision$
  * @package    propel.generator.behavior.aggregate_column
  */
 class AggregateColumnRelationBehavior extends Behavior
 {
-	
+
 	// default parameters value
 	protected $parameters = array(
 		'foreign_table' => '',
 		'update_method' => '',
 	);
-	
+
 	public function postSave($builder)
 	{
 		$relationName = $this->getRelationName($builder);
 		return "\$this->updateRelated{$relationName}(\$con);";
 	}
-	
+
 	// no need for a postDelete() hook, since delete() uses Query::delete(),
 	// which already has a hook
-	
+
 	public function objectAttributes($builder)
 	{
 		$relationName = $this->getRelationName($builder);
 		return "protected \$old{$relationName};
 ";
 	}
-	
+
 	public function objectMethods($builder)
 	{
 		return $this->addObjectUpdateRelated($builder);
 	}
-	
+
 	protected function addObjectUpdateRelated($builder)
 	{
 		$relationName = $this->getRelationName($builder);
@@ -57,7 +57,7 @@ class AggregateColumnRelationBehavior extends Behavior
 			'updateMethodName' => $this->getParameter('update_method'),
 		));
 	}
-	
+
 	public function objectFilter(&$script, $builder)
 	{
 		$relationName = $this->getRelationName($builder);
@@ -71,12 +71,12 @@ class AggregateColumnRelationBehavior extends Behavior
 		}";
 		$script = str_replace($search, $replace, $script);
 	}
-	
+
 	public function preUpdateQuery($builder)
 	{
 		return $this->getFindRelated($builder);
 	}
-	
+
 	public function preDeleteQuery($builder)
 	{
 		return $this->getFindRelated($builder);
@@ -92,7 +92,7 @@ class AggregateColumnRelationBehavior extends Behavior
 	{
 		return $this->getUpdateRelated($builder);
 	}
-	
+
 	public function postDeleteQuery($builder)
 	{
 		return $this->getUpdateRelated($builder);
@@ -103,25 +103,27 @@ class AggregateColumnRelationBehavior extends Behavior
 		$relationName = $this->getRelationName($builder);
 		return "\$this->updateRelated{$relationName}s(\$con);";
 	}
-	
+
 	public function queryMethods($builder)
 	{
 		$script = '';
 		$script .= $this->addQueryFindRelated($builder);
 		$script .= $this->addQueryUpdateRelated($builder);
-		
+
 		return $script;
 	}
-	
+
 	protected function addQueryFindRelated($builder)
 	{
 		$foreignKey = $this->getForeignKey();
+		$foreignQueryBuilder = $builder->getNewStubQueryBuilder($foreignKey->getForeignTable());
+		$builder->declareClass($foreignQueryBuilder->getFullyQualifiedClassname());
 		$relationName = $this->getRelationName($builder);
 		return $this->renderTemplate('queryFindRelated', array(
 			'foreignTable'     => $this->getForeignTable(),
 			'relationName'     => $relationName,
 			'variableName'     => self::lcfirst($relationName),
-			'foreignQueryName' => $foreignKey->getForeignTable()->getPhpName() . 'Query',
+			'foreignQueryName' => $foreignQueryBuilder->getClassname(),
 			'refRelationName'  => $builder->getRefFKPhpNameAffix($foreignKey),
 		));
 	}
@@ -149,12 +151,12 @@ class AggregateColumnRelationBehavior extends Behavior
 		// FIXME doesn't work when more than one fk to the same table
 		return array_shift($fks);
 	}
-	
+
 	protected function getRelationName($builder)
 	{
 		return $builder->getFKPhpNameAffix($this->getForeignKey());
 	}
-	
+
 	protected static function lcfirst($input)
 	{
 		// no lcfirst in php<5.3...

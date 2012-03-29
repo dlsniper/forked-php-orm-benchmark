@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/i18n/I18nBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for I18nBehavior class query modifier
  *
  * @author     François Zaninotto
- * @version    $Revision: 2192 $
+ * @version    $Revision$
  * @package    generator.behavior.i18n
  */
 class I18nBehaviorQueryBuilderModifierTest extends PHPUnit_Framework_TestCase
@@ -99,7 +98,7 @@ EOF;
 		$this->assertEquals($expectedSQL, $sql);
 		$this->assertEquals('en_EN', $params[0]['value']);
 	}
-	
+
 	public function testJoinI18nCreatesACorrectQuery()
 	{
 		$con = Propel::getConnection(I18nBehaviorTest11Peer::DATABASE_NAME);
@@ -111,7 +110,7 @@ EOF;
 		$this->assertEquals($expected, $con->getLastExecutedQuery());
 		$con->useDebug(false);
 	}
-	
+
 	public function testUseI18nQueryAddsTheProperJoin()
 	{
 		$q = I18nBehaviorTest11Query::create()
@@ -153,7 +152,7 @@ EOF;
 		$this->assertEquals($expected, $con->getLastExecutedQuery());
 		$con->useDebug(false);
 	}
-	
+
 	public function testJoinWithI18nAddsTheI18nColumns()
 	{
 		$q = I18nBehaviorTest11Query::create()
@@ -164,7 +163,7 @@ EOF;
 		$this->assertEquals($expectedSQL, $sql);
 		$this->assertEquals('en_EN', $params[0]['value']);
 	}
-	
+
 	public function testJoinWithI18nDoesNotPruneResultsWithoutTranslation()
 	{
 		I18nBehaviorTest11Query::create()->deleteAll();
@@ -214,7 +213,7 @@ EOF;
 		$this->assertEquals($count, $con->getQueryCount());
 		$this->assertEquals('hello', $translation->getBar());
 	}
-	
+
 	public function testJoinWithI18nSetsTheLocaleOnResults()
 	{
 		I18nBehaviorTest11Query::create()->deleteAll();
@@ -235,7 +234,7 @@ EOF;
 			->findOne();
 		$this->assertEquals('fr_FR', $o2->getLocale());
 	}
-	
+
 	public function testJoinWithI18nAndLimitDoesNotThrowException()
 	{
 		$res = I18nBehaviorTest11Query::create()

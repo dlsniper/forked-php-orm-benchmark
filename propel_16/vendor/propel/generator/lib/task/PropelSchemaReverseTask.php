@@ -17,7 +17,7 @@ require_once 'model/PropelTypes.php';
  * the database metadata.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2175 $
+ * @version    $Revision$
  * @package    propel.generator.task
  */
 class PropelSchemaReverseTask extends PDOTask
@@ -328,7 +328,7 @@ class PropelSchemaReverseTask extends PDOTask
 	public function main()
 	{
 		if (!$this->getDatabaseName()) {
-			throw new BuildException("databaseName attribute is required for schema reverse engineering", $this->getLocation());
+			throw new BuildException("The databaseName attribute (defined in propel.project property) is required for schema reverse engineering", $this->getLocation());
 		}
 
 		//(not yet supported) $this->log("schema : " . $this->dbSchema);
@@ -358,6 +358,7 @@ class PropelSchemaReverseTask extends PDOTask
 
 		} catch (Exception $e) {
 			$this->log("There was an error building XML from metadata: " . $e->getMessage(), Project::MSG_ERR);
+			return false;
 		}
 
 		$this->log("Schema reverse engineering finished");
@@ -384,15 +385,15 @@ class PropelSchemaReverseTask extends PDOTask
 	{
 		$config = $this->getGeneratorConfig();
 		$con = $this->getConnection();
-		
+
 		$this->log('Reading database structure...');
-		
+
 		$database = new Database($this->getDatabaseName());
 		$database->setPlatform($config->getConfiguredPlatform($con));
 		$database->setDefaultIdMethod(IDMethod::NATIVE);
 		$parser = $config->getConfiguredSchemaParser($con);
 		$nbTables = $parser->parse($database, $this);
-		
+
 		$this->log(sprintf('Successfully reverse engineered %d tables', $nbTables));
 
 		return $database;

@@ -15,7 +15,7 @@ require_once dirname(__FILE__) . '/../../../../tools/helpers/schemas/SchemasTest
  * Tests for AggregateColumnBehavior class
  *
  * @author		 François Zaninotto
- * @version		$Revision: 2092 $
+ * @version		$Revision$
  * @package		generator.behavior.aggregate_column
  */
 class AggregateColumnBehaviorWithSchemaTest extends SchemasTestBase
@@ -32,7 +32,7 @@ class AggregateColumnBehaviorWithSchemaTest extends SchemasTestBase
 		$this->con->commit();
 		parent::tearDown();
 	}
-	
+
 	public function testParametersWithSchema()
 	{
 		$storeTable = BookstoreSchemasBookstorePeer::getTableMap();

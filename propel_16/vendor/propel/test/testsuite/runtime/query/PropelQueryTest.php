@@ -42,20 +42,35 @@ class PropelQueryTest extends BookstoreTestBase
 			$this->assertTrue(true, 'PropelQuery::from() throws an exception when called on a non-existing query class');
 		}
 	}
-	
+
 	public function testQuery()
 	{
 		BookstoreDataPopulator::depopulate();
 		BookstoreDataPopulator::populate();
-		
+
 		$book = PropelQuery::from('Book b')
 			->where('b.Title like ?', 'Don%')
 			->orderBy('b.ISBN', 'desc')
 			->findOne();
 		$this->assertTrue($book instanceof Book);
 		$this->assertEquals('Don Juan', $book->getTitle());
-		
-	}
+
+    }
+
+    public function testInstancePool()
+    {
+        $object = new Table6();
+        $object->setTitle('test');
+        $object->save();
+        $key = $object->getId();
+
+        $this->assertSame($object, Table6Peer::getInstanceFromPool($key));
+        Table6Peer::removeInstanceFromPool($object);
+        $this->assertNull(Table6Peer::getInstanceFromPool($key));
+
+        $object = Table6Query::create()->findPk($key);
+        $this->assertSame($object, Table6Peer::getInstanceFromPool($key));
+    }
 }
 
 class myBookQuery extends BookQuery

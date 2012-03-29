@@ -8,13 +8,12 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/Propel.php';
 
 /**
  *
- * @package    generator.util 
+ * @package    generator.util
  */
 class PropelQuickBuilderTest extends PHPUnit_Framework_TestCase
 {
@@ -42,7 +41,7 @@ EOF;
 		$builder->setSchema($schema);
 		return array(array($builder));
 	}
-	
+
 	/**
 	 * @dataProvider simpleSchemaProvider
 	 */
@@ -65,18 +64,18 @@ EOF;
 -- quick_build_foo_1
 -----------------------------------------------------------------------
 
-DROP TABLE [quick_build_foo_1];
+DROP TABLE IF EXISTS quick_build_foo_1;
 
-CREATE TABLE [quick_build_foo_1]
+CREATE TABLE quick_build_foo_1
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER
 );
 
 EOF;
 		$this->assertEquals($expected, $builder->getSQL());
 	}
-	
+
 	/**
 	 * @dataProvider simpleSchemaProvider
 	 */
@@ -100,6 +99,20 @@ EOF;
 		$foo = new QuickBuildFoo1();
 		$this->assertTrue($foo instanceof BaseObject);
 		$this->assertTrue(QuickBuildFoo1Peer::getTableMap() instanceof QuickBuildFoo1TableMap);
+	}
+
+	/**
+	 * @dataProvider simpleSchemaProvider
+	 */
+	public function testGetClassesLimitedClassTargets($builder)
+	{
+		$script = $builder->getClasses(array('tablemap', 'peer', 'object', 'query'));
+		$this->assertNotContains('class QuickBuildFoo1 extends BaseQuickBuildFoo1', $script);
+		$this->assertNotContains('class QuickBuildFoo1Peer extends BaseQuickBuildFoo1Peer', $script);
+		$this->assertNotContains('class QuickBuildFoo1Query extends BaseQuickBuildFoo1Query', $script);
+		$this->assertContains('class BaseQuickBuildFoo1 extends BaseObject', $script);
+		$this->assertContains('class BaseQuickBuildFoo1Peer', $script);
+		$this->assertContains('class BaseQuickBuildFoo1Query extends ModelCriteria', $script);
 	}
 
 	public function testBuild()

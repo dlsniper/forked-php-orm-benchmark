@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/Behavior.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/Table.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/builder/util/XmlToAppData.php';
@@ -18,21 +17,21 @@ require_once dirname(__FILE__) . '/../../../../generator/lib/behavior/Timestampa
  * Tests for Behavior class
  *
  * @author     <a href="mailto:mpoeschl@marmot.at>Martin Poeschl</a>
- * @version    $Revision: 2221 $
+ * @version    $Revision$
  * @package    generator.model
  */
 class BehaviorTest extends PHPUnit_Framework_TestCase {
 
   private $xmlToAppData;
   private $appData;
-  
+
   public function testSetupObject()
   {
     $b = new Behavior();
     $b->loadFromXML(array('name' => 'foo'));
     $this->assertEquals($b->getName(), 'foo', 'setupObject() sets the Behavior name from XML attributes');
   }
-  
+
   public function testName()
   {
     $b = new Behavior();
@@ -40,7 +39,7 @@ class BehaviorTest extends PHPUnit_Framework_TestCase {
     $b->setName('foo');
     $this->assertEquals($b->getName(), 'foo', 'setName() sets the name, and getName() gets it');
   }
-  
+
   public function testTable()
   {
     $b = new Behavior();
@@ -50,7 +49,7 @@ class BehaviorTest extends PHPUnit_Framework_TestCase {
     $b->setTable($t);
     $this->assertEquals($b->getTable(), $t, 'setTable() sets the name, and getTable() gets it');
   }
-  
+
   public function testParameters()
   {
     $b = new Behavior();
@@ -99,7 +98,7 @@ EOF;
   /**
    * @expectedException InvalidArgumentException
    */
-	public function testUnkownBehavior()
+	public function testUnknownBehavior()
 	{
 		$xmlToAppData = new XmlToAppData();
 		$schema = <<<EOF
@@ -145,7 +144,7 @@ EOF;
 		$table = $appData->getDatabase('test1')->getTable('table1');
 		$this->assertTrue(array_key_exists('timestampable', $table->getBehaviors()), 'A database behavior is automatically copied to all its table');
 	}
-  
+
   public function testGetColumnForParameter()
   {
 		$xmlToAppData = new XmlToAppData();

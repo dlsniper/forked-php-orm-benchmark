@@ -12,7 +12,7 @@
  * Pre-order node iterator for Node objects.
  *
  * @author     Heltem <heltem@o2php.com>
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.runtime.om
  */
 class NestedSetRecursiveIterator implements RecursiveIterator

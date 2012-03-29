@@ -33,7 +33,7 @@ class PropelForeignKeyComparator
 	static public function computeDiff(ForeignKey $fromFk, ForeignKey $toFk, $caseInsensitive = false)
 	{
 		// Check for differences in local and remote table
-		$test = $caseInsensitive ? 
+		$test = $caseInsensitive ?
 			strtolower($fromFk->getTableName()) != strtolower($toFk->getTableName()) :
 			$fromFk->getTableName() != $toFk->getTableName();
 		if ($test) {
@@ -45,15 +45,23 @@ class PropelForeignKeyComparator
 		if ($test) {
 			return true;
 		}
-		
+
 		// compare columns
-		if (array_map('strtolower', $fromFk->getLocalColumns()) != array_map('strtolower', $toFk->getLocalColumns())) {
+		$fromFkLocalColumns = $fromFk->getLocalColumns();
+		sort($fromFkLocalColumns);
+		$toFkLocalColumns = $toFk->getLocalColumns();
+		sort($toFkLocalColumns);
+		if (array_map('strtolower', $fromFkLocalColumns) != array_map('strtolower', $toFkLocalColumns)) {
 			return true;
 		}
-		if (array_map('strtolower', $fromFk->getForeignColumns()) != array_map('strtolower', $toFk->getForeignColumns())) {
+		$fromFkForeignColumns = $fromFk->getForeignColumns();
+		sort($fromFkForeignColumns);
+		$toFkForeignColumns = $toFk->getForeignColumns();
+		sort($toFkForeignColumns);
+		if (array_map('strtolower', $fromFkForeignColumns) != array_map('strtolower', $toFkForeignColumns)) {
 			return true;
 		}
-		
+
 		// compare on
 		if ($fromFk->normalizeFKey($fromFk->getOnUpdate()) != $toFk->normalizeFKey($toFk->getOnUpdate())) {
 			return true;
@@ -61,13 +69,13 @@ class PropelForeignKeyComparator
 		if ($fromFk->normalizeFKey($fromFk->getOnDelete()) != $toFk->normalizeFKey($toFk->getOnDelete())) {
 			return true;
 		}
-		
+
 		// compare skipSql
 		if ($fromFk->isSkipSql() != $toFk->isSkipSql()) {
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 }

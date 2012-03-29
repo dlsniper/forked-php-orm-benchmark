@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/Propel.php';
 set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__) . '/../../../fixtures/namespaced/build/classes'));
 
@@ -16,7 +15,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__
  * Tests for Namespaces in generated classes class
  * Requires a build of the 'namespaced' fixture
  *
- * @version    $Revision: 2141 $
+ * @version    $Revision$
  * @package    generator.builder
  */
 class NamespaceTest extends PHPUnit_Framework_TestCase
@@ -35,7 +34,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		parent::tearDown();
 		Propel::init(dirname(__FILE__) . '/../../../fixtures/bookstore/build/conf/bookstore-conf.php');
 	}
-	
+
 	public function testInsert()
 	{
 		$book = new \Foo\Bar\NamespacedBook();
@@ -43,7 +42,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$book->setISBN('something');
 		$book->save();
 		$this->assertFalse($book->isNew());
-		
+
 		$publisher = new \Baz\NamespacedPublisher();
 		$publisher->save();
 		$this->assertFalse($publisher->isNew());
@@ -72,7 +71,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$book->save();
 		$this->assertFalse($book->isNew());
 		$this->assertFalse($author->isNew());
-		
+
 		$author = new NamespacedAuthor();
 		$author->setFirstName('Henning');
 		$author->setLastname('Mankell');
@@ -83,7 +82,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$author->save();
 		$this->assertFalse($book->isNew());
 		$this->assertFalse($author->isNew());
-		
+
 		$publisher = new \Baz\NamespacedPublisher();
 		$book = new \Foo\Bar\NamespacedBook();
 		$book->setTitle('Där vi en gång gått');
@@ -93,7 +92,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($book->isNew());
 		$this->assertFalse($publisher->isNew());
 	}
-	
+
 	public function testBasicQuery()
 	{
 		\Foo\Bar\NamespacedBookQuery::create()->deleteAll();
@@ -103,7 +102,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$noPublihser = \Baz\NamespacedPublisherQuery::create()->findOne();
 		$this->assertNull($noPublihser);
 	}
-	
+
 	public function testFind()
 	{
 		\Foo\Bar\NamespacedBookQuery::create()->deleteAll();
@@ -152,7 +151,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$book2 = $author2->getNamespacedBooks()->getFirst();
 		$this->assertEquals($book->getId(), $book2->getId());
 	}
-	
+
 	public function testFindWithManyToOne()
 	{
 		\Foo\Bar\NamespacedBookQuery::create()->deleteAll();
@@ -192,7 +191,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 		$book2 = $author2->getNamespacedBooks()->getFirst();
 		$this->assertEquals($book->getId(), $book2->getId());
 	}
-	
+
 	public function testSingleTableInheritance()
 	{
 		\Foo\Bar\NamespacedBookstoreEmployeeQuery::create()->deleteAll();
@@ -216,7 +215,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 			->count();
 		$this->assertEquals(1, $nbMan);
 	}
-	
+
 	public function testManyToMany()
 	{
 		\Foo\Bar\NamespacedBookQuery::create()->deleteAll();
@@ -250,7 +249,7 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 			->joinWith('NamespacedBookListRel.NamespacedBookClub')
 			->find($con);
 	}
-	
+
 	public function testUseQuery()
 	{
 		$book = \Foo\Bar\NamespacedBookQuery::create()
@@ -260,5 +259,5 @@ class NamespaceTest extends PHPUnit_Framework_TestCase
 			->findOne();
 		$this->assertNull($book);
 	}
-	
+
 }

@@ -20,7 +20,7 @@ require_once 'builder/util/XmlToDataSQL.php';
  * @author     Jason van Zyl  <jvanzyl@periapt.com> (Torque)
  * @author     John McNally  <jmcnally@collab.net> (Torque)
  * @author     Fedor Karpelevitch  <fedor.karpelevitch@home.com> (Torque)
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.generator.task
  */
 class PropelDataSQLTask extends AbstractPropelDataModelTask

@@ -11,7 +11,7 @@
 /**
  * Class for exceptions thrown during schema parsing
  *
- * @version    $Revision: 1960 $
+ * @version    $Revision$
  * @package    propel.generator.exception
  */
 class SchemaException extends Exception {}

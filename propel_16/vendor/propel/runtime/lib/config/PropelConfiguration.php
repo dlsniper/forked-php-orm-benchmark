@@ -17,7 +17,7 @@
  * PropelConfiguration instance.
  *
  * @author     Veikko Mäkinen <veikko@veikko.fi>
- * @version    $Revision: 2210 $
+ * @version    $Revision$
  * @package    propel.runtime.config
  */
 class PropelConfiguration implements ArrayAccess
@@ -26,18 +26,14 @@ class PropelConfiguration implements ArrayAccess
 	const TYPE_ARRAY_FLAT = 2;
 	const TYPE_OBJECT = 3;
 
-	/**
-	* @var        array An array of parameters
-	*/
 	protected $parameters = array();
-	
 	protected $flattenedParameters = array();
 	protected $isFlattened = false;
 
 	/**
 	 * Construct a new configuration container
 	 *
-	 * @param      array $parameters
+	 * @param     array  $parameters
 	 */
 	public function __construct(array $parameters = array())
 	{
@@ -45,7 +41,10 @@ class PropelConfiguration implements ArrayAccess
 	}
 
 	/**
-	 * @see        http://www.php.net/ArrayAccess
+	 * @see       http://www.php.net/ArrayAccess
+	 *
+	 * @param     integer  $offset
+	 * @return    boolean
 	 */
 	public function offsetExists($offset)
 	{
@@ -53,15 +52,22 @@ class PropelConfiguration implements ArrayAccess
 	}
 
 	/**
-	 * @see        http://www.php.net/ArrayAccess
+	 * @see       http://www.php.net/ArrayAccess
+	 *
+	 * @param     integer  $offset
+	 * @param     mixed    $value
 	 */
 	public function offsetSet($offset, $value)
 	{
-		$this->parameter[$offset] = $value;
+		$this->parameters[$offset] = $value;
+		$this->isFlattened = false;
 	}
 
 	/**
-	 * @see        http://www.php.net/ArrayAccess
+	 * @see       http://www.php.net/ArrayAccess
+	 *
+	 * @param     integer  $offset
+	 * @return    array
 	 */
 	public function offsetGet($offset)
 	{
@@ -69,20 +75,32 @@ class PropelConfiguration implements ArrayAccess
 	}
 
 	/**
-	 * @see        http://www.php.net/ArrayAccess
+	 * @see       http://www.php.net/ArrayAccess
+	 *
+	 * @param     integer  $offset
 	 */
 	public function offsetUnset($offset)
 	{
 		unset($this->parameters[$offset]);
+		$this->isFlattened = false;
 	}
 
 	/**
-	 * Get parameter value from the container
+	 * Get a value from the container, using a namespaced key.
+	 * If the specified value is supposed to be an array, the actual return value will be null.
+	 * Examples:
+	 * <code>
+	 *   $c['foo'] = 'bar';
+	 *   echo $c->getParameter('foo'); => 'bar'
+	 *   $c['foo1'] = array('foo2' => 'bar');
+	 *   echo $c->getParameter('foo1'); => null
+	 *   echo $c->getParameter('foo1.foo2'); => 'bar'
+	 * </code>
+   *
+	 * @param     string  $name  Parameter name
+	 * @param     mixed   $default  Default value to be used if the requested value is not found
 	 *
-	 * @param      string $name    Parameter name
-	 * @param      mixed  $default Default value to be used if the
-	 *                             requested value is not found
-	 * @return     mixed           Parameter value or the default
+	 * @return    mixed  Parameter value or the default
 	 */
 	public function getParameter($name, $default = null)
 	{
@@ -94,27 +112,39 @@ class PropelConfiguration implements ArrayAccess
 	}
 
 	/**
-	 * Store a value to the container
+	 * Store a value to the container. Accept scalar and array values.
+	 * Examples:
+	 * <code>
+	 *   $c->setParameter('foo', 'bar');
+	 *   echo $c['foo']; => 'bar'
+	 *   $c->setParameter('foo1.foo2', 'bar');
+	 *   print_r($c['foo1']); => array('foo2' => 'bar')
+	 * </code>
 	 *
-	 * @param      string $name Configuration item name (name.space.name)
-	 * @param      mixed $value Value to be stored
+	 * @param     string  $name  Configuration item name (name.space.name)
+	 * @param     mixed   $value  Value to be stored
 	 */
-	public function setParameter($name, $value)
+	public function setParameter($name, $value, $autoFlattenArrays = true)
 	{
 		$param = &$this->parameters;
 		$parts = explode('.', $name); //name.space.name
-		while ($part = array_shift($parts)) {
+		foreach ($parts as $part) {
 			$param = &$param[$part];
 		}
 		$param = $value;
-		$this->flattenedParameters[$name] = $value;
+		if (is_array($value) && $autoFlattenArrays) {
+			// The list will need to be re-flattened.
+			$this->isFlattened = false;
+		} else {
+			$this->flattenedParameters[$name] = $value;
+		}
 	}
 
 	/**
+	 * @throws     PropelException
 	 *
-	 *
-	 * @param      int $type
-	 * @return     mixed
+	 * @param     integer  $type
+	 * @return    mixed
 	 */
 	public function getParameters($type = PropelConfiguration::TYPE_ARRAY)
 	{
@@ -130,6 +160,9 @@ class PropelConfiguration implements ArrayAccess
 		}
 	}
 
+	/**
+	 * @return    array
+	 */
 	public function getFlattenedParameters()
 	{
 		if (!$this->isFlattened) {
@@ -151,5 +184,4 @@ class PropelConfiguration implements ArrayAccess
 		}
 		$this->flattenedParameters = array_merge($this->flattenedParameters, $result);
 	}
-
 }

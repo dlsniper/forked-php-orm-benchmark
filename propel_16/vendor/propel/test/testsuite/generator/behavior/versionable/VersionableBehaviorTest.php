@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/behavior/versionable/VersionableBehavior.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
@@ -18,7 +17,7 @@ require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
  * Tests for VersionableBehavior class
  *
  * @author     François Zaninotto
- * @version    $Revision: 2123 $
+ * @version    $Revision$
  * @package    generator.behavior.versionable
  */
 class VersionableBehaviorTest extends PHPUnit_Framework_TestCase
@@ -36,7 +35,7 @@ class VersionableBehaviorTest extends PHPUnit_Framework_TestCase
 EOF;
 		return array(array($schema));
 	}
-	
+
 	/**
 	 * @dataProvider basicSchemaDataProvider
 	 */
@@ -49,13 +48,13 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	version INTEGER DEFAULT 0
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -81,13 +80,13 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[foo_ver] INTEGER DEFAULT 0
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	foo_ver INTEGER DEFAULT 0
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -101,6 +100,7 @@ EOF;
 		<column name="id" primaryKey="true" type="INTEGER" autoIncrement="true" />
 		<column name="bar" type="INTEGER" />
 		<column name="version" type="BIGINT" />
+    <behavior name="versionable" />
 	</table>
 </database>
 EOF;
@@ -111,13 +111,13 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[version] BIGINT
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	version BIGINT
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -145,7 +145,7 @@ EOF;
 EOF;
 		return array(array($schema));
 	}
-	
+
 	/**
 	 * @dataProvider foreignTableSchemaDataProvider
 	 */
@@ -158,14 +158,14 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[foreign_id] INTEGER,
-	[version] INTEGER DEFAULT 0
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	foreign_id INTEGER,
+	version INTEGER DEFAULT 0
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -175,20 +175,20 @@ EOF;
 -- versionable_behavior_test_0_version
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0_version];
+DROP TABLE IF EXISTS versionable_behavior_test_0_version;
 
-CREATE TABLE [versionable_behavior_test_0_version]
+CREATE TABLE versionable_behavior_test_0_version
 (
-	[id] INTEGER NOT NULL,
-	[bar] INTEGER,
-	[foreign_id] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	[foreign_id_version] INTEGER DEFAULT 0,
-	PRIMARY KEY ([id],[version])
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	foreign_id INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	foreign_id_version INTEGER DEFAULT 0,
+	PRIMARY KEY (id,version)
 );
 
 -- SQLite does not support foreign keys; this is just for reference
--- FOREIGN KEY ([id]) REFERENCES versionable_behavior_test_0 ([id])
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_0 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -205,13 +205,13 @@ EOF;
 -- versionable_behavior_test_1
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_1];
+DROP TABLE IF EXISTS versionable_behavior_test_1;
 
-CREATE TABLE [versionable_behavior_test_1]
+CREATE TABLE versionable_behavior_test_1
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	version INTEGER DEFAULT 0
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
@@ -221,24 +221,24 @@ EOF;
 -- versionable_behavior_test_1_version
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_1_version];
+DROP TABLE IF EXISTS versionable_behavior_test_1_version;
 
-CREATE TABLE [versionable_behavior_test_1_version]
+CREATE TABLE versionable_behavior_test_1_version
 (
-	[id] INTEGER NOT NULL,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	[versionable_behavior_test_0_ids] MEDIUMTEXT,
-	[versionable_behavior_test_0_versions] MEDIUMTEXT,
-	PRIMARY KEY ([id],[version])
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	versionable_behavior_test_0_ids MEDIUMTEXT,
+	versionable_behavior_test_0_versions MEDIUMTEXT,
+	PRIMARY KEY (id,version)
 );
 
 -- SQLite does not support foreign keys; this is just for reference
--- FOREIGN KEY ([id]) REFERENCES versionable_behavior_test_1 ([id])
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_1 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
-	
+
 	/**
 	 * @dataProvider basicSchemaDataProvider
 	 */
@@ -251,18 +251,18 @@ EOF;
 -- versionable_behavior_test_0_version
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0_version];
+DROP TABLE IF EXISTS versionable_behavior_test_0_version;
 
-CREATE TABLE [versionable_behavior_test_0_version]
+CREATE TABLE versionable_behavior_test_0_version
 (
-	[id] INTEGER NOT NULL,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	PRIMARY KEY ([id],[version])
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY (id,version)
 );
 
 -- SQLite does not support foreign keys; this is just for reference
--- FOREIGN KEY ([id]) REFERENCES versionable_behavior_test_0 ([id])
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_0 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -287,18 +287,18 @@ EOF;
 -- foo_ver
 -----------------------------------------------------------------------
 
-DROP TABLE [foo_ver];
+DROP TABLE IF EXISTS foo_ver;
 
-CREATE TABLE [foo_ver]
+CREATE TABLE foo_ver
 (
-	[id] INTEGER NOT NULL,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	PRIMARY KEY ([id],[version])
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY (id,version)
 );
 
 -- SQLite does not support foreign keys; this is just for reference
--- FOREIGN KEY ([id]) REFERENCES versionable_behavior_test_0 ([id])
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_0 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
@@ -326,25 +326,25 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	version INTEGER DEFAULT 0
 );
 
 -----------------------------------------------------------------------
 -- versionable_behavior_test_0_version
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0_version];
+DROP TABLE IF EXISTS versionable_behavior_test_0_version;
 
-CREATE TABLE [versionable_behavior_test_0_version]
+CREATE TABLE versionable_behavior_test_0_version
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[baz] INTEGER
+	id INTEGER NOT NULL PRIMARY KEY,
+	baz INTEGER
 );
 
 EOF;
@@ -368,7 +368,7 @@ EOF;
 EOF;
 		return array(array($schema));
 	}
-	
+
 	/**
 	 * @dataProvider logSchemaDataProvider
 	 */
@@ -381,21 +381,21 @@ EOF;
 -- versionable_behavior_test_0
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0];
+DROP TABLE IF EXISTS versionable_behavior_test_0;
 
-CREATE TABLE [versionable_behavior_test_0]
+CREATE TABLE versionable_behavior_test_0
 (
-	[id] INTEGER NOT NULL PRIMARY KEY,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	[version_created_at] TIMESTAMP,
-	[version_created_by] VARCHAR(100),
-	[version_comment] VARCHAR(255)
+	id INTEGER NOT NULL PRIMARY KEY,
+	bar INTEGER,
+	version INTEGER DEFAULT 0,
+	version_created_at TIMESTAMP,
+	version_created_by VARCHAR(100),
+	version_comment VARCHAR(255)
 );
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
-	
+
 	/**
 	 * @dataProvider logSchemaDataProvider
 	 */
@@ -408,22 +408,57 @@ EOF;
 -- versionable_behavior_test_0_version
 -----------------------------------------------------------------------
 
-DROP TABLE [versionable_behavior_test_0_version];
+DROP TABLE IF EXISTS versionable_behavior_test_0_version;
 
-CREATE TABLE [versionable_behavior_test_0_version]
+CREATE TABLE versionable_behavior_test_0_version
 (
-	[id] INTEGER NOT NULL,
-	[bar] INTEGER,
-	[version] INTEGER DEFAULT 0,
-	[version_created_at] TIMESTAMP,
-	[version_created_by] VARCHAR(100),
-	[version_comment] VARCHAR(255),
-	PRIMARY KEY ([id],[version])
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	version_created_at TIMESTAMP,
+	version_created_by VARCHAR(100),
+	version_comment VARCHAR(255),
+	PRIMARY KEY (id,version)
 );
 
 -- SQLite does not support foreign keys; this is just for reference
--- FOREIGN KEY ([id]) REFERENCES versionable_behavior_test_0 ([id])
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_0 (id)
 EOF;
 		$this->assertContains($expected, $builder->getSQL());
 	}
+
+	public function testDatabaseLevelBehavior()
+	{
+			$schema = <<<EOF
+<database name="versionable_behavior_test_0">
+	<behavior name="versionable" />
+	<table name="versionable_behavior_test_0">
+		<column name="id" primaryKey="true" type="INTEGER" autoIncrement="true" />
+		<column name="bar" type="INTEGER" />
+	</table>
+</database>
+EOF;
+			$builder = new PropelQuickBuilder();
+			$builder->setSchema($schema);
+      $expected = <<<EOF
+-----------------------------------------------------------------------
+-- versionable_behavior_test_0_version
+-----------------------------------------------------------------------
+
+DROP TABLE IF EXISTS versionable_behavior_test_0_version;
+
+CREATE TABLE versionable_behavior_test_0_version
+(
+	id INTEGER NOT NULL,
+	bar INTEGER,
+	version INTEGER DEFAULT 0 NOT NULL,
+	PRIMARY KEY (id,version)
+);
+
+-- SQLite does not support foreign keys; this is just for reference
+-- FOREIGN KEY (id) REFERENCES versionable_behavior_test_0 (id)
+EOF;
+      $this->assertContains($expected, $builder->getSQL());
+	}
+
 }

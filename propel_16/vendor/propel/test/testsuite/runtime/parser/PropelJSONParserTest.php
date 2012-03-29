@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelParser.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/parser/PropelJSONParser.php';
 
@@ -24,10 +23,10 @@ class PropelJSONParserTest extends PHPUnit_Framework_TestCase
 	public static function arrayJsonConversionDataProvider()
 	{
 		return array(
-			array(array(), '[]', 'empty array'), 
+			array(array(), '[]', 'empty array'),
 			array(array(1, 2, 3), '[1,2,3]', 'regular array'),
 			array(array(1, '2', 3), '[1,"2",3]', 'array with strings'),
-			array(array(1, 2, array(3, 4)), '[1,2,[3,4]]', 'nested arrays'), 
+			array(array(1, 2, array(3, 4)), '[1,2,[3,4]]', 'nested arrays'),
 			array(array('a' => 1, 'b' => 2), '{"a":1,"b":2}', 'associative array'),
 			array(array('a' => 0, 'b' => null, 'c' => ''), '{"a":0,"b":null,"c":""}', 'associative array with empty values'),
 			array(array('a' => 1, 'b' => 'bar'), '{"a":1,"b":"bar"}', 'associative array with strings'),
@@ -37,7 +36,7 @@ class PropelJSONParserTest extends PHPUnit_Framework_TestCase
 			array(array('a1' => 1, 'b2' => 2), '{"a1":1,"b2":2}', 'keys with numbers'),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider arrayJsonConversionDataProvider
 	 */

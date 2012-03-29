@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -40,7 +39,7 @@ EOF;
 	{
 		$this->assertEquals(3, LazyLoadActiveRecord2Peer::NUM_HYDRATE_COLUMNS);
 	}
-	
+
 	public function testPopulateObjectNotInPool()
 	{
 		LazyLoadActiveRecord2Peer::clearInstancePool();
@@ -104,5 +103,5 @@ EOF;
 		$this->assertNull($obj->getBar());
 		$this->assertEquals('bazValue', $obj->getBaz());
 	}
-	
+
 }

@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/util/PropelQuickBuilder.php';
 require_once dirname(__FILE__) . '/../../../../../runtime/lib/Propel.php';
 
@@ -37,7 +36,7 @@ EOF;
 			PropelQuickBuilder::buildSchema($schema);
 		}
 	}
-	
+
 	public function testNullValue()
 	{
 		$r = new ComplexColumnTypeEntity5();
@@ -57,7 +56,7 @@ EOF;
 		$r->setBar1('');
 		$this->assertNull($r->getBar1());
 	}
-	
+
 	public function testPreEpochValue()
 	{
 		$r = new ComplexColumnTypeEntity5();

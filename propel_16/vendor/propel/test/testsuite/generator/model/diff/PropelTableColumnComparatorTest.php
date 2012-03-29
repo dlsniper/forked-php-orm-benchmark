@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableComparator.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableDiff.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
@@ -44,7 +43,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->setNotNull(true);
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t2->addColumn($c2);
-		
+
 		$this->assertFalse(PropelTableComparator::computeDiff($t1, $t2));
 	}
 
@@ -56,11 +55,11 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$t2 = new Table();
 		$c2 = new Column('Bar');
 		$t2->addColumn($c2);
-		
+
 		$diff = PropelTableComparator::computeDiff($t1, $t2);
 		$this->assertTrue($diff instanceof PropelTableDiff);
 	}
-	
+
 	public function testCompareCaseInsensitive()
 	{
 		$t1 = new Table();
@@ -87,7 +86,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->setNotNull(true);
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t2->addColumn($c2);
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -109,7 +108,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c1->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t1->addColumn($c1);
 		$t2 = new Table();
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -136,7 +135,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->setNotNull(true);
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t2->addColumn($c2);
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -166,7 +165,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c2->setNotNull(true);
 		$c2->getDomain()->setDefaultValue(new ColumnDefaultValue(123, ColumnDefaultValue::TYPE_VALUE));
 		$t2->addColumn($c2);
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -195,7 +194,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c3->getDomain()->copy($this->platform->getDomainForType('VARCHAR'));
 		$c3->getDomain()->replaceSize(255);
 		$t1->addColumn($c3);
-		
+
 		$t2 = new Table();
 		$c4 = new Column('col1');
 		$c4->getDomain()->copy($this->platform->getDomainForType('DOUBLE'));
@@ -212,7 +211,7 @@ class PropelTableColumnComparatorTest extends PHPUnit_Framework_TestCase
 		$c6->getDomain()->copy($this->platform->getDomainForType('LONGVARCHAR'));
 		$c6->getDomain()->setDefaultValue(new ColumnDefaultValue('123', ColumnDefaultValue::TYPE_VALUE));
 		$t2->addColumn($c6);
-		
+
 		// col1 was modified, col2 was renamed, col3 was removed, col4 was added
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);

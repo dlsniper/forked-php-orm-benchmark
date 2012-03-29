@@ -9,7 +9,6 @@
  */
 
 require_once dirname(__FILE__) . '/../../../runtime/lib/Propel.php';
-require_once 'PHPUnit/Framework.php';
 
 /**
  * Base functionality to be extended by all Propel test cases.  Test
@@ -18,7 +17,7 @@ require_once 'PHPUnit/Framework.php';
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
  * @author     Christopher Elkins <celkins@scardini.com> (Torque)
- * @version    $Revision: 1833 $
+ * @version    $Revision$
  */
 abstract class BaseTestCase extends PHPUnit_Framework_TestCase {
 

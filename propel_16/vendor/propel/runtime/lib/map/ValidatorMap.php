@@ -19,7 +19,7 @@
  * These classes in themselves do not do any database metadata lookups.
  *
  * @author     Michael Aichler <aichler@mediacluster.de>
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.runtime.map
  */
 class ValidatorMap

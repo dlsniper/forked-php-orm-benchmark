@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelIndexComparator.php';
 
 /**
@@ -52,7 +51,7 @@ class PropelIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2->addColumn($c2);
 		$this->assertFalse(PropelIndexComparator::computeDiff($i1, $i2, true));
 	}
-	
+
 	public function testCompareType()
 	{
 		$c1 = new Column('Foo');

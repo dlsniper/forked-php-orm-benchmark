@@ -12,7 +12,7 @@
  * A class that maps PropelTypes to PHP native types, PDO types (and Creole types).
  *
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
- * @version    $Revision: 2076 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class PropelTypes
@@ -94,8 +94,8 @@ class PropelTypes
 	const BOOLEAN_EMU_NATIVE_TYPE = "boolean";
 	const OBJECT_NATIVE_TYPE = "";
 	const PHP_ARRAY_NATIVE_TYPE = "array";
-	const ENUM_NATIVE_TYPE = "string";
-	
+	const ENUM_NATIVE_TYPE = "int";
+
 	/**
 	 * Mapping between Propel types and PHP native types.
 	 *
@@ -212,6 +212,14 @@ class PropelTypes
 			self::BU_TIMESTAMP => PDO::PARAM_STR,
 	);
 
+	private static $pdoTypeNames = array(
+		PDO::PARAM_BOOL => 'PDO::PARAM_BOOL',
+		PDO::PARAM_NULL => 'PDO::PARAM_NULL',
+		PDO::PARAM_INT  => 'PDO::PARAM_INT',
+		PDO::PARAM_STR  => 'PDO::PARAM_STR',
+		PDO::PARAM_LOB  => 'PDO::PARAM_LOB',
+	);
+
 	/**
 	 * Return native PHP type which corresponds to the
 	 * Creole type provided. Use in the base object class generation.
@@ -242,6 +250,15 @@ class PropelTypes
 	public static function getPDOType($type)
 	{
 		return self::$propelTypeToPDOTypeMap[$type];
+	}
+
+	/**
+	 * Resturns the PDO type ('PDO::PARAM_*' constant) name.
+	 * @return     string
+	 */
+	public static function getPdoTypeString($type)
+	{
+		return self::$pdoTypeNames[self::$propelTypeToPDOTypeMap[$type]];
 	}
 
 	/**
@@ -300,7 +317,7 @@ class PropelTypes
 	{
 		return in_array($type, self::$NUMERIC_TYPES);
 	}
-	
+
 	/**
 	 * Returns true if values for the type are boolean.
 	 *

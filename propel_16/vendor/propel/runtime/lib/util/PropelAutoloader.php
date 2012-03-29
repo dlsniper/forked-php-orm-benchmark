@@ -14,7 +14,7 @@
  *
  * @author     Prancois Zaninotto
  * @author     Fabien Potencier
- * @version    $Revision: 1773 $
+ * @version    $Revision$
  * @package    propel.util
  */
 class PropelAutoloader
@@ -71,7 +71,7 @@ class PropelAutoloader
 	{
 		$this->classes = array_merge($this->classes, $classMap);
 	}
-	
+
 	/**
 	 * Sets the path for a particular class.
 	 *
@@ -107,6 +107,11 @@ class PropelAutoloader
 		if (isset($this->classes[$class])) {
 			require $this->classes[$class];
 			return true;
+		}
+		// fallback for classes defined with leading backslash
+		if (strpos($class, '\\') === 0) {
+			$class = substr($class, 1);
+			return $this->autoload($class);
 		}
 		return false;
 	}

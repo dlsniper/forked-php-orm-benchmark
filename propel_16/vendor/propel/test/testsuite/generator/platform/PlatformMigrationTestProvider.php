@@ -457,4 +457,86 @@ EOF;
 		return array(array(array($table->getColumn('bar1'), $table->getColumn('bar2'))));
 	}
 
+	public function providerForTestGetModifyColumnRemoveDefaultValueDDL()
+	{
+	    $t1 = new Table('test');
+	    $c1 = new Column();
+	    $c1->setName('test');
+	    $c1->getDomain()->setType('INTEGER');
+	    $c1->setDefaultValue(0);
+	    $t1->addColumn($c1);
+	    $t2 = new Table('test');
+	    $c2 = new Column();
+	    $c2->setName('test');
+	    $c2->getDomain()->setType('INTEGER');
+	    $t2->addColumn($c2);
+	    return array(array(PropelColumnComparator::computeDiff($c1, $c2)));
+	}
+
+	public function providerForTestGetModifyTableForeignKeysSkipSql3DDL()
+	{
+		$schema1 = <<<EOF
+<database name="test">
+	<table name="test">
+		<column name="test" type="INTEGER" primaryKey="true" autoIncrement="true" required="true" />
+		<column name="ref_test" type="INTEGER"/>
+		<foreign-key foreignTable="test2" onDelete="CASCADE" onUpdate="CASCADE" skipSql="true">
+		    <reference local="ref_test" foreign="test" />
+	    </foreign-key>
+	</table>
+	<table name="test2">
+		<column name="test" type="integer" primaryKey="true" />
+	</table>
+</database>
+EOF;
+		$schema2 = <<<EOF
+<database name="test">
+  <table name="test">
+    <column name="test" type="INTEGER" primaryKey="true" autoIncrement="true" required="true" />
+    <column name="ref_test" type="INTEGER"/>
+  </table>
+  <table name="test2">
+    <column name="test" type="integer" primaryKey="true" />
+  </table>
+</database>
+EOF;
+		$d1 = $this->getDatabaseFromSchema($schema1);
+		$d2 = $this->getDatabaseFromSchema($schema2);
+		$diff = PropelDatabaseComparator::computeDiff($d1, $d2);
+		return array(array($diff));
+	}
+
+	public function providerForTestGetModifyTableForeignKeysSkipSql4DDL()
+	{
+		$schema1 = <<<EOF
+<database name="test">
+	<table name="test">
+		<column name="test" type="INTEGER" primaryKey="true" autoIncrement="true" required="true" />
+		<column name="ref_test" type="INTEGER"/>
+		<foreign-key foreignTable="test2" onDelete="CASCADE" onUpdate="CASCADE" skipSql="true">
+		    <reference local="ref_test" foreign="test" />
+	    </foreign-key>
+	</table>
+	<table name="test2">
+		<column name="test" type="integer" primaryKey="true" />
+	</table>
+</database>
+EOF;
+		$schema2 = <<<EOF
+<database name="test">
+  <table name="test">
+    <column name="test" type="INTEGER" primaryKey="true" autoIncrement="true" required="true" />
+    <column name="ref_test" type="INTEGER"/>
+  </table>
+  <table name="test2">
+    <column name="test" type="integer" primaryKey="true" />
+  </table>
+</database>
+EOF;
+		$d1 = $this->getDatabaseFromSchema($schema1);
+		$d2 = $this->getDatabaseFromSchema($schema2);
+		$diff = PropelDatabaseComparator::computeDiff($d2, $d1);
+		return array(array($diff));
+	}
+
 }

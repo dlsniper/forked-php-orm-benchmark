@@ -14,7 +14,7 @@ require_once dirname(__FILE__) . '/DefaultPlatform.php';
  * SQLite PropelPlatformInterface implementation.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 2168 $
+ * @version    $Revision$
  * @package    propel.generator.platform
  */
 class SqlitePlatform extends DefaultPlatform
@@ -62,8 +62,11 @@ class SqlitePlatform extends DefaultPlatform
 			$lines[] = $this->getColumnDDL($column);
 		}
 
-		if ($table->hasPrimaryKey() && count($table->getPrimaryKey()) > 1) {
-			$lines[] = $this->getPrimaryKeyDDL($table);
+		if ($table->hasPrimaryKey()) {
+		  $pk = $table->getPrimaryKey();
+		  if (count($pk) > 1 || !$pk[0]->isAutoIncrement()) {
+		    $lines[] = $this->getPrimaryKeyDDL($table);
+		  }
 		}
 
 		foreach ($table->getUnices() as $unique) {
@@ -91,13 +94,13 @@ class SqlitePlatform extends DefaultPlatform
 		// FIXME: not supported by SQLite
 		return '';
 	}
-	
+
 	public function getAddPrimaryKeyDDL(Table $table)
 	{
 		// FIXME: not supported by SQLite
 		return '';
 	}
-	
+
 	public function getAddForeignKeyDDL(ForeignKey $fk)
 	{
 		// no need for an alter table to return comments
@@ -108,14 +111,21 @@ class SqlitePlatform extends DefaultPlatform
 	{
 		return '';
 	}
-	
+
+	public function getDropTableDDL(Table $table)
+	{
+		return "
+DROP TABLE IF EXISTS " . $this->quoteIdentifier($table->getName()) . ";
+";
+	}
+
 	public function getForeignKeyDDL(ForeignKey $fk)
 	{
 		$pattern = "
 -- SQLite does not support foreign keys; this is just for reference
 -- FOREIGN KEY (%s) REFERENCES %s (%s)
 ";
-		return sprintf($pattern, 
+		return sprintf($pattern,
 			$this->getColumnListDDL($fk->getLocalColumns()),
 			$fk->getForeignTableName(),
 			$this->getColumnListDDL($fk->getForeignColumns())
@@ -146,4 +156,13 @@ class SqlitePlatform extends DefaultPlatform
 	{
 		return $this->isIdentifierQuotingEnabled ? '[' . $text . ']' : $text;
 	}
+
+	/**
+	 * @see        Platform::supportsMigrations()
+	 */
+	public function supportsMigrations()
+	{
+		return false;
+	}
+
 }

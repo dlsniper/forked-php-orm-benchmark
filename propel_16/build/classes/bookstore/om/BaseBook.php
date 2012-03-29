@@ -25,6 +25,12 @@ abstract class BaseBook extends BaseObject  implements Persistent
 	protected static $peer;
 
 	/**
+	 * The flag var to prevent infinit loop in deep copy
+	 * @var       boolean
+	 */
+	protected $startCopy = false;
+
+	/**
 	 * The value for the id field.
 	 * @var        int
 	 */
@@ -373,7 +379,7 @@ abstract class BaseBook extends BaseObject  implements Persistent
 			} else {
 				$con->commit();
 			}
-		} catch (PropelException $e) {
+		} catch (Exception $e) {
 			$con->rollBack();
 			throw $e;
 		}
@@ -425,7 +431,7 @@ abstract class BaseBook extends BaseObject  implements Persistent
 			}
 			$con->commit();
 			return $affectedRows;
-		} catch (PropelException $e) {
+		} catch (Exception $e) {
 			$con->rollBack();
 			throw $e;
 		}
@@ -460,27 +466,15 @@ abstract class BaseBook extends BaseObject  implements Persistent
 				$this->setAuthor($this->aAuthor);
 			}
 
-			if ($this->isNew() ) {
-				$this->modifiedColumns[] = BookPeer::ID;
-			}
-
-			// If this object has been modified, then save it to the database.
-			if ($this->isModified()) {
+			if ($this->isNew() || $this->isModified()) {
+				// persist changes
 				if ($this->isNew()) {
-					$criteria = $this->buildCriteria();
-					if ($criteria->keyContainsValue(BookPeer::ID) ) {
-						throw new PropelException('Cannot insert a value for auto-increment primary key ('.BookPeer::ID.')');
-					}
-
-					$pk = BasePeer::doInsert($criteria, $con);
-					$affectedRows += 1;
-					$this->setId($pk);  //[IMV] update autoincrement primary key
-					$this->setNew(false);
+					$this->doInsert($con);
 				} else {
-					$affectedRows += BookPeer::doUpdate($this, $con);
+					$this->doUpdate($con);
 				}
-
-				$this->resetModified(); // [HL] After being saved an object is no longer 'modified'
+				$affectedRows += 1;
+				$this->resetModified();
 			}
 
 			$this->alreadyInSave = false;
@@ -488,6 +482,98 @@ abstract class BaseBook extends BaseObject  implements Persistent
 		}
 		return $affectedRows;
 	} // doSave()
+
+	/**
+	 * Insert the row in the database.
+	 *
+	 * @param      PropelPDO $con
+	 *
+	 * @throws     PropelException
+	 * @see        doSave()
+	 */
+	protected function doInsert(PropelPDO $con)
+	{
+		$modifiedColumns = array();
+		$index = 0;
+
+		$this->modifiedColumns[] = BookPeer::ID;
+		if (null !== $this->id) {
+			throw new PropelException('Cannot insert a value for auto-increment primary key (' . BookPeer::ID . ')');
+		}
+
+		 // check the columns in natural order for more readable SQL queries
+		if ($this->isColumnModified(BookPeer::ID)) {
+			$modifiedColumns[':p' . $index++]  = 'ID';
+		}
+		if ($this->isColumnModified(BookPeer::TITLE)) {
+			$modifiedColumns[':p' . $index++]  = 'TITLE';
+		}
+		if ($this->isColumnModified(BookPeer::ISBN)) {
+			$modifiedColumns[':p' . $index++]  = 'ISBN';
+		}
+		if ($this->isColumnModified(BookPeer::PRICE)) {
+			$modifiedColumns[':p' . $index++]  = 'PRICE';
+		}
+		if ($this->isColumnModified(BookPeer::AUTHOR_ID)) {
+			$modifiedColumns[':p' . $index++]  = 'AUTHOR_ID';
+		}
+
+		$sql = sprintf(
+			'INSERT INTO book (%s) VALUES (%s)',
+			implode(', ', $modifiedColumns),
+			implode(', ', array_keys($modifiedColumns))
+		);
+
+		try {
+			$stmt = $con->prepare($sql);
+			foreach ($modifiedColumns as $identifier => $columnName) {
+				switch ($columnName) {
+					case 'ID':
+						$stmt->bindValue($identifier, $this->id, PDO::PARAM_INT);
+						break;
+					case 'TITLE':
+						$stmt->bindValue($identifier, $this->title, PDO::PARAM_STR);
+						break;
+					case 'ISBN':
+						$stmt->bindValue($identifier, $this->isbn, PDO::PARAM_STR);
+						break;
+					case 'PRICE':
+						$stmt->bindValue($identifier, $this->price, PDO::PARAM_STR);
+						break;
+					case 'AUTHOR_ID':
+						$stmt->bindValue($identifier, $this->author_id, PDO::PARAM_INT);
+						break;
+				}
+			}
+			$stmt->execute();
+		} catch (Exception $e) {
+			Propel::log($e->getMessage(), Propel::LOG_ERR);
+			throw new PropelException(sprintf('Unable to execute INSERT statement [%s]', $sql), $e);
+		}
+
+		try {
+			$pk = $con->lastInsertId();
+		} catch (Exception $e) {
+			throw new PropelException('Unable to get autoincrement id.', $e);
+		}
+		$this->setId($pk);
+
+		$this->setNew(false);
+	}
+
+	/**
+	 * Update the row in the database.
+	 *
+	 * @param      PropelPDO $con
+	 *
+	 * @see        doSave()
+	 */
+	protected function doUpdate(PropelPDO $con)
+	{
+		$selectCriteria = $this->buildPkeyCriteria();
+		$valuesCriteria = $this->buildCriteria();
+		BasePeer::doUpdate($selectCriteria, $valuesCriteria, $con);
+	}
 
 	/**
 	 * Array of ValidationFailed objects.
@@ -810,6 +896,18 @@ abstract class BaseBook extends BaseObject  implements Persistent
 		$copyObj->setISBN($this->getISBN());
 		$copyObj->setPrice($this->getPrice());
 		$copyObj->setAuthorId($this->getAuthorId());
+
+		if ($deepCopy && !$this->startCopy) {
+			// important: temporarily setNew(false) because this affects the behavior of
+			// the getter/setter methods for fkey referrer objects.
+			$copyObj->setNew(false);
+			// store object hash to prevent cycle
+			$this->startCopy = true;
+
+			//unflag object copy
+			$this->startCopy = false;
+		} // if ($deepCopy)
+
 		if ($makeNew) {
 			$copyObj->setNew(true);
 			$copyObj->setId(NULL); // this is a auto-increment column, so set to default value

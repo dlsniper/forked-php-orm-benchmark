@@ -9,7 +9,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableComparator.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/model/diff/PropelTableDiff.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/platform/MysqlPlatform.php';
@@ -51,10 +50,10 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2 = new Index('Foo_Index');
 		$i2->addColumn($c2);
 		$t2->addIndex($i2);
-		
+
 		$this->assertFalse(PropelTableComparator::computeDiff($t1, $t2));
 	}
-	
+
 	public function testCompareNotSameIndices()
 	{
 		$t1 = new Table();
@@ -79,7 +78,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2 = new Unique('Foo_Index');
 		$i2->addColumn($c2);
 		$t2->addIndex($i2);
-		
+
 		$diff = PropelTableComparator::computeDiff($t1, $t2);
 		$this->assertTrue($diff instanceof PropelTableDiff);
 	}
@@ -108,10 +107,10 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2 = new Index('fOO_iNDEX');
 		$i2->addColumn($c2);
 		$t2->addIndex($i2);
-		
+
 		$this->assertFalse(PropelTableComparator::computeDiff($t1, $t2, true));
 	}
-	
+
 	public function testCompareAddedIndices()
 	{
 		$t1 = new Table();
@@ -126,7 +125,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2 = new Index('Foo_Index');
 		$i2->addColumn($c2);
 		$t2->addIndex($i2);
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -136,7 +135,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(1, count($tableDiff->getAddedIndices()));
 		$this->assertEquals(array('Foo_Index' => $i2), $tableDiff->getAddedIndices());
 	}
-	
+
 	public function testCompareRemovedIndices()
 	{
 		$t1 = new Table();
@@ -151,7 +150,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i1->addColumn($c1);
 		$t1->addIndex($i1);
 		$t2 = new Table();
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);
@@ -161,7 +160,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(1, count($tableDiff->getRemovedIndices()));
 		$this->assertEquals(array('Bar_Index' => $i1), $tableDiff->getRemovedIndices());
 	}
-	
+
 	public function testCompareModifiedIndices()
 	{
 		$t1 = new Table();
@@ -184,7 +183,7 @@ class PropelTableIndexComparatorTest extends PHPUnit_Framework_TestCase
 		$i2 = new Unique('Foo_Index');
 		$i2->addColumn($c2);
 		$t2->addIndex($i2);
-		
+
 		$tc = new PropelTableComparator();
 		$tc->setFromTable($t1);
 		$tc->setToTable($t2);

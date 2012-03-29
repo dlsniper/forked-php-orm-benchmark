@@ -8,7 +8,6 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../runtime/lib/exception/PropelException.php';
 
 /**
@@ -39,7 +38,7 @@ class PropelExceptionTest extends PHPUnit_Framework_TestCase
 		$e = new PropelException('this is an error', $e1);
 		$this->assertEquals('this is an error [wrapped: real cause]', $e->getMessage());
 	}
-	
+
 	/**
 	 * @expectedException PropelException
 	 */
@@ -48,7 +47,7 @@ class PropelExceptionTest extends PHPUnit_Framework_TestCase
 		$e = new PropelException('this is an error');
 		throw $e;
 	}
-	
+
 	public function testGetCause()
 	{
 		$e1 = new FooException('real cause');

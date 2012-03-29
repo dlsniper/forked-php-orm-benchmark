@@ -26,7 +26,7 @@ require_once dirname(__FILE__) . '/../../../../generator/lib/model/AppData.php';
  * characters.</p>
  *
  * @author     <a href="mailto:dlr@collab.net">Daniel Rall</a>
- * @version    $Id: NameFactoryTest.php 1912 2010-08-16 19:52:39Z francois $
+ * @version    $Id$
  * @package    generator.model
  */
 class NameFactoryTest extends BaseTestCase

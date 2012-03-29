@@ -17,7 +17,7 @@
  * @author     Brett McLaughlin <bmclaugh@algx.net> (Torque)
  * @author     Bill Schneider <bschneider@vecna.com> (Torque)
  * @author     Daniel Rall <dlr@finemaltcoding.com> (Torque)
- * @version    $Revision: 2026 $
+ * @version    $Revision$
  * @package    propel.runtime.adapter
  */
 class DBOracle extends DBAdapter
@@ -27,8 +27,10 @@ class DBOracle extends DBAdapter
 	 * post-initialization queries or code.
 	 * Removes the charset query and adds the date queries
 	 *
-	 * @param      PDO   A PDO connection instance.
-	 * @see        parent::initConnection()
+	 * @see       parent::initConnection()
+	 *
+	 * @param     PDO    $con
+	 * @param     array  $settings  A $PDO PDO connection instance
 	 */
 	public function initConnection(PDO $con, array $settings)
 	{
@@ -42,12 +44,12 @@ class DBOracle extends DBAdapter
 			}
 		}
 	}
-	
+
 	/**
 	 * This method is used to ignore case.
 	 *
-	 * @param      string $in The string to transform to upper case.
-	 * @return     string The upper case string.
+	 * @param     string  $in  The string to transform to upper case.
+	 * @return    string  The upper case string.
 	 */
 	public function toUpperCase($in)
 	{
@@ -57,8 +59,8 @@ class DBOracle extends DBAdapter
 	/**
 	 * This method is used to ignore case.
 	 *
-	 * @param      string $in The string whose case to ignore.
-	 * @return     string The string in a case that can be ignored.
+	 * @param     string  $in  The string whose case to ignore.
+	 * @return    string  The string in a case that can be ignored.
 	 */
 	public function ignoreCase($in)
 	{
@@ -68,9 +70,10 @@ class DBOracle extends DBAdapter
 	/**
 	 * Returns SQL which concatenates the second string to the first.
 	 *
-	 * @param      string String to concatenate.
-	 * @param      string String to append.
-	 * @return     string
+	 * @param     string  $s1  String to concatenate.
+	 * @param     string  $s2  String to append.
+	 *
+	 * @return    string
 	 */
 	public function concatString($s1, $s2)
 	{
@@ -80,10 +83,11 @@ class DBOracle extends DBAdapter
 	/**
 	 * Returns SQL which extracts a substring.
 	 *
-	 * @param      string String to extract from.
-	 * @param      int Offset to start from.
-	 * @param      int Number of characters to extract.
-	 * @return     string
+	 * @param     string   $s  String to extract from.
+	 * @param     integer  $pos  Offset to start from.
+	 * @param     integer  $len  Number of characters to extract.
+	 *
+	 * @return    string
 	 */
 	public function subString($s, $pos, $len)
 	{
@@ -93,8 +97,8 @@ class DBOracle extends DBAdapter
 	/**
 	 * Returns SQL which calculates the length (in chars) of a string.
 	 *
-	 * @param      string String to calculate length of.
-	 * @return     string
+	 * @param     string  $s  String to calculate length of.
+	 * @return    string
 	 */
 	public function strLength($s)
 	{
@@ -102,7 +106,12 @@ class DBOracle extends DBAdapter
 	}
 
 	/**
-	 * @see        DBAdapter::applyLimit()
+	 * @see       DBAdapter::applyLimit()
+	 *
+	 * @param     string   $sql
+	 * @param     integer  $offset
+	 * @param     integer  $limit
+	 * @param     null|Criteria  $criteria
 	 */
 	public function applyLimit(&$sql, $offset, $limit, $criteria = null)
 	{
@@ -125,11 +134,21 @@ class DBOracle extends DBAdapter
 		}
 	}
 
+	/**
+	 * @return int
+	 */
 	protected function getIdMethod()
 	{
 		return DBAdapter::ID_METHOD_SEQUENCE;
 	}
 
+	/**
+	 * @param     PDO     $con
+	 * @param     string  $name
+	 *
+	 * @throws    PropelException
+	 * @return    integer
+	 */
 	public function getId(PDO $con, $name = null)
 	{
 		if ($name === null) {
@@ -142,6 +161,10 @@ class DBOracle extends DBAdapter
 		return $row[0];
 	}
 
+	/**
+	 * @param     string  $seed
+	 * @return    string
+	 */
 	public function random($seed=NULL)
 	{
 		return 'dbms_random.value';
@@ -150,11 +173,11 @@ class DBOracle extends DBAdapter
 	/**
 	 * Ensures uniqueness of select column names by turning them all into aliases
 	 * This is necessary for queries on more than one table when the tables share a column name
+	 *
 	 * @see http://propel.phpdb.org/trac/ticket/795
 	 *
-	 * @param Criteria $criteria
-	 *
-	 * @return Criteria The input, with Select columns replaced by aliases
+	 * @param     Criteria  $criteria
+	 * @return    Criteria  The input, with Select columns replaced by aliases
 	 */
 	public function turnSelectColumnsToAliases(Criteria $criteria)
 	{
@@ -186,4 +209,91 @@ class DBOracle extends DBAdapter
 		return $criteria;
 	}
 
+	/**
+	 * @see       DBAdapter::bindValue()
+	 * Warning: duplicates logic from OraclePlatform::getColumnBindingPHP().
+	 * Any code modification here must be ported there.
+	 *
+	 * @param     PDOStatement  $stmt
+	 * @param     string        $parameter
+	 * @param     mixed         $value
+	 * @param     ColumnMap     $cMap
+	 * @param     null|integer  $position
+	 *
+	 * @return    boolean
+	 */
+	public function bindValue(PDOStatement $stmt, $parameter, $value, ColumnMap $cMap, $position = null)
+	{
+		if ($cMap->isTemporal()) {
+			$value = $this->formatTemporalValue($value, $cMap);
+		} elseif ($cMap->getType() == PropelColumnTypes::CLOB_EMU) {
+			return $stmt->bindParam(':p'.$position, $value, $cMap->getPdoType(), strlen($value));
+		} elseif (is_resource($value) && $cMap->isLob()) {
+			// we always need to make sure that the stream is rewound, otherwise nothing will
+			// get written to database.
+			rewind($value);
+		}
+
+		return $stmt->bindValue($parameter, $value, $cMap->getPdoType());
+	}
+
+	/**
+	 * Do Explain Plan for query object or query string
+	 *
+	 * @param PropelPDO $con propel connection
+	 * @param ModelCriteria|string $query query the criteria or the query string
+	 * @throws PropelException
+	 * @return PDOStatement A PDO statement executed using the connection, ready to be fetched
+	 */
+	public function doExplainPlan(PropelPDO $con, $query)
+	{
+		$con->beginTransaction();
+		if ($query instanceof ModelCriteria) {
+			$params = array();
+			$dbMap = Propel::getDatabaseMap($query->getDbName());
+			$sql = BasePeer::createSelectSql($query, $params);
+		} else {
+			$sql = $query;
+		}
+		// unique id for the query string
+		$uniqueId = uniqid('Propel', true);
+
+		$stmt = $con->prepare($this->getExplainPlanQuery($sql, $uniqueId));
+
+		if ($query instanceof ModelCriteria) {
+			$this->bindValues($stmt, $params, $dbMap);
+		}
+
+		$stmt->execute();
+		// explain plan is save in a table, data must be commit
+		$con->commit();
+
+		$stmt = $con->prepare($this->getExplainPlanReadQuery($uniqueId));
+		$stmt->execute();
+		return $stmt;
+	}
+
+	/**
+	 * Explain Plan compute query getter
+	 *
+	 * @param string $query query to explain
+	 * @param string $uniqueId query unique id
+	 */
+	public function getExplainPlanQuery($query, $uniqueId)
+	{
+		return sprintf('EXPLAIN PLAN SET STATEMENT_ID = \'%s\' FOR %s', $uniqueId, $query);
+	}
+
+	/**
+	 * Explain Plan read query
+	 *
+	 * @param string $uniqueId
+	 * @return string query unique id
+	 */
+	public function getExplainPlanReadQuery($uniqueId)
+	{
+		return sprintf('SELECT LEVEL, OPERATION, OPTIONS, COST, CARDINALITY, BYTES
+FROM PLAN_TABLE CONNECT BY PRIOR ID = PARENT_ID AND PRIOR STATEMENT_ID = STATEMENT_ID
+START WITH ID = 0 AND STATEMENT_ID = \'%s\' ORDER BY ID', $uniqueId);
+	}
 }

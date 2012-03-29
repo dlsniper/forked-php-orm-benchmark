@@ -8,14 +8,13 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/ColumnDefaultValue.php';
 
 
 /**
  * Tests for ColumnDefaultValue class.
  *
- * @version    $Revision: 2238 $
+ * @version    $Revision$
  * @package    generator.model
  */
 class ColumnDefaultValueTest extends PHPUnit_Framework_TestCase
@@ -30,7 +29,7 @@ class ColumnDefaultValueTest extends PHPUnit_Framework_TestCase
 			array(new ColumnDefaultValue('current_timestamp', 'bar'), new ColumnDefaultValue('now()', 'bar1'), false),
 		);
 	}
-	
+
 	/**
 	 * @dataProvider equalsProvider
 	 */

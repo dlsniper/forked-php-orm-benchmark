@@ -8,13 +8,12 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../../generator/lib/builder/util/PropelTemplate.php';
 
 /**
  * Tests for PropelTemplate class
  *
- * @version    $Revision: 1834 $
+ * @version    $Revision$
  * @package    generator.builder.util
  */
 class PropelTemplateTest extends PHPUnit_Framework_TestCase
@@ -26,7 +25,7 @@ class PropelTemplateTest extends PHPUnit_Framework_TestCase
 		$res = $t->render();
 		$this->assertEquals('Hello, 3', $res);
 	}
-	
+
 	public function testRenderStringOneParam()
 	{
 		$t = new PropelTemplate();
@@ -43,7 +42,7 @@ class PropelTemplateTest extends PHPUnit_Framework_TestCase
 		$res = $t->render(array('name' => 'John', 'time' => $time));
 		$this->assertEquals('Hello, John, it is ' . $time . ' to go!', $res);
 	}
-	
+
 	public function testRenderFile()
 	{
 		$t = new PropelTemplate();

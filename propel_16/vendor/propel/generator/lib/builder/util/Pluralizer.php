@@ -12,7 +12,7 @@
  * The generic interface to create a plural form of a name.
  *
  * @author     Hans Lellelid <hans@xmpl.org>
- * @version    $Revision: 1612 $
+ * @version    $Revision$
  * @package    propel.generator.builder.util
  */
 interface Pluralizer

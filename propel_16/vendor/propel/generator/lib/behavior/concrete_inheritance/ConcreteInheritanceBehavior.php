@@ -18,7 +18,7 @@ require_once 'ConcreteInheritanceParentBehavior.php';
  * to the parent model.
  *
  * @author     François Zaninotto
- * @version    $Revision: 2240 $
+ * @version    $Revision$
  * @package    propel.generator.behavior.concrete_inheritance
  */
 class ConcreteInheritanceBehavior extends Behavior
@@ -30,7 +30,7 @@ class ConcreteInheritanceBehavior extends Behavior
 		'copy_data_to_parent' => 'true',
 		'schema'              => ''
 	);
-	
+
 	public function modifyTable()
 	{
 		$table = $this->getTable();
@@ -73,7 +73,7 @@ class ConcreteInheritanceBehavior extends Behavior
 				$table->addForeignKey($fk);
 			}
 		}
-		
+
 		// add the foreign keys of the parent table
 		foreach ($parentTable->getForeignKeys() as $fk) {
 			$copiedFk = clone $fk;
@@ -81,7 +81,7 @@ class ConcreteInheritanceBehavior extends Behavior
 			$copiedFk->setRefPhpName('');
 			$this->getTable()->addForeignKey($copiedFk);
 		}
-		
+
 		// add the validators of the parent table
 		foreach ($parentTable->getValidators() as $validator) {
 			$copiedValidator = clone $validator;
@@ -113,7 +113,7 @@ class ConcreteInheritanceBehavior extends Behavior
 		}
 
 	}
-	
+
 	protected function getParentTable()
 	{
 		$database = $this->getTable()->getDatabase();
@@ -123,30 +123,37 @@ class ConcreteInheritanceBehavior extends Behavior
 		}
 		return $database->getTable($tableName);
 	}
-	
+
 	protected function isCopyData()
 	{
 		return $this->getParameter('copy_data_to_parent') == 'true';
 	}
-	
+
 	public function parentClass($builder)
 	{
+		$parentTable = $this->getParentTable();
 		switch (get_class($builder)) {
 			case 'PHP5ObjectBuilder':
-				return $builder->getNewStubObjectBuilder($this->getParentTable())->getClassname();
+				$objectBuilder = $builder->getNewStubObjectBuilder($parentTable);
+				$builder->declareClass($objectBuilder->getFullyQualifiedClassname());
+				return $objectBuilder->getClassname();
 				break;
 			case 'QueryBuilder':
-				return $builder->getNewStubQueryBuilder($this->getParentTable())->getClassname();
+				$queryBuilder = $builder->getNewStubQueryBuilder($parentTable);
+				$builder->declareClass($queryBuilder->getFullyQualifiedClassname());
+				return $queryBuilder->getClassname();
 				break;
 			case 'PHP5PeerBuilder':
-				return $builder->getNewStubPeerBuilder($this->getParentTable())->getClassname();
+				$peerBuilder = $builder->getNewStubPeerBuilder($parentTable);
+				$builder->declareClass($peerBuilder->getFullyQualifiedClassname());
+				return $peerBuilder->getClassname();
 				break;
 			default:
 				return null;
 				break;
 		}
 	}
-	
+
 	public function preSave($script)
 	{
 		if ($this->isCopyData()) {
@@ -164,7 +171,7 @@ class ConcreteInheritanceBehavior extends Behavior
 ";
 		}
 	}
-	
+
 	public function objectMethods($builder)
 	{
 		if (!$this->isCopyData()) {
@@ -174,7 +181,7 @@ class ConcreteInheritanceBehavior extends Behavior
 		$script = '';
 		$this->addObjectGetParentOrCreate($script);
 		$this->addObjectGetSyncParent($script);
-		
+
 		return $script;
 	}
 
@@ -185,13 +192,16 @@ class ConcreteInheritanceBehavior extends Behavior
 		$script .= "
 /**
  * Get or Create the parent " . $parentClass . " object of the current object
- * 
+ *
  * @return    " . $parentClass . " The parent object
  */
 public function getParentOrCreate(\$con = null)
 {
 	if (\$this->isNew() && \$this->isPrimaryKeyNull()) {
-		\$parent = new " . $parentClass . "();
+		//this prevent issue with deep copy & save parent object
+		if (null === (\$parent = \$this->get". $parentClass . "(\$con))) {
+			\$parent = new " . $parentClass . "();
+		}
 		\$parent->set" . $this->getParentTable()->getColumn($this->getParameter('descendant_column'))->getPhpName() . "('" . $this->builder->getStubObjectBuilder()->getClassname() . "');
 		return \$parent;
 	} else {
@@ -200,7 +210,7 @@ public function getParentOrCreate(\$con = null)
 }
 ";
 	}
-	
+
 	protected function addObjectGetSyncParent(&$script)
 	{
 		$parentTable = $this->getParentTable();
@@ -235,7 +245,7 @@ public function getSyncParent(\$con = null)
 	}";
 		}
 		$script .= "
-		
+
 	return \$parent;
 }
 ";

@@ -8,19 +8,18 @@
  * @license    MIT License
  */
 
-require_once 'PHPUnit/Framework.php';
 require_once dirname(__FILE__) . '/../../../../generator/lib/model/PhpNameGenerator.php';
 
 /**
  * Tests for PhpNamleGenerator
  *
  * @author     <a href="mailto:mpoeschl@marmot.at>Martin Poeschl</a>
- * @version    $Revision: 1834 $
+ * @version    $Revision$
  * @package    generator.model
  */
 class PhpNameGeneratorTest extends PHPUnit_Framework_TestCase
 {
-	public static function testPhpnameMethodDataProvider()
+	public static function phpnameMethodDataProvider()
 	{
 		return array(
 			array('foo', 'Foo'),
@@ -33,14 +32,37 @@ class PhpNameGeneratorTest extends PHPUnit_Framework_TestCase
 			array('my_CLASS_name', 'MyCLASSName'),
 		);
 	}
-	
+
 	/**
-	 * @dataProvider testPhpnameMethodDataProvider
+	 * @dataProvider phpnameMethodDataProvider
 	 */
 	public function testPhpnameMethod($input, $output)
 	{
 		$generator = new TestablePhpNameGenerator();
 		$this->assertEquals($output, $generator->phpnameMethod($input));
+	}
+
+	public static function underscoreMethodDataProvider()
+	{
+		return array(
+			array('foo', 'Foo'),
+			array('Foo', 'Foo'),
+			array('Foo', 'Foo'),
+			array('123', '123'),
+			array('foo_bar', 'FooBar'),
+			array('bar_1', 'Bar1'),
+			array('bar_0', 'Bar0'),
+			array('my_CLASS_name', 'MyClassName'),
+		);
+	}
+
+	/**
+	 * @dataProvider underscoreMethodDataProvider
+	 */
+	public function testUnderscoreMethod($input, $output)
+	{
+		$generator = new TestablePhpNameGenerator();
+		$this->assertEquals($output, $generator->underscoreMethod($input));
 	}
 
 }
@@ -50,5 +72,10 @@ class TestablePhpNameGenerator extends PhpNameGenerator
 	public function phpnameMethod($schemaName)
 	{
 		return parent::phpnameMethod($schemaName);
+	}
+
+	public function underscoreMethod($schemaName)
+	{
+		return parent::underscoreMethod($schemaName);
 	}
 }

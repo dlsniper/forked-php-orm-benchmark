@@ -20,7 +20,7 @@ require_once dirname(__FILE__) . '/Index.php';
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Jason van Zyl <jvanzyl@apache.org> (Torque)
  * @author     Daniel Rall <dlr@collab.net> (Torque)
- * @version    $Revision: 1834 $
+ * @version    $Revision$
  * @package    propel.generator.model
  */
 class Unique extends Index
