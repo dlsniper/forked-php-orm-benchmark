@@ -1,7 +1,7 @@
 <?php
 
-echo "                               | Insert | findPk | complex| hydrate|  with  |\n";
-echo "                               |--------|--------|--------|--------|--------|\n";
+echo "                                   | Insert | findPk | complex| hydrate|  with  |\n";
+echo "                                   |--------|--------|--------|--------|--------|\n";
 
 passthru('php raw_pdo/TestRunner.php');
 passthru('php propel_14/TestRunner.php');
