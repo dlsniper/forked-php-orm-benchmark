@@ -53,7 +53,7 @@ abstract class AbstractTestSuite
 		$t3 = $this->runTest('runComplexQuery', 190);
 		$t4 = $this->runTest('runHydrate', 750);
 		$t5 = $this->runTest('runJoinSearch', 700);
-		echo sprintf("%30s | %6d | %6d | %6d | %6d | %6d | ", get_class($this), $t1, $t2, $t3, $t4, $t5);
+		echo sprintf("%34s | %6d | %6d | %6d | %6d | %6d | ", get_class($this), $t1, $t2, $t3, $t4, $t5);
 	}
 	
 	public function runTest($methodName, $nbTest = self::NB_TEST)
