@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/Doctrine2TestSuite.php';
+require_once dirname(__FILE__) . '/Doctrine21TestSuite.php';
 
-class Doctrine2WithCacheTestSuite extends Doctrine2TestSuite
+class Doctrine21WithCacheTestSuite extends Doctrine21TestSuite
 {
     private $cache = null;
     

@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
+require_once dirname(__FILE__) . '/Doctrine21WithCacheTestSuite.php';
 
-class Doctrine2ScalarHydrateTestSuite extends Doctrine2WithCacheTestSuite
+class Doctrine21ArrayHydrateTestSuite extends Doctrine21WithCacheTestSuite
 {
     public function runHydrate($i)
     {        
@@ -10,7 +10,7 @@ class Doctrine2ScalarHydrateTestSuite extends Doctrine2WithCacheTestSuite
             'SELECT b FROM Book b WHERE b.price > ?1'
         )->setParameter(1, $i)
          ->setMaxResults(5)
-         ->getScalarResult();
+         ->getArrayResult();
 
         foreach ($books as $book) {
             
@@ -24,7 +24,7 @@ class Doctrine2ScalarHydrateTestSuite extends Doctrine2WithCacheTestSuite
             'SELECT b, a FROM Book b JOIN b.author a WHERE b.title = ?1'
         )->setParameter(1, 'Hello' . $i)
          ->setMaxResults(1)
-         ->getScalarResult();
+         ->getArrayResult();
     }
 	
 }

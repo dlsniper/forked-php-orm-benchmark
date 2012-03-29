@@ -13,7 +13,7 @@ class Doctrine21TestSuite extends AbstractTestSuite
     public function initialize()
     {
       $lib = __DIR__ . '/vendor/doctrine2/lib/';
-      require $lib . 'vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
+      require_once $lib . 'vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
 
       $classLoader = new \Doctrine\Common\ClassLoader('Doctrine\Common', $lib . 'vendor/doctrine-common/lib');
       $classLoader->register();

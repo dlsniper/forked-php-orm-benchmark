@@ -1,7 +1,6 @@
 <?php
 
 require dirname(__FILE__) . '/Doctrine2TestSuite.php';
-
 $time = microtime(true);
 $memory = memory_get_usage();
 $test = new Doctrine2TestSuite();
@@ -11,7 +10,6 @@ echo "memory=".(memory_get_usage() - $memory)." bytes\t time=".(microtime(true) 
 unset($test);
 
 require dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
-
 $time = microtime(true);
 $memory = memory_get_usage();
 $test = new Doctrine2WithCacheTestSuite();
@@ -22,8 +20,8 @@ unset($test);
 
 // Optional tests of the alternative abstraction levels of results doctrine provides.
 // These are often used in production when data is only needed for presentation (read-only) purposes.
-require dirname(__FILE__) . '/Doctrine2ArrayHydrateTestSuite.php';
 
+require dirname(__FILE__) . '/Doctrine2ArrayHydrateTestSuite.php';
 $time = microtime(true);
 $memory = memory_get_usage();
 $test = new Doctrine2ArrayHydrateTestSuite();
@@ -33,7 +31,6 @@ echo "memory=".(memory_get_usage() - $memory)." bytes\t time=".(microtime(true) 
 unset($test);
 
 require dirname(__FILE__) . '/Doctrine2ScalarHydrateTestSuite.php';
-
 $time = microtime(true);
 $memory = memory_get_usage();
 $test = new Doctrine2ScalarHydrateTestSuite();
@@ -43,7 +40,6 @@ echo "memory=".(memory_get_usage() - $memory)." bytes\t time=".(microtime(true) 
 unset($test);
 
 require dirname(__FILE__) . '/Doctrine2WithoutProxiesTestSuite.php';
-
 $time = microtime(true);
 $memory = memory_get_usage();
 $test = new Doctrine2WithoutProxiesTestSuite();

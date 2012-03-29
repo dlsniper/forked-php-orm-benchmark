@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__FILE__) . '/Doctrine2WithCacheTestSuite.php';
+require_once dirname(__FILE__) . '/Doctrine21WithCacheTestSuite.php';
 
-class Doctrine2WithoutProxiesTestSuite extends Doctrine2WithCacheTestSuite
+class Doctrine21ScalarHydrateTestSuite extends Doctrine21WithCacheTestSuite
 {
     public function runHydrate($i)
     {        
@@ -10,8 +10,7 @@ class Doctrine2WithoutProxiesTestSuite extends Doctrine2WithCacheTestSuite
             'SELECT b FROM Book b WHERE b.price > ?1'
         )->setParameter(1, $i)
          ->setMaxResults(5)
-         ->setHint(\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true)
-         ->getResult();
+         ->getScalarResult();
 
         foreach ($books as $book) {
             
@@ -24,9 +23,8 @@ class Doctrine2WithoutProxiesTestSuite extends Doctrine2WithCacheTestSuite
         $book = $this->em->createQuery(
             'SELECT b, a FROM Book b JOIN b.author a WHERE b.title = ?1'
         )->setParameter(1, 'Hello' . $i)
-         ->setMaxResults(5)
-         ->setHint(\Doctrine\ORM\Query::HINT_FORCE_PARTIAL_LOAD, true)
-         ->getResult();
+         ->setMaxResults(1)
+         ->getScalarResult();
     }
 	
 }
